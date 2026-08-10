@@ -57,6 +57,7 @@ export default function DetalheChamado() {
   const [editForm, setEditForm] = useState({ titulo: '', descricao: '', categoria: '', prioridade: '' });
   const [novoCheck, setNovoCheck] = useState('');
   const [checklist, setChecklist] = useState([]);
+  const [techStats, setTechStats] = useState(null);
 
   const loadChamado = () => {
     fetch(`${API}/chamados/${id}`)
@@ -77,6 +78,13 @@ export default function DetalheChamado() {
   };
 
   useEffect(loadChamado, [id]);
+
+  useEffect(() => {
+    fetch(`${API}/chamados/stats`)
+      .then((r) => r.json())
+      .then((data) => setTechStats(data))
+      .catch(() => {});
+  }, [id]);
 
   useEffect(() => {
     if (!chamado) return;
@@ -456,16 +464,47 @@ export default function DetalheChamado() {
 
           <div className="detalhe-section">
             <div className="gamification-bar">
-              <div className="g-medal">🏆</div>
-              <div className="g-text">
-                <span className="g-title">Cristian Raffi Cunha</span>
-                <span className="g-sub">Nível Pro</span>
-              </div>
-              <div className="g-badges">
-                <span className="g-badge earned" title="10+ chamados">⭐</span>
-                <span className="g-badge earned" title="Resposta rápida">⚡</span>
-                <span className="g-badge earned" title="Top performer">💯</span>
-              </div>
+              {(() => {
+                const crisStats = (techStats?.tecnicos || []).find((t) => t.tecnico === 'Cris');
+                const totalResolvidos = crisStats?.resolvidos || 0;
+                const totalAtendidos = crisStats?.total || 0;
+
+                const tempoRes = chamado.resolvido_em
+                  ? (new Date(chamado.resolvido_em) - new Date(chamado.criado_em)) / 3600000
+                  : null;
+
+                let nivel = 'Iniciante';
+                let medal = '🥉';
+                if (totalResolvidos >= 20) { nivel = 'Lenda'; medal = '👑'; }
+                else if (totalResolvidos >= 10) { nivel = 'Pro'; medal = '🏆'; }
+                else if (totalResolvidos >= 5) { nivel = 'Avançado'; medal = '🥈'; }
+
+                const badges = [];
+                if (totalResolvidos >= 20) badges.push({ e: '👑', t: '20+ resolvidos' });
+                else if (totalResolvidos >= 10) badges.push({ e: '⭐', t: '10+ resolvidos' });
+                if (chamado.prioridade === 'critica' || chamado.prioridade === 'alta') badges.push({ e: '🔥', t: 'Complexo' });
+                if (tempoRes !== null && tempoRes < 2) badges.push({ e: '⚡', t: 'Resposta rápida' });
+                else if (totalResolvidos >= 5) badges.push({ e: '✅', t: 'Consistente' });
+                if (totalAtendidos >= 30) badges.push({ e: '💯', t: '30+ atendidos' });
+
+                return (
+                  <>
+                    <div className="g-medal">{medal}</div>
+                    <div className="g-text">
+                      <span className="g-title">Cristian Raffi Cunha</span>
+                      <span className="g-sub">
+                        {totalResolvidos} resolvidos · Nível {nivel}
+                        {tempoRes !== null && ` · ${tempoRes.toFixed(1)}h`}
+                      </span>
+                    </div>
+                    <div className="g-badges">
+                      {badges.slice(0, 3).map((b, i) => (
+                        <span key={i} className="g-badge earned" title={b.t}>{b.e}</span>
+                      ))}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
 
