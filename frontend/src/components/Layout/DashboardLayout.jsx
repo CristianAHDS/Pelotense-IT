@@ -139,6 +139,7 @@ export default function DashboardLayout() {
         <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}><Menu size={22} /></button>
         <div className="mobile-brand"><Wrench size={20} /><span>Pelotense IT</span></div>
         <div className="mobile-header-actions">
+          <NetworkSpeed />
           <button className="notif-btn" onClick={toggleTheme}><Sun size={18} /></button>
           <button className="notif-btn" onClick={() => setNOpen(!nOpen)}>
             <Bell size={18} />

@@ -24,5 +24,12 @@
 .speed-na { color: var(--color-text-muted); }
 
 @media (max-width: 768px) {
-  .network-speed { display: none; }
+  .network-speed {
+    padding: 4px 6px;
+    font-size: 10px;
+    gap: 3px;
+    border: none;
+    background: transparent;
+  }
+  .speed-values { gap: 2px; }
 }
