@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import React from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Send, Paperclip, Download, Trash2, Image, Timer, X as XIcon, Camera } from 'lucide-react';
+import { ArrowLeft, Send, Paperclip, Download, Trash2, Image, Timer, X as XIcon, Camera, Edit2, CheckSquare, PlusCircle, Check } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import { applyWatermark } from '../utils/watermark';
 import './DetalheChamado.css';
@@ -8,11 +9,16 @@ import './DetalheChamado.css';
 const API = '/api';
 
 const STATUS_MAP = {
-  aberto: { label: 'Aberto', cls: 'badge-blue' },
-  em_andamento: { label: 'Em Andamento', cls: 'badge-cyan' },
-  pendente: { label: 'Pendente', cls: 'badge-yellow' },
-  resolvido: { label: 'Resolvido', cls: 'badge-green' },
-  fechado: { label: 'Fechado', cls: 'badge-gray' },
+  aberto: { label: 'Aberto', cls: 'badge-blue', emoji: '📥' },
+  em_andamento: { label: 'Em Andamento', cls: 'badge-cyan', emoji: '🔧' },
+  pendente: { label: 'Pendente', cls: 'badge-yellow', emoji: '⏳' },
+  resolvido: { label: 'Resolvido', cls: 'badge-green', emoji: '✅' },
+  fechado: { label: 'Fechado', cls: 'badge-gray', emoji: '🔒' },
+};
+
+const CAT_AVATARS = {
+  hardware: '💻', software: '🖥️', rede: '🌐', impressora: '🖨️',
+  email: '📧', acesso: '🔑', geral: '📋', evento: '🎪', censura: '🎥',
 };
 
 const PRIORIDADE_MAP = {
@@ -47,12 +53,18 @@ export default function DetalheChamado() {
   const [resolucao, setResolucao] = useState('');
   const [resolucaoImg, setResolucaoImg] = useState(null);
   const [lightbox, setLightbox] = useState(null);
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ titulo: '', descricao: '', categoria: '', prioridade: '' });
+  const [novoCheck, setNovoCheck] = useState('');
+  const [checklist, setChecklist] = useState([]);
 
   const loadChamado = () => {
     fetch(`${API}/chamados/${id}`)
       .then((r) => r.json())
       .then((c) => {
         setChamado(c);
+        setChecklist(c.checklist || []);
+        setEditForm({ titulo: c.titulo, descricao: c.descricao, categoria: c.categoria, prioridade: c.prioridade });
         if (!c.tecnico) {
           fetch(`${API}/chamados/${id}`, {
             method: 'PUT',
@@ -164,6 +176,43 @@ export default function DetalheChamado() {
     loadChamado();
   };
 
+  const toggleCheck = async (item) => {
+    await fetch(`${API}/chamados/${id}/checklist/${item.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ concluido: !item.concluido }),
+    });
+    setChecklist((prev) => prev.map((i) => i.id === item.id ? { ...i, concluido: item.concluido ? 0 : 1 } : i));
+  };
+
+  const addCheckItem = async () => {
+    if (!novoCheck.trim()) return;
+    const r = await fetch(`${API}/chamados/${id}/checklist`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texto: novoCheck }),
+    });
+    const item = await r.json();
+    setChecklist((prev) => [...prev, item]);
+    setNovoCheck('');
+  };
+
+  const removeCheckItem = async (itemId) => {
+    await fetch(`${API}/chamados/${id}/checklist/${itemId}`, { method: 'DELETE' });
+    setChecklist((prev) => prev.filter((i) => i.id !== itemId));
+  };
+
+  const saveEdit = async () => {
+    await fetch(`${API}/chamados/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(editForm),
+    });
+    addToast('Chamado atualizado', 'success');
+    setEditing(false);
+    loadChamado();
+  };
+
   const isMediaPreview = (tipo) => ['imagem', 'video', 'audio'].includes(tipo);
 
   if (!chamado) return <div className="loading">Carregando...</div>;
@@ -176,12 +225,37 @@ export default function DetalheChamado() {
 
       <div className="detalhe-header">
         <div>
-          <h2>#{chamado.id} - {chamado.titulo}</h2>
-          <div className="detalhe-badges">
-            <span className={`badge ${STATUS_MAP[chamado.status]?.cls}`}>{STATUS_MAP[chamado.status]?.label}</span>
-            <span className={`badge ${PRIORIDADE_MAP[chamado.prioridade]?.cls}`}>{PRIORIDADE_MAP[chamado.prioridade]?.label}</span>
-            <span className="badge badge-gray">{chamado.categoria}</span>
-          </div>
+          {editing ? (
+            <div className="edit-form">
+              <input className="edit-titulo" value={editForm.titulo} onChange={(e) => setEditForm({ ...editForm, titulo: e.target.value })} />
+              <textarea className="edit-desc" rows={3} value={editForm.descricao} onChange={(e) => setEditForm({ ...editForm, descricao: e.target.value })} />
+              <div className="edit-row">
+                <select value={editForm.categoria} onChange={(e) => setEditForm({ ...editForm, categoria: e.target.value })}>
+                  <option value="geral">Geral</option><option value="hardware">Hardware</option><option value="software">Software</option>
+                  <option value="rede">Rede</option><option value="impressora">Impressora</option><option value="email">E-mail</option>
+                  <option value="acesso">Acesso</option><option value="evento">Evento</option><option value="censura">Censura</option>
+                </select>
+                <select value={editForm.prioridade} onChange={(e) => setEditForm({ ...editForm, prioridade: e.target.value })}>
+                  <option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option><option value="critica">Crítica</option>
+                </select>
+                <button className="btn btn-primary" onClick={saveEdit}><Check size={14} /> Salvar</button>
+                <button className="btn btn-ghost" onClick={() => setEditing(false)}>Cancelar</button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <h2>
+                <span className="cat-avatar">{CAT_AVATARS[chamado.categoria] || '📋'}</span>
+                #{chamado.id} - {chamado.titulo}
+                <button className="btn-icon edit-btn" title="Editar" onClick={() => setEditing(true)}><Edit2 size={14} /></button>
+              </h2>
+              <div className="detalhe-badges">
+                <span className={`badge ${STATUS_MAP[chamado.status]?.cls}`}>{STATUS_MAP[chamado.status]?.label}</span>
+                <span className={`badge ${PRIORIDADE_MAP[chamado.prioridade]?.cls}`}>{PRIORIDADE_MAP[chamado.prioridade]?.label}</span>
+                <span className="badge badge-gray">{chamado.categoria}</span>
+              </div>
+            </>
+          )}
           {chamado.tags && chamado.tags.length > 0 && (
             <div className="detalhe-tags">
               {chamado.tags.map((t) => <span key={t.id} className="tag-chip">{t.nome}</span>)}
@@ -245,6 +319,28 @@ export default function DetalheChamado() {
               </div>
             </div>
           )}
+
+          <div className="detalhe-section">
+            <h3><CheckSquare size={16} /> Checklist ({checklist.filter((i) => i.concluido).length}/{checklist.length})</h3>
+            <div className="checklist-list">
+              {checklist.map((item) => (
+                <div key={item.id} className={`checklist-item ${item.concluido ? 'done' : ''}`}>
+                  <button className={`check-toggle ${item.concluido ? 'checked' : ''}`} onClick={() => toggleCheck(item)}>
+                    {item.concluido && <Check size={12} />}
+                  </button>
+                  <span className="check-text">{item.texto}</span>
+                  <button className="btn-icon btn-icon-danger" onClick={() => removeCheckItem(item.id)}><Trash2 size={12} /></button>
+                </div>
+              ))}
+              {checklist.length === 0 && <p className="text-muted">Nenhum item na checklist.</p>}
+            </div>
+            <div className="checklist-add">
+              <input value={novoCheck} onChange={(e) => setNovoCheck(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addCheckItem()}
+                placeholder="Adicionar item..." />
+              <button className="btn btn-sm btn-primary" onClick={addCheckItem}><PlusCircle size={14} /></button>
+            </div>
+          </div>
 
           {chamado.historico && chamado.historico.length > 0 && (
             <div className="detalhe-section">
@@ -325,6 +421,39 @@ export default function DetalheChamado() {
                 <span>{elapsed}</span>
               </dd>
             </dl>
+          </div>
+
+          <div className="detalhe-section">
+            <h3>Linha do Tempo</h3>
+            <div className="timeline-h">
+              {['aberto', 'em_andamento', 'pendente', 'resolvido'].map((s, i) => {
+                const ordem = ['aberto', 'em_andamento', 'pendente', 'resolvido'];
+                const idx = ordem.indexOf(chamado.status);
+                const active = chamado.status === s;
+                const past = ordem.indexOf(s) <= idx && chamado.status !== 'fechado';
+                return (
+                  <React.Fragment key={s}>
+                    <div className={`timeline-step ${active ? 'active' : past ? 'past' : ''}`}>
+                      <div className="timeline-step-dot" />
+                      <span className="timeline-step-label">{STATUS_MAP[s]?.label}</span>
+                    </div>
+                    {i < 3 && <div className={`timeline-line ${past ? 'done' : ''}`} />}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+            <div className="gamification-bar">
+              <div className="g-level">🏆</div>
+              <div className="g-info">
+                <span>Cris · Nível Pro</span>
+                <small>12 chamados resolvidos este mês</small>
+              </div>
+              <div className="g-badges">
+                <span className="g-badge earned" title="10+ chamados">⭐</span>
+                <span className="g-badge earned" title="Resposta rápida">⚡</span>
+                <span className="g-badge earned" title="100% satisfação">💯</span>
+              </div>
+            </div>
           </div>
 
           <div className="detalhe-section">

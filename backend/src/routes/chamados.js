@@ -136,7 +136,12 @@ router.get('/:id', (req, res) => {
       historico = query('SELECT * FROM historico WHERE chamado_id = ? ORDER BY criado_em DESC', [parseInt(req.params.id)]);
     } catch (_) {}
 
-    res.json({ ...chamado, comentarios, anexos, tags, historico });
+    let checklist = [];
+    try {
+      checklist = query('SELECT * FROM checklist WHERE chamado_id = ? ORDER BY criado_em ASC', [parseInt(req.params.id)]);
+    } catch (_) {}
+
+    res.json({ ...chamado, comentarios, anexos, tags, historico, checklist });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -331,6 +336,49 @@ router.get('/tags/list', (req, res) => {
   try {
     const tags = query('SELECT * FROM tags ORDER BY nome');
     res.json(tags);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/:id/checklist', (req, res) => {
+  try {
+    const items = query('SELECT * FROM checklist WHERE chamado_id = ? ORDER BY criado_em ASC', [parseInt(req.params.id)]);
+    res.json(items);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/:id/checklist', (req, res) => {
+  try {
+    const { texto } = req.body;
+    if (!texto) return res.status(400).json({ error: 'Texto é obrigatório' });
+    run('INSERT INTO checklist (chamado_id, texto) VALUES (?, ?)', [parseInt(req.params.id), texto]);
+    const item = queryOne('SELECT * FROM checklist WHERE id = ?', [getLastID('checklist')]);
+    res.status(201).json(item);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/:id/checklist/:itemId', (req, res) => {
+  try {
+    const { concluido } = req.body;
+    run('UPDATE checklist SET concluido = ? WHERE id = ? AND chamado_id = ?',
+      [concluido ? 1 : 0, parseInt(req.params.itemId), parseInt(req.params.id)]);
+    const item = queryOne('SELECT * FROM checklist WHERE id = ?', [parseInt(req.params.itemId)]);
+    res.json(item);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/:id/checklist/:itemId', (req, res) => {
+  try {
+    run('DELETE FROM checklist WHERE id = ? AND chamado_id = ?',
+      [parseInt(req.params.itemId), parseInt(req.params.id)]);
+    res.json({ message: 'Item removido' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

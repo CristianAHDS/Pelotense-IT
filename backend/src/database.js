@@ -95,6 +95,17 @@ async function initDatabase() {
     )
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS checklist (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      chamado_id INTEGER NOT NULL,
+      texto TEXT NOT NULL,
+      concluido INTEGER NOT NULL DEFAULT 0,
+      criado_em TEXT DEFAULT (datetime('now','localtime')),
+      FOREIGN KEY (chamado_id) REFERENCES chamados(id) ON DELETE CASCADE
+    )
+  `);
+
   save();
 }
 

@@ -25,7 +25,108 @@
   font-weight: 800;
   letter-spacing: -0.5px;
   margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
+
+.cat-avatar {
+  font-size: 28px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.edit-btn {
+  opacity: 0.3;
+  margin-left: 8px;
+}
+
+.detalhe-header h2:hover .edit-btn { opacity: 1; }
+
+.edit-form { display: flex; flex-direction: column; gap: 10px; }
+.edit-titulo {
+  font-size: 18px; font-weight: 700;
+  background: var(--color-bg); border: 1px solid var(--color-border);
+  color: var(--color-text); padding: 8px 12px; border-radius: var(--radius-sm);
+  outline: none; font-family: inherit;
+}
+.edit-titulo:focus { border-color: var(--color-primary); }
+.edit-desc {
+  font-size: 13px;
+  background: var(--color-bg); border: 1px solid var(--color-border);
+  color: var(--color-text); padding: 8px 12px; border-radius: var(--radius-sm);
+  outline: none; font-family: inherit; resize: vertical;
+}
+.edit-desc:focus { border-color: var(--color-primary); }
+.edit-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.edit-row select {
+  background: var(--color-bg); border: 1px solid var(--color-border);
+  color: var(--color-text); padding: 8px 12px; border-radius: var(--radius-sm);
+  font-size: 13px; outline: none;
+}
+.edit-row .btn { padding: 8px 16px; font-size: 12px; border-radius: var(--radius-sm); }
+.edit-row .btn-ghost { background: transparent; color: var(--color-text-muted); border: 1px solid var(--color-border); }
+.edit-row .btn-ghost:hover { background: var(--color-bg-tertiary); }
+
+/* Checklist */
+.checklist-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.checklist-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--color-border); }
+.checklist-item:last-child { border-bottom: none; }
+.checklist-item.done .check-text { text-decoration: line-through; color: var(--color-text-muted); }
+.check-toggle {
+  width: 20px; height: 20px; border-radius: 4px;
+  border: 2px solid var(--color-border); background: transparent;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all 0.15s; padding: 0;
+}
+.check-toggle.checked { background: var(--color-success); border-color: var(--color-success); color: #fff; }
+.check-text { flex: 1; font-size: 13.5px; }
+.checklist-add { display: flex; gap: 8px; }
+.checklist-add input {
+  flex: 1; background: var(--color-bg); border: 1px solid var(--color-border);
+  color: var(--color-text); padding: 8px 12px; border-radius: var(--radius-sm);
+  font-size: 13px; outline: none;
+}
+.checklist-add input:focus { border-color: var(--color-primary); }
+.checklist-add .btn-sm { padding: 6px 12px; }
+
+/* Timeline horizontal */
+.timeline-h {
+  display: flex; align-items: center; gap: 0; overflow-x: auto; padding: 8px 0;
+}
+.timeline-step {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  min-width: 70px; text-align: center; position: relative;
+}
+.timeline-step-dot {
+  width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--color-border);
+  background: var(--color-bg); transition: all 0.2s;
+}
+.timeline-step.active .timeline-step-dot { background: var(--color-primary); border-color: var(--color-primary); }
+.timeline-step.past .timeline-step-dot { background: var(--color-success); border-color: var(--color-success); }
+.timeline-step-label { font-size: 10px; color: var(--color-text-muted); text-transform: uppercase; font-weight: 600; }
+.timeline-step.active .timeline-step-label { color: var(--color-primary-light); }
+.timeline-line {
+  flex: 1; height: 2px; background: var(--color-border); min-width: 20px;
+}
+.timeline-line.done { background: var(--color-success); }
+
+/* Gamification */
+.gamification-bar {
+  display: flex; align-items: center; gap: 16px;
+  padding: 12px 16px; border-radius: var(--radius);
+  background: rgba(99, 102, 241, 0.06); border: 1px solid var(--color-border);
+  margin-top: 16px;
+}
+.gamification-bar .g-level { font-size: 24px; font-weight: 800; color: var(--color-primary-light); }
+.gamification-bar .g-info { flex: 1; }
+.gamification-bar .g-info span { display: block; font-size: 13px; font-weight: 700; }
+.gamification-bar .g-info small { font-size: 11px; color: var(--color-text-muted); }
+.gamification-bar .g-badges { display: flex; gap: 6px; }
+.g-badge { font-size: 22px; opacity: 0.3; }
+.g-badge.earned { opacity: 1; }
+
+@media (max-width: 768px) {
 
 .detalhe-badges {
   display: flex;
