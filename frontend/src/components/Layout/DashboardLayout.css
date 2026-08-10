@@ -26,8 +26,10 @@
 .sidebar {
   width: var(--sidebar-width);
   height: 100vh;
-  background: linear-gradient(180deg, #0f1527 0%, #111827 100%);
-  border-right: 1px solid var(--color-border);
+  background: linear-gradient(180deg, rgba(15, 21, 39, 0.85), rgba(17, 24, 39, 0.85));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid var(--glass-border);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -38,7 +40,7 @@
 }
 
 .light .sidebar {
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.85), rgba(241, 245, 249, 0.85));
 }
 
 .sidebar-close {
@@ -282,8 +284,10 @@
   display: none;
   position: fixed; top: 0; left: 0; right: 0;
   height: 52px;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-bottom: 1px solid var(--glass-border);
   z-index: 50;
   align-items: center;
   padding: 0 16px;
@@ -301,8 +305,10 @@
   display: none;
   position: fixed; bottom: 0; left: 0; right: 0;
   height: 60px;
-  background: var(--color-surface);
-  border-top: 1px solid var(--color-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-top: 1px solid var(--glass-border);
   z-index: 50;
   justify-content: space-around; align-items: center;
   padding: 0 4px;
