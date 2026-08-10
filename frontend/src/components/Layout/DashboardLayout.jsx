@@ -3,6 +3,7 @@ import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Ticket, PlusCircle, BarChart3, Settings,
   Wrench, Columns, Menu, X, Bell, Sun, Moon, ChevronLeft, ChevronRight, Plus,
+  Play, Pause, Volume2,
 } from 'lucide-react';
 import { useSocket } from '../../contexts/SocketContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -30,6 +31,9 @@ export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [nOpen, setNOpen] = useState(false);
+  const [radioPlaying, setRadioPlaying] = useState(false);
+  const [radioVolume, setRadioVolume] = useState(0.5);
+  const [radioAudio, setRadioAudio] = useState(null);
   const { notifications, clearNotifications } = useSocket();
   const { theme, toggle: toggleTheme } = useTheme();
   const location = useLocation();
@@ -39,6 +43,26 @@ export default function DashboardLayout() {
 
   const isDetailPage = location.pathname.startsWith('/chamados/') && location.pathname !== '/chamados' && location.pathname !== '/chamados/novo';
   const currentLabel = breadcrumbMap[location.pathname] || (isDetailPage ? `Chamado #${location.pathname.split('/').pop()}` : '');
+
+  const toggleRadio = () => {
+    if (radioPlaying) {
+      if (radioAudio) { radioAudio.pause(); radioAudio.src = ''; setRadioAudio(null); }
+      setRadioPlaying(false);
+    } else {
+      const audio = new Audio('https://painel.audiotx.com.br/audio/radio.pelotense.aac');
+      audio.volume = radioVolume;
+      audio.play().catch(() => {});
+      audio.addEventListener('error', () => setRadioPlaying(false));
+      setRadioAudio(audio);
+      setRadioPlaying(true);
+    }
+  };
+
+  const handleVolume = (e) => {
+    const v = parseFloat(e.target.value);
+    setRadioVolume(v);
+    if (radioAudio) radioAudio.volume = v;
+  };
 
   return (
     <div className={`dashboard-layout ${collapsed ? 'sidebar-collapsed' : ''}`}>
@@ -76,6 +100,26 @@ export default function DashboardLayout() {
             {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
           </button>
         </div>
+
+        {!collapsed && (
+          <div className={`sidebar-radio ${radioPlaying ? 'playing' : ''}`}>
+            <div className="sidebar-radio-top">
+              <div className="radio-info">
+                <span className="radio-dot" />
+                <span>Rádio Pelotense</span>
+              </div>
+              <button className="radio-play-btn" onClick={toggleRadio} title={radioPlaying ? 'Parar' : 'Tocar'}>
+                {radioPlaying ? <Pause size={14} /> : <Play size={14} />}
+              </button>
+            </div>
+            {radioPlaying && (
+              <div className="radio-volume-row">
+                <Volume2 size={12} />
+                <input type="range" min="0" max="1" step="0.1" value={radioVolume} onChange={handleVolume} />
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="sidebar-footer">
           <div className="sidebar-user">
