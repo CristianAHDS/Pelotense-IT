@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Save, Upload, X, Image } from 'lucide-react';
+import { Save, Upload, X, File, Image, Film, Music } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import './Portal.css';
 
@@ -9,12 +9,35 @@ const API = '/api';
 export default function PortalNovo() {
   const navigate = useNavigate();
   const { add: addToast } = useToast();
+  const fileInputRef = useRef(null);
   const [form, setForm] = useState({
     titulo: '', descricao: '', prioridade: 'media',
     categoria: 'geral', solicitante: '',
   });
+  const [arquivos, setArquivos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length + arquivos.length > 5) {
+      setError('Máximo de 5 anexos por chamado.');
+      return;
+    }
+    setArquivos((prev) => [...prev, ...files]);
+    e.target.value = '';
+  };
+
+  const removeFile = (index) => {
+    setArquivos((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const getFileIcon = (file) => {
+    if (file.type.startsWith('image/')) return Image;
+    if (file.type.startsWith('video/')) return Film;
+    if (file.type.startsWith('audio/')) return Music;
+    return File;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,6 +54,17 @@ export default function PortalNovo() {
         body: JSON.stringify(form),
       });
       if (!res.ok) throw new Error((await res.json()).error);
+      const chamado = await res.json();
+
+      if (arquivos.length > 0) {
+        const fd = new FormData();
+        arquivos.forEach((f) => fd.append('arquivos', f));
+        await fetch(`${API}/chamados/${chamado.id}/anexos`, {
+          method: 'POST',
+          body: fd,
+        });
+      }
+
       addToast('Chamado criado com sucesso!', 'success');
       navigate('/portal');
     } catch (err) {
@@ -103,6 +137,53 @@ export default function PortalNovo() {
               <option value="critica">Crítica</option>
             </select>
           </div>
+        </div>
+
+        <div className="form-group">
+          <label>Anexos ({arquivos.length}/5)</label>
+          <div
+            className="portal-dropzone"
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              const files = Array.from(e.dataTransfer.files || []);
+              if (files.length + arquivos.length > 5) {
+                setError('Máximo de 5 anexos por chamado.');
+                return;
+              }
+              setArquivos((prev) => [...prev, ...files]);
+            }}
+          >
+            <Upload size={20} />
+            <span>Clique ou arraste arquivos</span>
+            <small>Imagens, vídeos, áudio (máx. 50MB cada)</small>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*,video/*,audio/*"
+            onChange={handleFileChange}
+            style={{ display: 'none' }}
+          />
+          {arquivos.length > 0 && (
+            <div className="file-list">
+              {arquivos.map((file, i) => {
+                const FileIcon = getFileIcon(file);
+                return (
+                  <div key={i} className="file-item">
+                    <FileIcon size={16} />
+                    <span className="file-name">{file.name}</span>
+                    <span className="file-size">{(file.size / 1024 / 1024).toFixed(1)} MB</span>
+                    <button type="button" className="file-remove" onClick={() => removeFile(i)}>
+                      <X size={14} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <button type="submit" className="btn btn-primary portal-submit" disabled={loading}>
