@@ -1,6 +1,7 @@
 import { Outlet, Link, NavLink } from 'react-router-dom';
-import { Wrench, Ticket, Plus, Sun, Moon } from 'lucide-react';
+import { Ticket, Plus, Sun, Moon, Contrast } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
+import PageTransition from '../ui/PageTransition';
 import './PortalLayout.css';
 
 export default function PortalLayout() {
@@ -10,7 +11,9 @@ export default function PortalLayout() {
     <div className="portal-layout">
       <header className="portal-header">
         <Link to="/portal" className="portal-logo">
-          <div className="portal-logo-icon"><Wrench size={22} /></div>
+          <div className="portal-logo-icon">
+            <img src="https://i.imgur.com/mfoPeJL.png" alt="Pelotense IT" className="portal-logo-img" />
+          </div>
           <div>
             <h1>Pelotense IT</h1>
             <span>Portal do Cliente</span>
@@ -23,13 +26,15 @@ export default function PortalLayout() {
           <NavLink to="/portal/novo" className={({ isActive }) => isActive ? 'active' : ''}>
             <Plus size={16} /> Novo Chamado
           </NavLink>
-          <button className="portal-theme-btn" onClick={toggle}>
-            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          <button className="portal-theme-btn ripple" onClick={toggle} title={theme === 'dark' ? 'Modo claro' : theme === 'light' ? 'Alto contraste' : 'Modo escuro'}>
+            {theme === 'dark' ? <Sun size={16} /> : theme === 'light' ? <Contrast size={16} /> : <Moon size={16} />}
           </button>
         </nav>
       </header>
       <main className="portal-main">
-        <Outlet />
+        <PageTransition>
+          <Outlet />
+        </PageTransition>
       </main>
       <footer className="portal-footer">
         <span>Pelotense IT &copy; {new Date().getFullYear()}</span>
