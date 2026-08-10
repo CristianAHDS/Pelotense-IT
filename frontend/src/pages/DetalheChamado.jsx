@@ -273,6 +273,7 @@ export default function DetalheChamado() {
                 const imgMatch = c.texto.match(/\[imagem:\s*(.+?)\]/);
                 const displayText = c.texto.replace(/\[imagem:\s*.+?\]/, '').trim();
                 const imgUrl = imgMatch ? imgMatch[1] : null;
+                const imgName = imgUrl ? imgUrl.split('/').pop() : 'imagem';
                 return (
                   <div key={c.id} className="comentario-item">
                     <div className="comentario-header">
@@ -280,7 +281,13 @@ export default function DetalheChamado() {
                       <span>{new Date(c.criado_em).toLocaleString()}</span>
                     </div>
                     {displayText && <p>{displayText}</p>}
-                    {imgUrl && <img src={imgUrl} alt="anexo" className="comentario-img" onClick={() => setLightbox(imgUrl)} />}
+                    {imgUrl && (
+                      <div className="comentario-anexo" onClick={() => setLightbox(imgUrl)}>
+                        <Paperclip size={14} />
+                        <span>{imgName}</span>
+                        <a href={imgUrl} download className="btn-icon" onClick={(e) => e.stopPropagation()}><Download size={14} /></a>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -361,7 +368,7 @@ export default function DetalheChamado() {
 
       {lightbox && (
         <div className="lightbox-overlay" onClick={() => setLightbox(null)}>
-          <button className="lightbox-close" onClick={() => setLightbox(null)}>✕</button>
+          <button className="lightbox-close" onClick={() => setLightbox(null)}>✕ Fechar</button>
           <img src={lightbox} alt="Visualização" className="lightbox-img" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
