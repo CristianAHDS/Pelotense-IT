@@ -109,6 +109,7 @@ export default function Chamados() {
                 <th>Título</th>
                 <th>Status</th>
                 <th>Prioridade</th>
+                <th>Categoria</th>
                 <th>Solicitante</th>
                 <th>Criado em</th>
                 <th style={{ width: 80 }}></th>
@@ -117,7 +118,7 @@ export default function Chamados() {
             <tbody>
               {chamados.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="empty-cell">📋 Nenhum chamado encontrado.</td>
+                  <td colSpan={9} className="empty-cell">📋 Nenhum chamado encontrado.</td>
                 </tr>
               ) : (
                 chamados.map((c) => (
@@ -126,6 +127,7 @@ export default function Chamados() {
                     <td className="cell-title">{c.titulo}</td>
                     <td><span className={`badge ${STATUS_MAP[c.status]?.cls}`}>{STATUS_MAP[c.status]?.label}</span></td>
                     <td><span className={`badge ${PRIORIDADE_MAP[c.prioridade]?.cls}`}>{PRIORIDADE_MAP[c.prioridade]?.label}</span></td>
+                    <td><span className="badge badge-gray">{c.categoria}</span></td>
                     <td>{c.solicitante}</td>
                     <td className="cell-date">{new Date(c.criado_em).toLocaleDateString()}</td>
                     <td>

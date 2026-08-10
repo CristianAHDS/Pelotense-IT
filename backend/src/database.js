@@ -106,6 +106,73 @@ async function initDatabase() {
     )
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS badges (
+      id TEXT PRIMARY KEY,
+      nome TEXT NOT NULL,
+      descricao TEXT NOT NULL,
+      icone TEXT NOT NULL,
+      categoria TEXT NOT NULL,
+      criterio TEXT NOT NULL,
+      criado_em TEXT DEFAULT (datetime('now','localtime'))
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS usuario_badges (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      usuario TEXT NOT NULL,
+      badge_id TEXT NOT NULL,
+      conquistado_em TEXT DEFAULT (datetime('now','localtime')),
+      UNIQUE(usuario, badge_id),
+      FOREIGN KEY (badge_id) REFERENCES badges(id)
+    )
+  `);
+
+  const existing = query("SELECT COUNT(*) as c FROM badges");
+  if (existing[0]?.c === 0) {
+    const inserts = [
+      ["primeiro", "Primeiro Sangue", "Resolver o primeiro chamado", "🎯", "especial", '{"tipo":"primeiro"}'],
+      ["total_5", "Iniciante", "5 chamados resolvidos", "🥉", "volume", '{"tipo":"total","min":5}'],
+      ["total_10", "Bronze", "10 chamados resolvidos", "🥈", "volume", '{"tipo":"total","min":10}'],
+      ["total_25", "Prata", "25 chamados resolvidos", "🥇", "volume", '{"tipo":"total","min":25}'],
+      ["total_50", "Ouro", "50 chamados resolvidos", "🏆", "volume", '{"tipo":"total","min":50}'],
+      ["total_100", "Diamante", "100 chamados resolvidos", "💎", "volume", '{"tipo":"total","min":100}'],
+      ["total_200", "Lenda", "200 chamados resolvidos", "👑", "volume", '{"tipo":"total","min":200}'],
+      ["hardware_5", "Hardware Novice", "5 chamados de hardware resolvidos", "💻", "categoria", '{"tipo":"categoria","categoria":"hardware","min":5}'],
+      ["hardware_10", "Hardware Expert", "10 chamados de hardware resolvidos", "🔧", "categoria", '{"tipo":"categoria","categoria":"hardware","min":10}'],
+      ["software_5", "Software Novice", "5 chamados de software resolvidos", "💿", "categoria", '{"tipo":"categoria","categoria":"software","min":5}'],
+      ["software_10", "Software Expert", "10 chamados de software resolvidos", "🖥️", "categoria", '{"tipo":"categoria","categoria":"software","min":10}'],
+      ["rede_5", "Rede Novice", "5 chamados de rede resolvidos", "🌐", "categoria", '{"tipo":"categoria","categoria":"rede","min":5}'],
+      ["rede_10", "Rede Expert", "10 chamados de rede resolvidos", "🔌", "categoria", '{"tipo":"categoria","categoria":"rede","min":10}'],
+      ["impressora_3", "Printer Novice", "3 chamados de impressora resolvidos", "🖨️", "categoria", '{"tipo":"categoria","categoria":"impressora","min":3}'],
+      ["impressora_7", "Printer Pro", "7 chamados de impressora resolvidos", "📠", "categoria", '{"tipo":"categoria","categoria":"impressora","min":7}'],
+      ["email_3", "Email Novice", "3 chamados de email resolvidos", "📧", "categoria", '{"tipo":"categoria","categoria":"email","min":3}'],
+      ["email_7", "Email Pro", "7 chamados de email resolvidos", "✉️", "categoria", '{"tipo":"categoria","categoria":"email","min":7}'],
+      ["acesso_3", "Access Novice", "3 chamados de acesso resolvidos", "🔑", "categoria", '{"tipo":"categoria","categoria":"acesso","min":3}'],
+      ["acesso_7", "Access Pro", "7 chamados de acesso resolvidos", "🛡️", "categoria", '{"tipo":"categoria","categoria":"acesso","min":7}'],
+      ["evento_3", "Event Supporter", "3 chamados de evento resolvidos", "🎪", "categoria", '{"tipo":"categoria","categoria":"evento","min":3}'],
+      ["censura_3", "Censura Handler", "3 chamados de censura resolvidos", "🎥", "categoria", '{"tipo":"categoria","categoria":"censura","min":3}'],
+      ["speed_30min", "Flash", "Chamado resolvido em menos de 30 minutos", "⚡", "velocidade", '{"tipo":"tempo_max_horas", "horas":0.5}'],
+      ["speed_2h", "Rápido", "Chamado resolvido em menos de 2 horas", "🚀", "velocidade", '{"tipo":"tempo_max_horas", "horas":2}'],
+      ["speed_24h", "Eficiente", "Chamado resolvido em menos de 24 horas", "⏱️", "velocidade", '{"tipo":"tempo_max_horas", "horas":24}'],
+      ["critica_1", "Herói", "1 chamado crítico resolvido", "🦸", "prioridade", '{"tipo":"prioridade","prioridade":"critica","min":1}'],
+      ["critica_5", "Bombeiro", "5 chamados críticos resolvidos", "🔥", "prioridade", '{"tipo":"prioridade","prioridade":"critica","min":5}'],
+      ["alta_5", "Alta Prioridade", "5 chamados de prioridade alta resolvidos", "🚨", "prioridade", '{"tipo":"prioridade","prioridade":"alta","min":5}'],
+      ["alta_10", "Alta Prioridade Pro", "10 de prioridade alta resolvidos", "⚠️", "prioridade", '{"tipo":"prioridade","prioridade":"alta","min":10}'],
+      ["todas_categorias", "Generalista", "Resolveu chamados de todas as categorias", "🌈", "especial", '{"tipo":"todas_categorias"}'],
+      ["dia_5", "Produtivo", "Resolveu 5+ chamados no mesmo dia", "📅", "especial", '{"tipo":"dia","min":5}'],
+      ["dia_10", "Super Produtivo", "Resolveu 10+ chamados no mesmo dia", "🔥", "especial", '{"tipo":"dia","min":10}'],
+      ["sequencia_3d", "3-Day Streak", "3 dias consecutivos resolvendo chamados", "📆", "especial", '{"tipo":"sequencia_dias","min":3}'],
+      ["sequencia_5d", "5-Day Streak", "5 dias consecutivos resolvendo chamados", "🗓️", "especial", '{"tipo":"sequencia_dias","min":5}'],
+      ["noturno_3", "Coruja", "3 chamados resolvidos entre 22h e 6h", "🌙", "especial", '{"tipo":"noturno","min":3}'],
+    ];
+    inserts.forEach(([id, nome, descricao, icone, categoria, criterio]) => {
+      run('INSERT INTO badges (id, nome, descricao, icone, categoria, criterio) VALUES (?, ?, ?, ?, ?, ?)',
+        [id, nome, descricao, icone, categoria, criterio]);
+    });
+  }
+
   save();
 }
 

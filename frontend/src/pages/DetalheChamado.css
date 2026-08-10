@@ -181,6 +181,15 @@
   opacity: 1;
 }
 
+.g-hint {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  font-style: italic;
+  padding: 2px 6px;
+  background: rgba(99,102,241,0.06);
+  border-radius: var(--radius-sm);
+}
+
 .timeline-step-time {
   font-size: 9px;
   color: var(--color-text-muted);

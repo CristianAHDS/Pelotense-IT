@@ -4,6 +4,7 @@ const cors = require('cors');
 const { Server } = require('socket.io');
 const { initDatabase } = require('./database');
 const chamadosRouter = require('./routes/chamados');
+const { router: gamificacaoRouter } = require('./routes/gamificacao');
 
 const app = express();
 const server = http.createServer(app);
@@ -21,6 +22,7 @@ app.use((req, res, next) => {
 });
 
 app.use('/api/chamados', chamadosRouter);
+app.use('/api/gamificacao', gamificacaoRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

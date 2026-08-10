@@ -475,17 +475,11 @@ export default function DetalheChamado() {
 
                 let nivel = 'Iniciante';
                 let medal = '🥉';
-                if (totalResolvidos >= 20) { nivel = 'Lenda'; medal = '👑'; }
-                else if (totalResolvidos >= 10) { nivel = 'Pro'; medal = '🏆'; }
-                else if (totalResolvidos >= 5) { nivel = 'Avançado'; medal = '🥈'; }
-
-                const badges = [];
-                if (totalResolvidos >= 20) badges.push({ e: '👑', t: '20+ resolvidos' });
-                else if (totalResolvidos >= 10) badges.push({ e: '⭐', t: '10+ resolvidos' });
-                if (chamado.prioridade === 'critica' || chamado.prioridade === 'alta') badges.push({ e: '🔥', t: 'Complexo' });
-                if (tempoRes !== null && tempoRes < 2) badges.push({ e: '⚡', t: 'Resposta rápida' });
-                else if (totalResolvidos >= 5) badges.push({ e: '✅', t: 'Consistente' });
-                if (totalAtendidos >= 30) badges.push({ e: '💯', t: '30+ atendidos' });
+                if (totalResolvidos >= 200) { nivel = 'Lenda'; medal = '👑'; }
+                else if (totalResolvidos >= 100) { nivel = 'Diamante'; medal = '💎'; }
+                else if (totalResolvidos >= 50) { nivel = 'Ouro'; medal = '🏆'; }
+                else if (totalResolvidos >= 25) { nivel = 'Prata'; medal = '🥇'; }
+                else if (totalResolvidos >= 10) { nivel = 'Bronze'; medal = '🥈'; }
 
                 return (
                   <>
@@ -493,15 +487,15 @@ export default function DetalheChamado() {
                     <div className="g-text">
                       <span className="g-title">Cristian Raffi Cunha</span>
                       <span className="g-sub">
-                        {totalResolvidos} resolvidos · Nível {nivel}
+                        {totalResolvidos} resolvidos · {totalAtendidos} atendidos · Nível {nivel}
                         {tempoRes !== null && ` · ${tempoRes.toFixed(1)}h`}
                       </span>
                     </div>
-                    <div className="g-badges">
-                      {badges.slice(0, 3).map((b, i) => (
-                        <span key={i} className="g-badge earned" title={b.t}>{b.e}</span>
-                      ))}
-                    </div>
+                    {chamado.status !== 'resolvido' && (
+                      <div className="g-hint">
+                        Resolva este chamado para ganhar badges!
+                      </div>
+                    )}
                   </>
                 );
               })()}

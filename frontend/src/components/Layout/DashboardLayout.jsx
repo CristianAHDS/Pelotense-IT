@@ -3,7 +3,7 @@ import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Ticket, PlusCircle, BarChart3, Settings,
   Wrench, Columns, Menu, X, Bell, Sun, Moon, ChevronLeft, ChevronRight, Plus,
-  Play, Pause, Volume2,
+  Play, Pause, Volume2, Trophy,
 } from 'lucide-react';
 import { useSocket } from '../../contexts/SocketContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -16,6 +16,7 @@ const menuItems = [
   { to: '/chamados', icon: Ticket, label: 'Chamados' },
   { to: '/chamados/novo', icon: PlusCircle, label: 'Novo Chamado' },
   { to: '/relatorios', icon: BarChart3, label: 'Relatórios' },
+  { to: '/gamificacao', icon: Trophy, label: 'Gamificação' },
   { to: '/configuracoes', icon: Settings, label: 'Configurações' },
 ];
 
@@ -25,6 +26,7 @@ const breadcrumbMap = {
   '/chamados': 'Chamados',
   '/chamados/novo': 'Novo Chamado',
   '/relatorios': 'Relatórios',
+  '/gamificacao': 'Gamificação',
   '/configuracoes': 'Configurações',
 };
 
@@ -72,7 +74,9 @@ export default function DashboardLayout() {
       <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
         <button className="sidebar-close" onClick={closeSidebar}><X size={20} /></button>
         <div className="sidebar-brand">
-          <div className="brand-icon"><Wrench size={collapsed ? 20 : 26} /></div>
+          <div className="brand-icon">
+            <img src="https://i.imgur.com/mfoPeJL.png" alt="Pelotense IT" className="brand-logo" />
+          </div>
           {!collapsed && <div className="brand-text"><h1>Pelotense IT</h1><span>Gestão de Chamados</span></div>}
         </div>
 
@@ -137,7 +141,7 @@ export default function DashboardLayout() {
 
       <header className="mobile-header">
         <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}><Menu size={22} /></button>
-        <div className="mobile-brand"><Wrench size={20} /><span>Pelotense IT</span></div>
+        <div className="mobile-brand"><img src="https://i.imgur.com/mfoPeJL.png" alt="Pelotense IT" className="mobile-brand-logo" /><span>Pelotense IT</span></div>
         <div className="mobile-header-actions">
           <NetworkSpeed />
           <button className="notif-btn" onClick={toggleTheme}><Sun size={18} /></button>

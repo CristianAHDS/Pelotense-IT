@@ -7,6 +7,7 @@ import Chamados from './pages/Chamados';
 import NovoChamado from './pages/NovoChamado';
 import DetalheChamado from './pages/DetalheChamado';
 import Relatorios from './pages/Relatorios';
+import Gamificacao from './pages/Gamificacao';
 import Configuracoes from './pages/Configuracoes';
 import PortalHome from './pages/PortalHome';
 import PortalNovo from './pages/PortalNovo';
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="/chamados/novo" element={<NovoChamado />} />
         <Route path="/chamados/:id" element={<DetalheChamado />} />
         <Route path="/relatorios" element={<Relatorios />} />
+        <Route path="/gamificacao" element={<Gamificacao />} />
         <Route path="/configuracoes" element={<Configuracoes />} />
       </Route>
       <Route element={<PortalLayout />}>

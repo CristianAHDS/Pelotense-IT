@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const { query, queryOne, run, getLastID } = require('../database');
+const { verificarBadges } = require('./gamificacao');
 
 const UPLOADS_DIR = path.join(__dirname, '..', '..', 'uploads');
 
@@ -231,6 +232,18 @@ router.put('/:id', (req, res) => {
         run('INSERT INTO historico (chamado_id, acao, descricao, usuario) VALUES (?, ?, ?, ?)', [
           id, 'status', `Status alterado para "${labels[novoStatus] || novoStatus}"`, usuario
         ]);
+      } catch (_) {}
+    }
+
+    if (novoStatus === 'resolvido' && usuario && usuario !== 'Sistema') {
+      try {
+        const resultado = verificarBadges(usuario);
+        if (resultado.newBadges.length > 0) {
+          req.io?.emit('badges:conquistados', {
+            usuario,
+            badges: resultado.newBadges.map(b => ({ ...b, conquistado: true })),
+          });
+        }
       } catch (_) {}
     }
     if (titulo && titulo !== chamado.titulo) {
