@@ -39,6 +39,8 @@ async function initDatabase() {
     )
   `);
 
+  try { db.run('ALTER TABLE chamados ADD COLUMN resolucao TEXT'); } catch (_) {}
+
   db.run(`
     CREATE TABLE IF NOT EXISTS comentarios (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

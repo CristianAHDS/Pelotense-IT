@@ -187,7 +187,7 @@ router.put('/:id', (req, res) => {
     const chamado = queryOne('SELECT * FROM chamados WHERE id = ?', [id]);
     if (!chamado) return res.status(404).json({ error: 'Chamado não encontrado' });
 
-    const { titulo, descricao, status, prioridade, categoria, tecnico } = req.body;
+    const { titulo, descricao, status, prioridade, categoria, tecnico, resolucao } = req.body;
     const novoStatus = status || chamado.status;
     const usuario = tecnico || 'Sistema';
 
@@ -201,9 +201,16 @@ router.put('/:id', (req, res) => {
         `UPDATE chamados SET titulo = COALESCE(?, titulo), descricao = COALESCE(?, descricao),
          status = ?, prioridade = COALESCE(?, prioridade), categoria = COALESCE(?, categoria),
          tecnico = COALESCE(?, tecnico), atualizado_em = datetime('now','localtime'),
-         resolvido_em = datetime('now','localtime') WHERE id = ?`,
-        params
+         resolvido_em = datetime('now','localtime'), resolucao = COALESCE(?, resolucao) WHERE id = ?`,
+        [...params.slice(0, 6), resolucao ?? null, id]
       );
+      if (resolucao) {
+        try {
+          run('INSERT INTO historico (chamado_id, acao, descricao, usuario) VALUES (?, ?, ?, ?)', [
+            id, 'resolucao', `Descrição de resolução adicionada`, usuario
+          ]);
+        } catch (_) {}
+      }
     } else {
       run(
         `UPDATE chamados SET titulo = COALESCE(?, titulo), descricao = COALESCE(?, descricao),

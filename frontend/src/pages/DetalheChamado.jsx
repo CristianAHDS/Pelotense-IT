@@ -42,6 +42,8 @@ export default function DetalheChamado() {
   const [comentario, setComentario] = useState('');
   const [comentImagem, setComentImagem] = useState(null);
   const [elapsed, setElapsed] = useState('');
+  const [showResolve, setShowResolve] = useState(false);
+  const [resolucao, setResolucao] = useState('');
 
   const loadChamado = () => {
     fetch(`${API}/chamados/${id}`)
@@ -73,12 +75,29 @@ export default function DetalheChamado() {
   }, [chamado]);
 
   const handleStatusChange = async (novoStatus) => {
+    if (novoStatus === 'resolvido') {
+      setResolucao('');
+      setShowResolve(true);
+      return;
+    }
     await fetch(`${API}/chamados/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: novoStatus, tecnico: 'Cris' }),
     });
     addToast(`Status alterado para ${STATUS_MAP[novoStatus]?.label || novoStatus}`, 'info');
+    loadChamado();
+  };
+
+  const confirmarResolucao = async () => {
+    await fetch(`${API}/chamados/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'resolvido', tecnico: 'Cris', resolucao }),
+    });
+    setShowResolve(false);
+    setResolucao('');
+    addToast('Chamado resolvido com sucesso!', 'success');
     loadChamado();
   };
 
@@ -152,6 +171,13 @@ export default function DetalheChamado() {
             <h3>Descrição</h3>
             <p>{chamado.descricao}</p>
           </div>
+
+          {chamado.resolucao && (
+            <div className="detalhe-section detalhe-resolucao">
+              <h3>Descrição da Resolução</h3>
+              <p>{chamado.resolucao}</p>
+            </div>
+          )}
 
           {chamado.anexos && chamado.anexos.length > 0 && (
             <div className="detalhe-section">
@@ -279,6 +305,28 @@ export default function DetalheChamado() {
           </div>
         </div>
       </div>
+
+      {showResolve && (
+        <div className="modal-overlay" onClick={() => setShowResolve(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Descreva a resolução</h3>
+            <p className="modal-sub">Como o problema foi resolvido?</p>
+            <textarea
+              autoFocus
+              rows={4}
+              value={resolucao}
+              onChange={(e) => setResolucao(e.target.value)}
+              placeholder="Ex: Substituído cabo de rede com defeito, configurado novo IP..."
+            />
+            <div className="modal-actions">
+              <button className="btn btn-ghost" onClick={() => setShowResolve(false)}>Cancelar</button>
+              <button className="btn btn-primary" onClick={confirmarResolucao}>
+                Resolver Chamado
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
