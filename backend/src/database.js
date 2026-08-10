@@ -173,6 +173,25 @@ async function initDatabase() {
     });
   }
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS config_email (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      smtp_host TEXT DEFAULT 'smtp.gmail.com',
+      smtp_port INTEGER DEFAULT 587,
+      smtp_user TEXT DEFAULT '',
+      smtp_pass TEXT DEFAULT '',
+      remetente TEXT DEFAULT 'Pelotense IT <ti@pelotense.com.br>',
+      destinatarios TEXT DEFAULT '',
+      relatorio_hora TEXT DEFAULT '18:00',
+      ativo INTEGER DEFAULT 0
+    )
+  `);
+
+  const existingConfig = query("SELECT COUNT(*) as c FROM config_email");
+  if (existingConfig[0]?.c === 0) {
+    run(`INSERT INTO config_email (id) VALUES (1)`);
+  }
+
   save();
 }
 
