@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  GripVertical, Plus, AlertTriangle, Clock, Pause, CheckCircle, X,
+  GripVertical, Plus, AlertTriangle, Clock, Pause, CheckCircle, X, ChevronDown, ChevronUp, Archive,
 } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import { SkeletonKanban } from '../components/ui/Skeleton';
@@ -16,6 +16,19 @@ const COLUNAS = [
   { id: 'finalizado', titulo: 'Finalizado', icon: CheckCircle, cor: '#10b981', bgCor: '#10b98112' },
 ];
 
+const hoje = () => new Date().toLocaleDateString('sv');
+
+function getSemana(data) {
+  const d = new Date(data);
+  d.setHours(0, 0, 0, 0);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const seg = new Date(d.setDate(diff));
+  const dom = new Date(seg);
+  dom.setDate(dom.getDate() + 6);
+  return `${seg.toLocaleDateString('pt-BR')} - ${dom.toLocaleDateString('pt-BR')}`;
+}
+
 export default function Kanban() {
   const navigate = useNavigate();
   const [chamados, setChamados] = useState([]);
@@ -24,6 +37,7 @@ export default function Kanban() {
   const [dragOverCol, setDragOverCol] = useState(null);
   const [creating, setCreating] = useState(null);
   const [novoCard, setNovoCard] = useState({ titulo: '', solicitante: '', prioridade: 'media' });
+  const [logOpen, setLogOpen] = useState(false);
   const dragIdRef = useRef(null);
 
   const { add: addToast } = useToast();
@@ -40,10 +54,18 @@ export default function Kanban() {
 
   const getChamadosPorColuna = (colunaId) => {
     if (colunaId === 'finalizado') {
-      return chamados.filter((c) => c.status === 'resolvido');
+      const today = hoje();
+      return chamados.filter((c) => c.status === 'resolvido' && (c.resolvido_em || '').slice(0, 10) >= today);
     }
     return chamados.filter((c) =>
       c.status === colunaId && c.status !== 'resolvido' && c.status !== 'fechado'
+    );
+  };
+
+  const getArquivados = () => {
+    const today = hoje();
+    return chamados.filter((c) =>
+      c.status === 'resolvido' && (c.resolvido_em || c.criado_em).slice(0, 10) < today
     );
   };
 
@@ -77,11 +99,8 @@ export default function Kanban() {
     setDragOverCol(null);
 
     let id = dragIdRef.current;
-    if (!id) {
-      try { id = parseInt(e.dataTransfer.getData('text/plain')); } catch (_) {}
-    }
+    if (!id) { try { id = parseInt(e.dataTransfer.getData('text/plain')); } catch (_) {} }
     if (!id) return;
-
     dragIdRef.current = null;
 
     const chamado = chamados.find((c) => c.id === id);
@@ -89,9 +108,7 @@ export default function Kanban() {
     if (colunaId === chamado.status) return;
 
     if (colunaId === 'finalizado') {
-      const novoTitulo = chamado.titulo.includes('(pendencia)')
-        ? chamado.titulo
-        : `${chamado.titulo} (pendencia)`;
+      const novoTitulo = chamado.titulo.includes('(pendencia)') ? chamado.titulo : `${chamado.titulo} (pendencia)`;
       await fetch(`${API}/chamados/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -130,6 +147,8 @@ export default function Kanban() {
     setCreating(null);
     fetchChamados();
   };
+
+  const arquivados = getArquivados();
 
   if (loading) {
     return (
@@ -182,48 +201,23 @@ export default function Kanban() {
                   <>
                     {creating === coluna.id ? (
                       <div className="card-create-form">
-                        <input
-                          autoFocus
-                          placeholder="Título do chamado..."
-                          value={novoCard.titulo}
+                        <input autoFocus placeholder="Título do chamado..." value={novoCard.titulo}
                           onChange={(e) => setNovoCard({ ...novoCard, titulo: e.target.value })}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleCreateCard(coluna.id);
-                            if (e.key === 'Escape') { setCreating(null); setNovoCard({ titulo: '', solicitante: '', prioridade: 'media' }); }
-                          }}
-                        />
-                        <input
-                          placeholder="Solicitante..."
-                          value={novoCard.solicitante}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleCreateCard(coluna.id); if (e.key === 'Escape') { setCreating(null); setNovoCard({ titulo: '', solicitante: '', prioridade: 'media' }); } }} />
+                        <input placeholder="Solicitante..." value={novoCard.solicitante}
                           onChange={(e) => setNovoCard({ ...novoCard, solicitante: e.target.value })}
-                          onKeyDown={(e) => e.key === 'Enter' && handleCreateCard(coluna.id)}
-                        />
-                        <select
-                          value={novoCard.prioridade}
-                          onChange={(e) => setNovoCard({ ...novoCard, prioridade: e.target.value })}
-                        >
-                          <option value="baixa">Baixa</option>
-                          <option value="media">Média</option>
-                          <option value="alta">Alta</option>
-                          <option value="critica">Crítica</option>
+                          onKeyDown={(e) => e.key === 'Enter' && handleCreateCard(coluna.id)} />
+                        <select value={novoCard.prioridade}
+                          onChange={(e) => setNovoCard({ ...novoCard, prioridade: e.target.value })}>
+                          <option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option><option value="critica">Crítica</option>
                         </select>
                         <div className="create-form-actions">
-                          <button className="btn btn-sm btn-primary" onClick={() => handleCreateCard(coluna.id)}>
-                            Criar
-                          </button>
-                          <button className="btn btn-sm btn-ghost" onClick={() => {
-                            setCreating(null);
-                            setNovoCard({ titulo: '', solicitante: '', prioridade: 'media' });
-                          }}>
-                            <X size={14} />
-                          </button>
+                          <button className="btn btn-sm btn-primary" onClick={() => handleCreateCard(coluna.id)}>Criar</button>
+                          <button className="btn btn-sm btn-ghost" onClick={() => { setCreating(null); setNovoCard({ titulo: '', solicitante: '', prioridade: 'media' }); }}><X size={14} /></button>
                         </div>
                       </div>
                     ) : (
-                      <button
-                        className="coluna-add-btn"
-                        onClick={() => setCreating(coluna.id)}
-                      >
+                      <button className="coluna-add-btn" onClick={() => setCreating(coluna.id)}>
                         <Plus size={14} /> Novo card
                       </button>
                     )}
@@ -245,10 +239,7 @@ export default function Kanban() {
                     draggable={!isFinalizado}
                     onDragStart={(e) => handleDragStart(e, c)}
                     onDragEnd={handleDragEnd}
-                    onClick={(e) => {
-                      if (dragIdRef.current) return;
-                      navigate(`/chamados/${c.id}`);
-                    }}
+                    onClick={() => { if (!dragIdRef.current) navigate(`/chamados/${c.id}`); }}
                   >
                     <div className="card-header-row">
                       <span className={`card-prioridade prioridade-${c.prioridade}`} />
@@ -263,15 +254,54 @@ export default function Kanban() {
                 ))}
 
                 {!isFinalizado && cards.length === 0 && creating !== coluna.id && (
-                  <div className="coluna-empty">
-                    <p>Nenhum chamado</p>
-                  </div>
+                  <div className="coluna-empty"><p>Nenhum chamado</p></div>
                 )}
               </div>
             </div>
           );
         })}
       </div>
+
+      {arquivados.length > 0 && (
+        <div className="kanban-log">
+          <button className="kanban-log-toggle" onClick={() => setLogOpen(!logOpen)}>
+            <Archive size={16} /> Log de Finalizados ({arquivados.length})
+            {logOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+
+          {logOpen && (
+            <div className="kanban-log-grid">
+              {arquivados.map((c) => {
+                const dataRes = c.resolvido_em || c.criado_em;
+                const dt = new Date(dataRes);
+                const mes = dt.toLocaleDateString('pt-BR', { month: 'long' });
+                const ano = dt.getFullYear();
+                const semana = getSemana(dataRes);
+                return (
+                  <div
+                    key={c.id}
+                    className="kanban-card kanban-card-sm"
+                    onClick={() => navigate(`/chamados/${c.id}`)}
+                  >
+                    <div className="card-header-row">
+                      <span className={`card-prioridade prioridade-${c.prioridade}`} />
+                      <span className="card-id">#{c.id}</span>
+                    </div>
+                    <p className="card-titulo">{c.titulo}</p>
+                    <div className="card-log-info">
+                      <span>{dt.toLocaleDateString('pt-BR')}</span>
+                      <span className="card-log-semana">Semana: {semana}</span>
+                    </div>
+                    <div className="card-log-meta">{mes} de {ano}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div style={{ paddingBottom: 20 }} />
     </div>
   );
 }
