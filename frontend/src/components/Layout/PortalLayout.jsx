@@ -1,7 +1,6 @@
 import { Outlet, Link, NavLink } from 'react-router-dom';
 import { Ticket, Plus, Sun, Moon, Contrast } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
-import PageTransition from '../ui/PageTransition';
 import './PortalLayout.css';
 
 export default function PortalLayout() {
@@ -32,9 +31,7 @@ export default function PortalLayout() {
         </nav>
       </header>
       <main className="portal-main">
-        <PageTransition>
-          <Outlet />
-        </PageTransition>
+        <Outlet />
       </main>
       <footer className="portal-footer">
         <span>Pelotense IT &copy; {new Date().getFullYear()}</span>

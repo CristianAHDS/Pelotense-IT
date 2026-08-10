@@ -10,6 +10,14 @@ const API = '/api';
 export default function PortalNovo() {
   const navigate = useNavigate();
   const { add: addToast } = useToast();
+  const fileInputRef = useRef(null);
+  const [form, setForm] = useState({
+    titulo: '', descricao: '', prioridade: 'media',
+    categoria: 'geral', solicitante: '',
+  });
+  const [arquivos, setArquivos] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const handlePaste = (e) => {
@@ -19,26 +27,20 @@ export default function PortalNovo() {
         if (item.type.startsWith('image/')) {
           const file = item.getAsFile();
           if (file) {
-            if (arquivos.length >= 5) {
-              setError('Máximo de 5 anexos por chamado.');
-              return;
-            }
-            setArquivos((prev) => [...prev, file]);
+            setArquivos((prev) => {
+              if (prev.length >= 5) {
+                setError('Máximo de 5 anexos por chamado.');
+                return prev;
+              }
+              return [...prev, file];
+            });
           }
         }
       }
     };
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
-  }, [arquivos]);
-  const fileInputRef = useRef(null);
-  const [form, setForm] = useState({
-    titulo: '', descricao: '', prioridade: 'media',
-    categoria: 'geral', solicitante: '',
-  });
-  const [arquivos, setArquivos] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  }, []);
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files || []);
