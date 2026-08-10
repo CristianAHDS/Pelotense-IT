@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Save, Upload, X, File, Image, Film, Music, Tag } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
+import { applyWatermark } from '../utils/watermark';
 import './NovoChamado.css';
 
 const API = '/api';
@@ -72,7 +73,10 @@ export default function NovoChamado() {
 
       if (arquivos.length > 0) {
         const fd = new FormData();
-        arquivos.forEach((f) => fd.append('arquivos', f));
+        for (const f of arquivos) {
+          const wm = await applyWatermark(f, 'Cris');
+          fd.append('arquivos', wm);
+        }
         await fetch(`${API}/chamados/${chamado.id}/anexos`, {
           method: 'POST',
           body: fd,

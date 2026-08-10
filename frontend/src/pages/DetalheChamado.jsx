@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Send, Paperclip, Download, Trash2, Image, Timer } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
+import { applyWatermark } from '../utils/watermark';
 import './DetalheChamado.css';
 
 const API = '/api';
@@ -111,7 +112,8 @@ export default function DetalheChamado() {
 
     if (comentImagem) {
       const fd = new FormData();
-      fd.append('arquivos', comentImagem);
+      const wm = await applyWatermark(comentImagem, 'Cris');
+      fd.append('arquivos', wm);
       try {
         const r = await fetch(`${API}/chamados/${id}/anexos`, { method: 'POST', body: fd });
         const anexos = await r.json();
