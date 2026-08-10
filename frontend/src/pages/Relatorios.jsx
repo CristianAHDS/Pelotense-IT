@@ -33,28 +33,49 @@ export default function Relatorios() {
   const resolvidos = stats?.porStatus?.find((s) => s.status === 'resolvido')?.count || 0;
   const taxaResolucao = totalChamados > 0 ? ((resolvidos / totalChamados) * 100).toFixed(1) : 0;
 
-  const exportCSV = () => {
+  const exportCSV = async () => {
     if (!stats) return;
-    let csv = '\uFEFFRelatório - Pelotense IT\n';
-    if (inicio || fim) csv += `Período: ${inicio || '...'} a ${fim || '...'}\n`;
-    csv += `\nTotal de chamados,${totalChamados}\n`;
-    csv += `Taxa de resolucao,${taxaResolucao}%\n`;
-    csv += `Tempo medio de resolucao,${stats.slaMedio || 0}h\n\n`;
+    const params = new URLSearchParams({ limit: '999' });
+    if (inicio) params.set('inicio', inicio);
+    if (fim) params.set('fim', fim);
+    let chamados = [];
+    try { const r = await fetch(`${API}/chamados?${params}`); const d = await r.json(); chamados = d.chamados || []; } catch (_) {}
 
-    csv += 'Status,Quantidade,Porcentagem\n';
+    const now = new Date().toLocaleDateString('pt-BR');
+    let csv = '\uFEFF';
+    csv += `RELATÓRIO DE CHAMADOS - PELOTENSE IT\n`;
+    csv += `Gerado em: ${now}\n`;
+    if (inicio || fim) csv += `Período: ${inicio || '...'} até ${fim || '...'}\n`;
+    csv += `\n`;
+
+    csv += 'ID,Título,Descrição,Status,Prioridade,Categoria,Solicitante,Técnico,Criado em,Atualizado em,Resolvido em\n';
+    chamados.forEach((c) => {
+      const desc = (c.descricao || '').replace(/"/g, '""').replace(/\n/g, ' ');
+      csv += `${c.id},"${c.titulo}","${desc}",${statusLabels[c.status] || c.status},${c.prioridade},${c.categoria},${c.solicitante},${c.tecnico || ''},${c.criado_em},${c.atualizado_em},${c.resolvido_em || ''}\n`;
+    });
+
+    csv += `\n`;
+    csv += `========================================\n`;
+    csv += `RESUMO GERAL (OVERVIEW)\n`;
+    csv += `========================================\n`;
+    csv += `Total de chamados,${totalChamados}\n`;
+    csv += `Taxa de resolucao,${taxaResolucao}%\n`;
+    csv += `Tempo medio de resolucao,${stats.slaMedio || 0}h\n`;
+    csv += `\nPor Status:\n`;
     stats.porStatus?.forEach((s) => {
-      csv += `${statusLabels[s.status] || s.status},${s.count},${((s.count / (totalChamados || 1)) * 100).toFixed(1)}%\n`;
+      csv += `  ${statusLabels[s.status] || s.status},${s.count},${((s.count / (totalChamados || 1)) * 100).toFixed(1)}%\n`;
     });
-    csv += '\nPrioridade,Quantidade,Porcentagem\n';
+    csv += `\nPor Prioridade:\n`;
     stats.porPrioridade?.forEach((p) => {
-      csv += `${p.prioridade},${p.count},${((p.count / (totalChamados || 1)) * 100).toFixed(1)}%\n`;
+      csv += `  ${p.prioridade},${p.count},${((p.count / (totalChamados || 1)) * 100).toFixed(1)}%\n`;
     });
-    csv += '\nCategoria,Quantidade\n';
-    stats.porCategoria?.forEach((c) => csv += `${c.categoria},${c.count}\n`);
+    csv += `\nPor Categoria:\n`;
+    stats.porCategoria?.forEach((c) => csv += `  ${c.categoria},${c.count}\n`);
     if (stats.tecnicos?.length > 0) {
-      csv += '\nTecnico,Total,Resolvidos\n';
-      stats.tecnicos.forEach((t) => csv += `${t.tecnico || '-'},${t.total},${t.resolvidos}\n`);
+      csv += `\nTecnicos:\n`;
+      stats.tecnicos.forEach((t) => csv += `  ${t.tecnico || '-'},${t.total} total,${t.resolvidos} resolvidos\n`);
     }
+    csv += `\n--- Fim do relatório ---\n`;
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a');
@@ -63,56 +84,101 @@ export default function Relatorios() {
     a.click();
   };
 
-  const exportPDF = () => {
+  const exportPDF = async () => {
     if (!stats) return;
+    const params = new URLSearchParams({ limit: '999' });
+    if (inicio) params.set('inicio', inicio);
+    if (fim) params.set('fim', fim);
+    let chamados = [];
+    try { const r = await fetch(`${API}/chamados?${params}`); const d = await r.json(); chamados = d.chamados || []; } catch (_) {}
+
     const doc = new jsPDF();
     let y = 20;
+    const now = new Date().toLocaleDateString('pt-BR');
 
-    doc.setFontSize(16);
-    doc.text('Relatório - Pelotense IT', 20, y);
-    y += 10;
-
-    if (inicio || fim) {
-      doc.setFontSize(11);
-      doc.text(`Periodo: ${inicio || 'inicio'} ate ${fim || 'hoje'}`, 20, y);
-      y += 6;
-    }
-
+    doc.setFontSize(18);
+    doc.text('RELATORIO DE CHAMADOS', 20, y);
+    y += 8;
     doc.setFontSize(11);
-    doc.text(`Total: ${totalChamados} | Resolvidos: ${resolvidos} (${taxaResolucao}%) | SLA medio: ${stats.slaMedio || 0}h`, 20, y);
-    y += 12;
+    doc.text(`Pelotense IT - Gerado em ${now}`, 20, y);
+    y += 6;
+    if (inicio || fim) { doc.text(`Periodo: ${inicio || 'inicio'} ate ${fim || 'hoje'}`, 20, y); y += 6; }
+    y += 6;
 
     doc.setFontSize(13);
-    doc.text('Por Status', 20, y);
+    doc.text('Lista de Chamados', 20, y);
     y += 8;
-    stats.porStatus?.forEach((s) => {
-      doc.setFontSize(10);
-      doc.text(`${statusLabels[s.status] || s.status}: ${s.count} (${((s.count / (totalChamados || 1)) * 100).toFixed(1)}%)`, 24, y);
-      y += 6;
+
+    const drawHeader = () => {
+      doc.setFontSize(8);
+      doc.text('#', 20, y); doc.text('Titulo', 28, y); doc.text('Status', 100, y); doc.text('Prior.', 130, y); doc.text('Solicitante', 148, y);
+      y += 4;
+      doc.line(20, y, 190, y);
+      y += 5;
+    };
+
+    drawHeader();
+    chamados.slice(0, 200).forEach((c) => {
+      if (y > 270) { doc.addPage(); y = 20; drawHeader(); }
+      doc.setFontSize(7.5);
+      doc.text(String(c.id), 20, y);
+      doc.text((c.titulo || '').slice(0, 35), 28, y);
+      doc.text((statusLabels[c.status] || c.status).slice(0, 10), 100, y);
+      doc.text(c.prioridade, 130, y);
+      doc.text((c.solicitante || '').slice(0, 18), 148, y);
+      y += 4.5;
     });
 
-    y += 4;
-    doc.setFontSize(13);
-    doc.text('Por Prioridade', 20, y);
     y += 8;
+    if (y > 260) { doc.addPage(); y = 20; }
+
+    doc.setFontSize(14);
+    doc.text('RESUMO GERAL (OVERVIEW)', 20, y);
+    y += 10;
+
+    doc.setFontSize(11);
+    doc.text(`Total de chamados: ${totalChamados}`, 20, y); y += 6;
+    doc.text(`Taxa de resolucao: ${taxaResolucao}%`, 20, y); y += 6;
+    doc.text(`Tempo medio de resolucao (SLA): ${stats.slaMedio || 0}h`, 20, y); y += 8;
+
+    doc.setFontSize(13);
+    doc.text('Por Status', 20, y); y += 7;
+    doc.setFontSize(10);
+    stats.porStatus?.forEach((s) => {
+      doc.text(`${statusLabels[s.status] || s.status}: ${s.count} (${((s.count / (totalChamados || 1)) * 100).toFixed(1)}%)`, 24, y); y += 5;
+    });
+
+    y += 3;
+    doc.setFontSize(13);
+    doc.text('Por Prioridade', 20, y); y += 7;
+    doc.setFontSize(10);
     stats.porPrioridade?.forEach((p) => {
-      doc.setFontSize(10);
-      doc.text(`${p.prioridade}: ${p.count}`, 24, y);
-      y += 6;
+      doc.text(`${p.prioridade}: ${p.count}`, 24, y); y += 5;
+    });
+
+    y += 3;
+    doc.setFontSize(13);
+    doc.text('Por Categoria', 20, y); y += 7;
+    doc.setFontSize(10);
+    stats.porCategoria?.forEach((c) => {
+      doc.text(`${c.categoria}: ${c.count}`, 24, y); y += 5;
     });
 
     if (stats.tecnicos?.length > 0) {
-      y += 4;
+      y += 3;
+      if (y > 260) { doc.addPage(); y = 20; }
       doc.setFontSize(13);
-      doc.text('Tecnicos', 20, y);
-      y += 8;
+      doc.text('Desempenho por Tecnico', 20, y); y += 7;
+      doc.setFontSize(10);
       stats.tecnicos.forEach((t) => {
-        doc.setFontSize(10);
-        doc.text(`${t.tecnico || 'N/A'}: ${t.total} total / ${t.resolvidos} resolvidos`, 24, y);
-        y += 6;
+        doc.text(`${t.tecnico || 'N/A'}: ${t.total} total / ${t.resolvidos} resolvidos (${t.total > 0 ? ((t.resolvidos / t.total) * 100).toFixed(0) : 0}%)`, 24, y); y += 5;
         if (y > 270) { doc.addPage(); y = 20; }
       });
     }
+
+    y += 6;
+    doc.setFontSize(9);
+    doc.text('--- Fim do relatorio ---', 20, y);
 
     doc.save(`relatorio-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
