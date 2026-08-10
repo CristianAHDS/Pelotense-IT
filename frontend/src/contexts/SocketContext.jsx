@@ -1,9 +1,34 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
+import confetti from 'canvas-confetti';
 
 const SocketContext = createContext(null);
 
 const SOCKET_URL = `${window.location.protocol}//${window.location.hostname}:3001`;
+
+function dispararConfetti() {
+  const duration = 3000;
+  const end = Date.now() + duration;
+  const colors = ['#6366f1', '#818cf8', '#10b981', '#f59e0b', '#f43f5e', '#38bdf8', '#8b5cf6'];
+
+  (function frame() {
+    confetti({
+      particleCount: 3,
+      angle: 60,
+      spread: 60,
+      origin: { x: 0, y: 0.7 },
+      colors,
+    });
+    confetti({
+      particleCount: 3,
+      angle: 120,
+      spread: 60,
+      origin: { x: 1, y: 0.7 },
+      colors,
+    });
+    if (Date.now() < end) requestAnimationFrame(frame);
+  }());
+}
 
 export function SocketProvider({ children }) {
   const socketRef = useRef(null);
@@ -21,6 +46,12 @@ export function SocketProvider({ children }) {
       addNotification(`Chamado #${chamado.id} atualizado`, 'updated');
     });
 
+    socket.on('badges:conquistados', (data) => {
+      const nomes = data.badges.map(b => b.nome).join(', ');
+      addNotification(`🏆 Novos badges: ${nomes}`, 'achievement');
+      dispararConfetti();
+    });
+
     return () => socket.disconnect();
   }, []);
 
@@ -31,7 +62,7 @@ export function SocketProvider({ children }) {
 
     setTimeout(() => {
       setNotifications((prev) => prev.filter((item) => item.id !== id));
-    }, 5000);
+    }, 8000);
   }
 
   function clearNotifications() {

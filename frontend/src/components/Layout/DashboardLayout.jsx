@@ -3,11 +3,12 @@ import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Ticket, PlusCircle, BarChart3, Settings,
   Wrench, Columns, Menu, X, Bell, Sun, Moon, ChevronLeft, ChevronRight, Plus,
-  Play, Pause, Volume2, Trophy,
+  Play, Pause, Volume2, Trophy, Contrast,
 } from 'lucide-react';
 import { useSocket } from '../../contexts/SocketContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import NetworkSpeed from '../ui/NetworkSpeed';
+import PageTransition from '../ui/PageTransition';
 import './DashboardLayout.css';
 
 const menuItems = [
@@ -101,8 +102,8 @@ export default function DashboardLayout() {
           <button className="sidebar-collapse-btn" onClick={() => setCollapsed(!collapsed)} title={collapsed ? 'Expandir' : 'Recolher'}>
             {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
           </button>
-          <button className="sidebar-collapse-btn" onClick={toggleTheme} title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}>
-            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          <button className="sidebar-collapse-btn" onClick={toggleTheme} title={theme === 'dark' ? 'Modo claro' : theme === 'light' ? 'Alto contraste' : 'Modo escuro'}>
+            {theme === 'dark' ? <Sun size={16} /> : theme === 'light' ? <Contrast size={16} /> : <Moon size={16} />}
           </button>
         </div>
 
@@ -144,7 +145,9 @@ export default function DashboardLayout() {
         <div className="mobile-brand"><img src="https://i.imgur.com/mfoPeJL.png" alt="Pelotense IT" className="mobile-brand-logo" /><span>Pelotense IT</span></div>
         <div className="mobile-header-actions">
           <NetworkSpeed />
-          <button className="notif-btn" onClick={toggleTheme}><Sun size={18} /></button>
+          <button className="notif-btn" onClick={toggleTheme} title={theme === 'dark' ? 'Modo claro' : theme === 'light' ? 'Alto contraste' : 'Modo escuro'}>
+            {theme === 'dark' ? <Sun size={18} /> : theme === 'light' ? <Contrast size={18} /> : <Moon size={18} />}
+          </button>
           <button className="notif-btn" onClick={() => setNOpen(!nOpen)}>
             <Bell size={18} />
             {unread > 0 && <span className="notif-badge">{unread}</span>}
@@ -203,7 +206,9 @@ export default function DashboardLayout() {
             </div>
           </div>
         </div>
-        <Outlet />
+        <PageTransition>
+          <Outlet />
+        </PageTransition>
       </main>
 
       <NavLink to="/chamados/novo" className="fab-btn"><Plus size={24} /></NavLink>
