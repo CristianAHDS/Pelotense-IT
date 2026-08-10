@@ -15,6 +15,64 @@
   padding: 28px 32px;
 }
 
+.welcome-carousel {
+  position: relative;
+  overflow: hidden;
+  min-height: 90px;
+}
+
+.carousel-slide {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  inset: 28px 32px;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: all 0.5s ease;
+  pointer-events: none;
+}
+
+.carousel-slide.active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+  position: relative;
+  inset: auto;
+}
+
+.welcome-carousel .welcome-date {
+  position: absolute;
+  right: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.carousel-dots {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+}
+
+.carousel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-border);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.carousel-dot.active {
+  background: var(--color-primary);
+  width: 20px;
+  border-radius: 4px;
+}
+
 .welcome-content {
   display: flex;
   align-items: center;
@@ -414,6 +472,15 @@
     align-items: flex-start;
     gap: 12px;
     padding: 20px;
+    min-height: 100px;
+  }
+
+  .carousel-slide {
+    inset: 20px;
+  }
+
+  .welcome-carousel .welcome-date {
+    display: none;
   }
 
   .welcome-content h1 {

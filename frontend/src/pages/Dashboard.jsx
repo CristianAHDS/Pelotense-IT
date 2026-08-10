@@ -66,8 +66,49 @@ export default function Dashboard() {
   const [recentes, setRecentes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [weather, setWeather] = useState(null);
+  const [slide, setSlide] = useState(0);
   const greeting = getGreeting();
   const { socket } = useSocket();
+
+  const todayStr = new Date().toLocaleDateString('sv');
+  const hojeCriados = stats?.porDia?.find((d) => d.dia === todayStr)?.count || 0;
+  const hojeResolvidos = stats ? chamadosAtivosResolvidosHoje() : 0;
+  function chamadosAtivosResolvidosHoje() {
+    if (!stats) return 0;
+    return (recentes || []).filter((c) => c.status === 'resolvido' && (c.resolvido_em || '').slice(0, 10) === todayStr).length;
+  }
+
+  useEffect(() => {
+    const timer = setInterval(() => setSlide((s) => (s + 1) % slides.length), 6000);
+    return () => clearInterval(timer);
+  }, [weather, stats, greeting]);
+
+  const weatherInfo = weather ? getWeatherEmoji(weather.code) : null;
+
+  const slides = [
+    {
+      emoji: weatherInfo ? weatherInfo.emoji : (new Date().getHours() < 18 ? '🌤️' : '🌙'),
+      title: `${greeting}, Cristian`,
+      text: weather ? `${weatherInfo.label}, ${weather.temp}°C — Confira o resumo dos chamados` : 'Confira o resumo dos chamados de hoje',
+    },
+    {
+      emoji: '📊',
+      title: 'Resumo do Dia',
+      text: `${hojeCriados} criados hoje · ${hojeResolvidos} resolvidos · ${stats?.porStatus?.find((s) => s.status === 'aberto')?.count || 0} em aberto`,
+    },
+    {
+      emoji: '⏰',
+      title: 'Lembrete',
+      text: stats?.porStatus?.find((s) => s.status === 'pendente')?.count
+        ? `${stats.porStatus.find((s) => s.status === 'pendente').count} chamados pendentes aguardando ação`
+        : 'Nenhum chamado pendente no momento',
+    },
+    {
+      emoji: '💡',
+      title: 'Dica',
+      text: 'Use o Kanban para arrastar cards entre colunas e gerenciar o fluxo de trabalho de forma visual.',
+    },
+  ];
 
   const loadData = () => {
     Promise.all([
@@ -132,25 +173,24 @@ export default function Dashboard() {
     { label: 'Ver Chamados', icon: List, to: '/chamados', color: '#10b981', description: 'Lista completa' },
   ];
 
-  const weatherInfo = weather ? getWeatherEmoji(weather.code) : null;
-
   return (
     <div className="home-page">
-      <section className="home-welcome">
-        <div className="welcome-content">
-          <div className="welcome-emoji">
-            {weatherInfo ? weatherInfo.emoji : (new Date().getHours() < 18 ? '🌤️' : '🌙')}
+      <section className="home-welcome welcome-carousel">
+        {slides.map((s, i) => (
+          <div key={i} className={`carousel-slide ${i === slide ? 'active' : ''}`}>
+            <div className="welcome-content">
+              <div className="welcome-emoji">{s.emoji}</div>
+              <div>
+                <h1>{s.title}</h1>
+                <p>{s.text}</p>
+              </div>
+            </div>
           </div>
-          <div>
-            <h1>{greeting}, Cristian</h1>
-            <p>
-              {weather ? (
-                <>Confira o resumo dos chamados &mdash; {weatherInfo.label}, {weather.temp}°C</>
-              ) : (
-                'Confira o resumo dos chamados de hoje'
-              )}
-            </p>
-          </div>
+        ))}
+        <div className="carousel-dots">
+          {slides.map((_, i) => (
+            <button key={i} className={`carousel-dot ${i === slide ? 'active' : ''}`} onClick={() => setSlide(i)} />
+          ))}
         </div>
         <div className="welcome-date">
           {new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
