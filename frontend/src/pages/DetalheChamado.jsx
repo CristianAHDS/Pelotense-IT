@@ -204,10 +204,17 @@ export default function DetalheChamado() {
                 const imgMatch = chamado.resolucao.match(/\[imagem:\s*(.+?)\]/);
                 const displayText = chamado.resolucao.replace(/\[imagem:\s*.+?\]/, '').trim();
                 const imgUrl = imgMatch ? imgMatch[1] : null;
+                const imgName = imgUrl ? imgUrl.split('/').pop() : 'imagem';
                 return (
                   <>
                     {displayText && <p>{displayText}</p>}
-                    {imgUrl && <img src={imgUrl} alt="Resolução" className="comentario-img" onClick={() => setLightbox(imgUrl)} />}
+                    {imgUrl && (
+                      <div className="comentario-anexo" onClick={() => setLightbox(imgUrl)}>
+                        <Paperclip size={14} />
+                        <span>{imgName}</span>
+                        <a href={imgUrl} download className="btn-icon" onClick={(e) => e.stopPropagation()}><Download size={14} /></a>
+                      </div>
+                    )}
                   </>
                 );
               })()}
@@ -368,7 +375,7 @@ export default function DetalheChamado() {
 
       {lightbox && (
         <div className="lightbox-overlay" onClick={() => setLightbox(null)}>
-          <button className="lightbox-close" onClick={() => setLightbox(null)}>✕ Fechar</button>
+          <button className="lightbox-close" onClick={() => setLightbox(null)}><XIcon size={16} /> Fechar</button>
           <img src={lightbox} alt="Visualização" className="lightbox-img" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
