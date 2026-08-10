@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useSocket } from '../../contexts/SocketContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import NetworkSpeed from '../ui/NetworkSpeed';
 import './DashboardLayout.css';
 
 const menuItems = [
@@ -166,6 +167,7 @@ export default function DashboardLayout() {
             )}
           </div>
           <div className="top-bar-right">
+            <NetworkSpeed />
             <button className="notif-btn" onClick={toggleTheme} title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}>
               {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
             </button>
