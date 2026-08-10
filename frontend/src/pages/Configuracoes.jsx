@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '../contexts/ToastContext';
+import { version } from '../../package.json';
 import './Configuracoes.css';
 
 const API = '/api';
@@ -193,7 +194,7 @@ export default function Configuracoes() {
           <h3>Sobre</h3>
           <dl>
             <dt>Versão</dt>
-            <dd>1.0.0</dd>
+            <dd>{version}</dd>
             <dt>Desenvolvedor</dt>
             <dd>Cristian Raffi Cunha</dd>
             <dt>Plataforma</dt>
