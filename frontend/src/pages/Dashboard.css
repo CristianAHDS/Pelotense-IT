@@ -513,14 +513,40 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .recent-main {
+    width: 100%;
+    min-width: 0;
   }
 
   .recent-meta {
     flex-wrap: wrap;
+    gap: 4px;
+    width: 100%;
+  }
+
+  .recent-meta .badge {
+    font-size: 10px;
+    padding: 2px 8px;
   }
 
   .recent-titulo {
-    max-width: 180px;
+    max-width: none;
+    flex: 1;
+    min-width: 0;
+    font-size: 12.5px;
+  }
+
+  .recent-id {
+    font-size: 11px;
+    min-width: 32px;
+  }
+
+  .badge {
+    font-size: 10px;
+    padding: 2px 8px;
   }
 
   .home-panel {
