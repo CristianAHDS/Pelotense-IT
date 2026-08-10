@@ -44,6 +44,7 @@ export default function DetalheChamado() {
   const [elapsed, setElapsed] = useState('');
   const [showResolve, setShowResolve] = useState(false);
   const [resolucao, setResolucao] = useState('');
+  const [lightbox, setLightbox] = useState(null);
 
   const loadChamado = () => {
     fetch(`${API}/chamados/${id}`)
@@ -187,9 +188,9 @@ export default function DetalheChamado() {
                 {chamado.anexos.map((a) => (
                   <div key={a.id} className="anexo-card">
                     {a.tipo === 'imagem' && (
-                      <a href={`${API}/chamados/anexos/${a.nome_armazenado}`} target="_blank" rel="noreferrer" className="anexo-preview">
+                      <div className="anexo-preview" onClick={() => setLightbox(`${API}/chamados/anexos/${a.nome_armazenado}`)} style={{ cursor: 'pointer' }}>
                         <img src={`${API}/chamados/anexos/${a.nome_armazenado}`} alt={a.nome_original} />
-                      </a>
+                      </div>
                     )}
                     {a.tipo === 'video' && (
                       <div className="anexo-preview video-preview">
@@ -252,7 +253,7 @@ export default function DetalheChamado() {
                       <span>{new Date(c.criado_em).toLocaleString()}</span>
                     </div>
                     {displayText && <p>{displayText}</p>}
-                    {imgUrl && <img src={imgUrl} alt="anexo" className="comentario-img" />}
+                    {imgUrl && <img src={imgUrl} alt="anexo" className="comentario-img" onClick={() => setLightbox(imgUrl)} />}
                   </div>
                 );
               })}
@@ -312,20 +313,20 @@ export default function DetalheChamado() {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h3>Descreva a resolução</h3>
             <p className="modal-sub">Como o problema foi resolvido?</p>
-            <textarea
-              autoFocus
-              rows={4}
-              value={resolucao}
-              onChange={(e) => setResolucao(e.target.value)}
-              placeholder="Ex: Substituído cabo de rede com defeito, configurado novo IP..."
-            />
+            <textarea autoFocus rows={4} value={resolucao} onChange={(e) => setResolucao(e.target.value)}
+              placeholder="Ex: Substituído cabo de rede com defeito, configurado novo IP..." />
             <div className="modal-actions">
               <button className="btn btn-ghost" onClick={() => setShowResolve(false)}>Cancelar</button>
-              <button className="btn btn-primary" onClick={confirmarResolucao}>
-                Resolver Chamado
-              </button>
+              <button className="btn btn-primary" onClick={confirmarResolucao}>Resolver Chamado</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {lightbox && (
+        <div className="lightbox-overlay" onClick={() => setLightbox(null)}>
+          <button className="lightbox-close" onClick={() => setLightbox(null)}>✕</button>
+          <img src={lightbox} alt="Visualização" className="lightbox-img" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
     </div>
