@@ -294,17 +294,18 @@
   width: 46px;
   height: 46px;
   border-radius: var(--radius);
-  border: 1px solid var(--color-border);
-  background: var(--color-bg);
-  color: var(--color-text-muted);
+  border: none;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
+  color: #fff;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px var(--color-primary-glow);
   flex-shrink: 0;
 }
 
 .comentario-img-btn:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary-light);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px var(--color-primary-glow);
 }
 
 .comentario-img-name {
