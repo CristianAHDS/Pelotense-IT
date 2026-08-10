@@ -321,6 +321,37 @@ export default function DetalheChamado() {
           )}
 
           <div className="detalhe-section">
+            <h3>Linha do Tempo</h3>
+            {(() => {
+              const statusFromHistory = (chamado.historico || [])
+                .filter((h) => h.acao === 'status')
+                .map((h) => {
+                  const match = h.descricao.match(/"([^"]+)"/);
+                  const label = match ? match[1] : '';
+                  const key = Object.entries(STATUS_MAP).find(([, v]) => v.label === label)?.[0];
+                  return { key: key || chamado.status, label, time: h.criado_em };
+                })
+                .reverse();
+              const steps = [{ key: 'aberto', label: 'Aberto', time: chamado.criado_em }];
+              statusFromHistory.forEach((s) => { if (!steps.find((st) => st.key === s.key)) steps.push(s); });
+              return (
+                <div className="timeline-h">
+                  {steps.map((s, i) => (
+                    <React.Fragment key={s.key + i}>
+                      <div className={`timeline-step ${i === steps.length - 1 ? 'active' : 'past'}`} title={new Date(s.time).toLocaleString()}>
+                        <div className="timeline-step-dot" />
+                        <span className="timeline-step-label">{s.label}</span>
+                        <span className="timeline-step-time">{new Date(s.time).toLocaleDateString('pt-BR')}</span>
+                      </div>
+                      {i < steps.length - 1 && <div className="timeline-line done" />}
+                    </React.Fragment>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+
+          <div className="detalhe-section">
             <h3><CheckSquare size={16} /> Checklist ({checklist.filter((i) => i.concluido).length}/{checklist.length})</h3>
             <div className="checklist-list">
               {checklist.map((item) => (
@@ -424,55 +455,6 @@ export default function DetalheChamado() {
           </div>
 
           <div className="detalhe-section">
-            <h3>Linha do Tempo</h3>
-            {(() => {
-              const statusOrder = ['aberto', 'em_andamento', 'pendente', 'resolvido', 'fechado'];
-              const statusFromHistory = (chamado.historico || [])
-                .filter((h) => h.acao === 'status')
-                .map((h) => {
-                  const match = h.descricao.match(/"([^"]+)"/);
-                  const label = match ? match[1] : '';
-                  const key = Object.entries(STATUS_MAP).find(([, v]) => v.label === label)?.[0];
-                  return { key: key || chamado.status, label, time: h.criado_em };
-                })
-                .reverse();
-
-              const steps = [];
-              if (chamado.criado_em) {
-                steps.push({ key: 'aberto', label: 'Aberto', time: chamado.criado_em });
-              }
-              statusFromHistory.forEach((s) => {
-                if (!steps.find((st) => st.key === s.key)) {
-                  steps.push(s);
-                }
-              });
-
-              if (steps.length === 0) {
-                steps.push({ key: chamado.status, label: STATUS_MAP[chamado.status]?.label || chamado.status, time: chamado.criado_em });
-              }
-
-              const currentIdx = statusOrder.indexOf(chamado.status);
-              const lastRealIdx = steps.length > 0 ? statusOrder.indexOf(steps[steps.length - 1].key) : currentIdx;
-
-              return (
-                <div className="timeline-h">
-                  {steps.map((s, i) => {
-                    const isActive = i === steps.length - 1;
-                    const isPast = true;
-                    return (
-                      <React.Fragment key={s.key + i}>
-                        <div className={`timeline-step ${isActive ? 'active' : 'past'}`} title={new Date(s.time).toLocaleString()}>
-                          <div className="timeline-step-dot" />
-                          <span className="timeline-step-label">{s.label}</span>
-                          <span className="timeline-step-time">{new Date(s.time).toLocaleDateString('pt-BR')}</span>
-                        </div>
-                        {i < steps.length - 1 && <div className="timeline-line done" />}
-                      </React.Fragment>
-                    );
-                  })}
-                </div>
-              );
-            })()}
             <div className="gamification-bar">
               <div className="g-medal">🏆</div>
               <div className="g-text">

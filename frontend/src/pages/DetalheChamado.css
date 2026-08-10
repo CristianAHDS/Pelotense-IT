@@ -92,15 +92,32 @@
 
 /* Timeline horizontal */
 .timeline-h {
-  display: flex; align-items: center; gap: 0; overflow-x: auto; padding: 8px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  padding: 8px 0;
+  max-width: 100%;
 }
+
 .timeline-step {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  min-width: 70px; text-align: center; position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 60px;
+  max-width: 80px;
+  text-align: center;
+  position: relative;
+  flex-shrink: 0;
 }
+
 .timeline-step-dot {
-  width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--color-border);
-  background: var(--color-bg); transition: all 0.2s;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  background: var(--color-bg);
+  flex-shrink: 0;
 }
 .timeline-step.active .timeline-step-dot { background: var(--color-primary); border-color: var(--color-primary); }
 .timeline-step.past .timeline-step-dot { background: var(--color-success); border-color: var(--color-success); }
