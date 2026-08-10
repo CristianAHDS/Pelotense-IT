@@ -130,7 +130,7 @@ export default function Chamados() {
                     <td className="cell-date">{new Date(c.criado_em).toLocaleDateString()}</td>
                     <td>
                       <div className="row-actions">
-                        <Link to={`/chamados/${c.id}`} className="btn-icon" title="Ver detalhes"><Eye size={16} /></Link>
+                        <Link to={`/chamados/${c.id}`} className="btn-icon btn-icon-edit" title="Ver detalhes"><Eye size={16} /></Link>
                         <button className="btn-icon btn-icon-danger" title="Excluir chamado" onClick={() => handleDelete(c.id)}><Trash2 size={16} /></button>
                       </div>
                     </td>

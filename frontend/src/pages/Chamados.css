@@ -168,9 +168,26 @@
   color: var(--color-primary-light);
 }
 
-.btn-icon-danger:hover {
-  background: rgba(244, 63, 94, 0.1);
+.btn-icon-danger {
   color: var(--color-danger);
+  opacity: 0.7;
+}
+
+.btn-icon-danger:hover {
+  background: rgba(244, 63, 94, 0.12);
+  color: var(--color-danger);
+  opacity: 1;
+}
+
+.btn-icon-edit {
+  color: var(--color-primary-light);
+  opacity: 0.7;
+}
+
+.btn-icon-edit:hover {
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--color-primary-light);
+  opacity: 1;
 }
 
 .row-actions {
