@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Send, Paperclip, Download, Trash2, Image, Timer } from 'lucide-react';
+import { ArrowLeft, Send, Paperclip, Download, Trash2, Image, Timer, X as XIcon, Camera } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import { applyWatermark } from '../utils/watermark';
 import './DetalheChamado.css';
@@ -45,6 +45,7 @@ export default function DetalheChamado() {
   const [elapsed, setElapsed] = useState('');
   const [showResolve, setShowResolve] = useState(false);
   const [resolucao, setResolucao] = useState('');
+  const [resolucaoImg, setResolucaoImg] = useState(null);
   const [lightbox, setLightbox] = useState(null);
 
   const loadChamado = () => {
@@ -80,6 +81,7 @@ export default function DetalheChamado() {
   const handleStatusChange = async (novoStatus) => {
     if (novoStatus === 'resolvido') {
       setResolucao('');
+      setResolucaoImg(null);
       setShowResolve(true);
       return;
     }
@@ -93,13 +95,32 @@ export default function DetalheChamado() {
   };
 
   const confirmarResolucao = async () => {
+    let textoResolucao = resolucao.trim();
+
+    if (resolucaoImg) {
+      try {
+        const wm = await applyWatermark(resolucaoImg, 'Cris');
+        const fd = new FormData();
+        fd.append('arquivos', wm);
+        const r = await fetch(`${API}/chamados/${id}/anexos`, { method: 'POST', body: fd });
+        const anexos = await r.json();
+        if (anexos.length > 0) {
+          const imgRef = `[imagem: ${API}/chamados/anexos/${anexos[0].nome_armazenado}]`;
+          textoResolucao = textoResolucao ? `${textoResolucao}\n${imgRef}` : imgRef;
+        }
+      } catch (_) {}
+    }
+
+    if (!textoResolucao && !resolucaoImg) return;
+
     await fetch(`${API}/chamados/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'resolvido', tecnico: 'Cris', resolucao }),
+      body: JSON.stringify({ status: 'resolvido', tecnico: 'Cris', resolucao: textoResolucao || ' ' }),
     });
     setShowResolve(false);
     setResolucao('');
+    setResolucaoImg(null);
     addToast('Chamado resolvido com sucesso!', 'success');
     loadChamado();
   };
@@ -179,7 +200,17 @@ export default function DetalheChamado() {
           {chamado.resolucao && (
             <div className="detalhe-section detalhe-resolucao">
               <h3>Descrição da Resolução</h3>
-              <p>{chamado.resolucao}</p>
+              {(() => {
+                const imgMatch = chamado.resolucao.match(/\[imagem:\s*(.+?)\]/);
+                const displayText = chamado.resolucao.replace(/\[imagem:\s*.+?\]/, '').trim();
+                const imgUrl = imgMatch ? imgMatch[1] : null;
+                return (
+                  <>
+                    {displayText && <p>{displayText}</p>}
+                    {imgUrl && <img src={imgUrl} alt="Resolução" className="comentario-img" onClick={() => setLightbox(imgUrl)} />}
+                  </>
+                );
+              })()}
             </div>
           )}
 
@@ -317,6 +348,15 @@ export default function DetalheChamado() {
             <p className="modal-sub">Como o problema foi resolvido?</p>
             <textarea autoFocus rows={4} value={resolucao} onChange={(e) => setResolucao(e.target.value)}
               placeholder="Ex: Substituído cabo de rede com defeito, configurado novo IP..." />
+            <div className="resolve-upload-row">
+              <label className="resolve-img-btn">
+                <Camera size={14} /> Adicionar foto
+                <input type="file" accept="image/*" onChange={(e) => setResolucaoImg(e.target.files?.[0] || null)} hidden />
+              </label>
+              {resolucaoImg && (
+                <span className="resolve-img-name">{resolucaoImg.name} <button onClick={() => setResolucaoImg(null)}><XIcon size={12} /></button></span>
+              )}
+            </div>
             <div className="modal-actions">
               <button className="btn btn-ghost" onClick={() => setShowResolve(false)}>Cancelar</button>
               <button className="btn btn-primary" onClick={confirmarResolucao}>Resolver Chamado</button>
