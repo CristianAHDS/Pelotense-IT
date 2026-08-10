@@ -393,6 +393,10 @@
 }
 
 @media (max-width: 768px) {
+  .home-page {
+    overflow-x: hidden;
+  }
+
   .home-grid {
     grid-template-columns: 1fr;
   }
@@ -409,5 +413,50 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+    padding: 20px;
+  }
+
+  .welcome-content h1 {
+    font-size: 17px;
+  }
+
+  .welcome-date {
+    display: none;
+  }
+
+  .stat-card {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .stat-icon-wrap {
+    width: 38px;
+    height: 38px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+  }
+
+  .recent-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .recent-meta {
+    flex-wrap: wrap;
+  }
+
+  .recent-titulo {
+    max-width: 180px;
+  }
+
+  .home-panel {
+    padding: 16px;
   }
 }
