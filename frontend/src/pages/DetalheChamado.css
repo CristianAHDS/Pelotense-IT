@@ -126,8 +126,6 @@
 .g-badge { font-size: 22px; opacity: 0.3; }
 .g-badge.earned { opacity: 1; }
 
-@media (max-width: 768px) {
-
 .detalhe-badges {
   display: flex;
   gap: 8px;
