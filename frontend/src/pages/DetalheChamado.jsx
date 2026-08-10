@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Send, Paperclip, Download, Trash2, Play } from 'lucide-react';
+import { ArrowLeft, Send, Paperclip, Download, Trash2, Image, Timer } from 'lucide-react';
+import { useToast } from '../contexts/ToastContext';
 import './DetalheChamado.css';
 
 const API = '/api';
@@ -20,45 +21,102 @@ const PRIORIDADE_MAP = {
   critica: { label: 'Crítica', cls: 'badge-red' },
 };
 
+function tempoDecorrido(inicio, fim) {
+  const start = new Date(inicio);
+  const end = fim ? new Date(fim) : new Date();
+  const diff = Math.floor((end - start) / 1000);
+  if (diff < 60) return `${diff}s`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}min ${diff % 60}s`;
+  const h = Math.floor(diff / 3600);
+  const m = Math.floor((diff % 3600) / 60);
+  if (diff < 86400) return `${h}h ${m}min`;
+  const d = Math.floor(diff / 86400);
+  return `${d}d ${h % 24}h`;
+}
+
 export default function DetalheChamado() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { add: addToast } = useToast();
   const [chamado, setChamado] = useState(null);
   const [comentario, setComentario] = useState('');
+  const [comentImagem, setComentImagem] = useState(null);
+  const [elapsed, setElapsed] = useState('');
 
   const loadChamado = () => {
     fetch(`${API}/chamados/${id}`)
       .then((r) => r.json())
-      .then(setChamado)
+      .then((c) => {
+        setChamado(c);
+        if (!c.tecnico) {
+          fetch(`${API}/chamados/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tecnico: 'Cris' }),
+          }).then((r) => r.json()).then(setChamado);
+        }
+      })
       .catch(() => navigate('/chamados'));
   };
 
   useEffect(loadChamado, [id]);
 
+  useEffect(() => {
+    if (!chamado) return;
+    const tick = () => {
+      if (chamado.resolvido_em) setElapsed(tempoDecorrido(chamado.criado_em, chamado.resolvido_em));
+      else setElapsed(tempoDecorrido(chamado.criado_em));
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [chamado]);
+
   const handleStatusChange = async (novoStatus) => {
     await fetch(`${API}/chamados/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: novoStatus }),
+      body: JSON.stringify({ status: novoStatus, tecnico: 'Cris' }),
     });
+    addToast(`Status alterado para ${STATUS_MAP[novoStatus]?.label || novoStatus}`, 'info');
     loadChamado();
   };
 
   const enviarComentario = async (e) => {
     e.preventDefault();
-    if (!comentario.trim()) return;
+    if (!comentario.trim() && !comentImagem) return;
+
+    let texto = comentario.trim();
+
+    if (comentImagem) {
+      const fd = new FormData();
+      fd.append('arquivos', comentImagem);
+      try {
+        const r = await fetch(`${API}/chamados/${id}/anexos`, { method: 'POST', body: fd });
+        const anexos = await r.json();
+        if (anexos.length > 0) {
+          texto = texto ? `${texto}\n[imagem: ${API}/chamados/anexos/${anexos[0].nome_armazenado}]` : `[imagem: ${API}/chamados/anexos/${anexos[0].nome_armazenado}]`;
+        }
+      } catch (_) {}
+    }
+
+    if (!texto) return;
+
     await fetch(`${API}/chamados/${id}/comentarios`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ autor: 'Técnico', texto: comentario }),
+      body: JSON.stringify({ autor: 'Cris', texto }),
     });
     setComentario('');
+    setComentImagem(null);
+    addToast('Comentário adicionado', 'success');
     loadChamado();
   };
 
   const removerAnexo = async (anexoId) => {
     if (!confirm('Remover este anexo?')) return;
     await fetch(`${API}/chamados/anexos/${anexoId}`, { method: 'DELETE' });
+    addToast('Anexo removido', 'success');
     loadChamado();
   };
 
@@ -76,22 +134,16 @@ export default function DetalheChamado() {
         <div>
           <h2>#{chamado.id} - {chamado.titulo}</h2>
           <div className="detalhe-badges">
-            <span className={`badge ${STATUS_MAP[chamado.status]?.cls}`}>
-              {STATUS_MAP[chamado.status]?.label}
-            </span>
-            <span className={`badge ${PRIORIDADE_MAP[chamado.prioridade]?.cls}`}>
-              {PRIORIDADE_MAP[chamado.prioridade]?.label}
-            </span>
-          <span className="badge badge-gray">{chamado.categoria}</span>
-        </div>
-        {chamado.tags && chamado.tags.length > 0 && (
-          <div className="detalhe-tags">
-            {chamado.tags.map((t) => (
-              <span key={t.id} className="tag-chip">{t.nome}</span>
-            ))}
+            <span className={`badge ${STATUS_MAP[chamado.status]?.cls}`}>{STATUS_MAP[chamado.status]?.label}</span>
+            <span className={`badge ${PRIORIDADE_MAP[chamado.prioridade]?.cls}`}>{PRIORIDADE_MAP[chamado.prioridade]?.label}</span>
+            <span className="badge badge-gray">{chamado.categoria}</span>
           </div>
-        )}
-      </div>
+          {chamado.tags && chamado.tags.length > 0 && (
+            <div className="detalhe-tags">
+              {chamado.tags.map((t) => <span key={t.id} className="tag-chip">{t.nome}</span>)}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="detalhe-grid">
@@ -123,22 +175,15 @@ export default function DetalheChamado() {
                       </div>
                     )}
                     {!isMediaPreview(a.tipo) && (
-                      <div className="anexo-preview doc-preview">
-                        <Paperclip size={28} />
-                      </div>
+                      <div className="anexo-preview doc-preview"><Paperclip size={28} /></div>
                     )}
                     <div className="anexo-info">
                       <span className="anexo-nome" title={a.nome_original}>{a.nome_original}</span>
                       <span className="anexo-tamanho">{(a.tamanho / 1024 / 1024).toFixed(1)} MB</span>
                     </div>
                     <div className="anexo-actions">
-                      <a href={`${API}/chamados/anexos/${a.nome_armazenado}`} download={a.nome_original}
-                        className="btn-icon" title="Download">
-                        <Download size={15} />
-                      </a>
-                      <button onClick={() => removerAnexo(a.id)} className="btn-icon btn-icon-danger" title="Remover">
-                        <Trash2 size={15} />
-                      </button>
+                      <a href={`${API}/chamados/anexos/${a.nome_armazenado}`} download={a.nome_original} className="btn-icon" title="Download"><Download size={15} /></a>
+                      <button onClick={() => removerAnexo(a.id)} className="btn-icon btn-icon-danger" title="Remover"><Trash2 size={15} /></button>
                     </div>
                   </div>
                 ))}
@@ -169,21 +214,34 @@ export default function DetalheChamado() {
               {chamado.comentarios?.length === 0 && (
                 <p className="text-muted">Nenhum comentário ainda.</p>
               )}
-              {chamado.comentarios?.map((c) => (
-                <div key={c.id} className="comentario-item">
-                  <div className="comentario-header">
-                    <strong>{c.autor}</strong>
-                    <span>{new Date(c.criado_em).toLocaleString()}</span>
+              {chamado.comentarios?.map((c) => {
+                const imgMatch = c.texto.match(/\[imagem:\s*(.+?)\]/);
+                const displayText = c.texto.replace(/\[imagem:\s*.+?\]/, '').trim();
+                const imgUrl = imgMatch ? imgMatch[1] : null;
+                return (
+                  <div key={c.id} className="comentario-item">
+                    <div className="comentario-header">
+                      <strong>{c.autor}</strong>
+                      <span>{new Date(c.criado_em).toLocaleString()}</span>
+                    </div>
+                    {displayText && <p>{displayText}</p>}
+                    {imgUrl && <img src={imgUrl} alt="anexo" className="comentario-img" />}
                   </div>
-                  <p>{c.texto}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <form className="comentario-form" onSubmit={enviarComentario}>
               <input value={comentario} onChange={(e) => setComentario(e.target.value)}
                 placeholder="Adicionar comentário..." />
-              <button type="submit" disabled={!comentario.trim()}>
+              <label className="comentario-img-btn" title="Anexar imagem">
+                <Image size={16} />
+                <input type="file" accept="image/*" onChange={(e) => setComentImagem(e.target.files?.[0] || null)} hidden />
+              </label>
+              {comentImagem && (
+                <span className="comentario-img-name">{comentImagem.name}</span>
+              )}
+              <button type="submit" disabled={!comentario.trim() && !comentImagem}>
                 <Send size={16} />
               </button>
             </form>
@@ -194,15 +252,16 @@ export default function DetalheChamado() {
           <div className="detalhe-section">
             <h3>Informações</h3>
             <dl>
-              <dt>Solicitante</dt>
-              <dd>{chamado.solicitante}</dd>
-              <dt>Técnico</dt>
-              <dd>{chamado.tecnico || '-'}</dd>
-              <dt>Criado em</dt>
-              <dd>{new Date(chamado.criado_em).toLocaleString()}</dd>
-              <dt>Atualizado em</dt>
-              <dd>{new Date(chamado.atualizado_em).toLocaleString()}</dd>
+              <dt>Solicitante</dt><dd>{chamado.solicitante}</dd>
+              <dt>Técnico</dt><dd>{chamado.tecnico || 'Cris'}</dd>
+              <dt>Criado em</dt><dd>{new Date(chamado.criado_em).toLocaleString()}</dd>
+              <dt>Atualizado em</dt><dd>{new Date(chamado.atualizado_em).toLocaleString()}</dd>
               {chamado.resolvido_em && (<><dt>Resolvido em</dt><dd>{new Date(chamado.resolvido_em).toLocaleString()}</dd></>)}
+              <dt>Tempo</dt>
+              <dd className="tempo-timer">
+                <Timer size={14} />
+                <span>{elapsed}</span>
+              </dd>
             </dl>
           </div>
 
