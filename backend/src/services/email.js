@@ -10,7 +10,9 @@ function getTransporter(config) {
     host: config.smtp_host,
     port: config.smtp_port,
     secure: config.smtp_port === 465,
+    requireTLS: config.smtp_port === 587,
     auth: { user: config.smtp_user, pass: config.smtp_pass },
+    tls: { rejectUnauthorized: false },
   });
   return transporter;
 }
