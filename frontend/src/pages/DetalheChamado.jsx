@@ -65,10 +65,11 @@ export default function DetalheChamado() {
 
   useEffect(() => {
     if (!chamado) return;
-    const tick = () => {
-      if (chamado.resolvido_em) setElapsed(tempoDecorrido(chamado.criado_em, chamado.resolvido_em));
-      else setElapsed(tempoDecorrido(chamado.criado_em));
-    };
+    if (chamado.resolvido_em) {
+      setElapsed(tempoDecorrido(chamado.criado_em, chamado.resolvido_em));
+      return;
+    }
+    const tick = () => setElapsed(tempoDecorrido(chamado.criado_em));
     tick();
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
