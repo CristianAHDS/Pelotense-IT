@@ -150,6 +150,8 @@ export default function PortalNovo() {
               <option value="impressora">Impressora</option>
               <option value="email">E-mail</option>
               <option value="acesso">Acesso</option>
+              <option value="evento">Evento</option>
+              <option value="censura">Censura</option>
             </select>
           </div>
           <div className="form-group">
