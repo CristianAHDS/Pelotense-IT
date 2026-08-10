@@ -217,37 +217,31 @@ export default function DetalheChamado() {
           {chamado.anexos && chamado.anexos.length > 0 && (
             <div className="detalhe-section">
               <h3><Paperclip size={16} /> Anexos ({chamado.anexos.length})</h3>
-              <div className="anexos-grid">
-                {chamado.anexos.map((a) => (
-                  <div key={a.id} className="anexo-card">
-                    {a.tipo === 'imagem' && (
-                      <div className="anexo-preview" onClick={() => setLightbox(`${API}/chamados/anexos/${a.nome_armazenado}`)} style={{ cursor: 'pointer' }}>
-                        <img src={`${API}/chamados/anexos/${a.nome_armazenado}`} alt={a.nome_original} />
+              <div className="anexos-list">
+                {chamado.anexos.map((a) => {
+                  const url = `${API}/chamados/anexos/${a.nome_armazenado}`;
+                  const ext = (a.nome_original || '').split('.').pop()?.toUpperCase();
+                  return (
+                    <div
+                      key={a.id}
+                      className="anexo-item"
+                      onClick={() => {
+                        if (a.tipo === 'imagem') setLightbox(url);
+                        else window.open(url, '_blank');
+                      }}
+                    >
+                      <div className="anexo-item-icon">
+                        <Paperclip size={14} />
                       </div>
-                    )}
-                    {a.tipo === 'video' && (
-                      <div className="anexo-preview video-preview">
-                        <video controls src={`${API}/chamados/anexos/${a.nome_armazenado}`} />
+                      <div className="anexo-item-info">
+                        <span className="anexo-item-name">{a.nome_original}</span>
+                        <span className="anexo-item-meta">{ext} · {(a.tamanho / 1024 / 1024).toFixed(1)} MB</span>
                       </div>
-                    )}
-                    {a.tipo === 'audio' && (
-                      <div className="anexo-preview audio-preview">
-                        <audio controls src={`${API}/chamados/anexos/${a.nome_armazenado}`} />
-                      </div>
-                    )}
-                    {!isMediaPreview(a.tipo) && (
-                      <div className="anexo-preview doc-preview"><Paperclip size={28} /></div>
-                    )}
-                    <div className="anexo-info">
-                      <span className="anexo-nome" title={a.nome_original}>{a.nome_original}</span>
-                      <span className="anexo-tamanho">{(a.tamanho / 1024 / 1024).toFixed(1)} MB</span>
+                      <a href={url} download={a.nome_original} className="btn-icon" title="Download" onClick={(e) => e.stopPropagation()}><Download size={14} /></a>
+                      <button onClick={(e) => { e.stopPropagation(); removerAnexo(a.id); }} className="btn-icon btn-icon-danger" title="Remover"><Trash2 size={14} /></button>
                     </div>
-                    <div className="anexo-actions">
-                      <a href={`${API}/chamados/anexos/${a.nome_armazenado}`} download={a.nome_original} className="btn-icon" title="Download"><Download size={15} /></a>
-                      <button onClick={() => removerAnexo(a.id)} className="btn-icon btn-icon-danger" title="Remover"><Trash2 size={15} /></button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
