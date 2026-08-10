@@ -57,7 +57,7 @@ export default function DetalheChamado() {
   const [editForm, setEditForm] = useState({ titulo: '', descricao: '', categoria: '', prioridade: '' });
   const [novoCheck, setNovoCheck] = useState('');
   const [checklist, setChecklist] = useState([]);
-  const [techStats, setTechStats] = useState(null);
+  const [gamiData, setGamiData] = useState(null);
 
   const loadChamado = () => {
     fetch(`${API}/chamados/${id}`)
@@ -80,9 +80,9 @@ export default function DetalheChamado() {
   useEffect(loadChamado, [id]);
 
   useEffect(() => {
-    fetch(`${API}/chamados/stats`)
+    fetch(`${API}/gamificacao/usuario/Cris`)
       .then((r) => r.json())
-      .then((data) => setTechStats(data))
+      .then(setGamiData)
       .catch(() => {});
   }, [id]);
 
@@ -465,38 +465,54 @@ export default function DetalheChamado() {
           <div className="detalhe-section">
             <div className="gamification-bar">
               {(() => {
-                const crisStats = (techStats?.tecnicos || []).find((t) => t.tecnico === 'Cris');
-                const totalResolvidos = crisStats?.resolvidos || 0;
-                const totalAtendidos = crisStats?.total || 0;
-
+                const d = gamiData;
+                if (!d) return <div className="loading">Carregando...</div>;
                 const tempoRes = chamado.resolvido_em
                   ? (new Date(chamado.resolvido_em) - new Date(chamado.criado_em)) / 3600000
                   : null;
-
-                let nivel = 'Iniciante';
-                let medal = '🥉';
-                if (totalResolvidos >= 200) { nivel = 'Lenda'; medal = '👑'; }
-                else if (totalResolvidos >= 100) { nivel = 'Diamante'; medal = '💎'; }
-                else if (totalResolvidos >= 50) { nivel = 'Ouro'; medal = '🏆'; }
-                else if (totalResolvidos >= 25) { nivel = 'Prata'; medal = '🥇'; }
-                else if (totalResolvidos >= 10) { nivel = 'Bronze'; medal = '🥈'; }
-
+                const earnedBadges = (d.allBadges || []).filter(b => b.conquistado);
+                const recentBadges = earnedBadges.slice(-3);
                 return (
-                  <>
-                    <div className="g-medal">{medal}</div>
-                    <div className="g-text">
-                      <span className="g-title">Cristian Raffi Cunha</span>
-                      <span className="g-sub">
-                        {totalResolvidos} resolvidos · {totalAtendidos} atendidos · Nível {nivel}
-                        {tempoRes !== null && ` · ${tempoRes.toFixed(1)}h`}
-                      </span>
-                    </div>
-                    {chamado.status !== 'resolvido' && (
-                      <div className="g-hint">
-                        Resolva este chamado para ganhar badges!
+                  <div className="g-wrap">
+                    <div className="g-top">
+                      <div className="g-medal">{d.medal}</div>
+                      <div className="g-text">
+                        <span className="g-title">{d.usuario}</span>
+                        <span className="g-sub">
+                          {d.totalResolvidos} resolvidos · Nível {d.nivel}
+                        </span>
                       </div>
-                    )}
-                  </>
+                    </div>
+                    <div className="g-mid">
+                      <div className="g-progress-label">
+                        <span>Progresso para {d.proximoNivel}</span>
+                        <span>{d.progressoNivel}%</span>
+                      </div>
+                      <div className="g-progress-bar">
+                        <div className="g-progress-fill" style={{ width: `${d.progressoNivel}%` }} />
+                      </div>
+                    </div>
+                    <div className="g-bottom">
+                      <div className="g-stats-row">
+                        <span className="g-stat"><span className="g-stat-val">{d.totalResolvidos}</span> resolvidos</span>
+                        <span className="g-stat"><span className="g-stat-val">{earnedBadges.length}</span> badges</span>
+                        <span className="g-stat"><span className="g-stat-val">{d.streak}d</span> streak</span>
+                        {tempoRes !== null && (
+                          <span className="g-stat"><span className="g-stat-val">{tempoRes.toFixed(1)}h</span> SLA</span>
+                        )}
+                      </div>
+                      {recentBadges.length > 0 && (
+                        <div className="g-badges">
+                          {recentBadges.map((b, i) => (
+                            <span key={i} className="g-badge earned" title={b.descricao}>{b.icone}</span>
+                          ))}
+                        </div>
+                      )}
+                      {chamado.status !== 'resolvido' && (
+                        <div className="g-hint">Resolva este chamado para ganhar badges!</div>
+                      )}
+                    </div>
+                  </div>
                 );
               })()}
             </div>
