@@ -89,7 +89,12 @@
   border-radius: var(--radius-lg);
   padding: 16px;
   text-align: center;
-  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+}
+.stat-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-border-light);
+  box-shadow: var(--shadow-lg);
 }
 
 .stat-icon {
@@ -124,7 +129,12 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: 20px;
-  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+}
+.section-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-border-light);
+  box-shadow: var(--shadow-lg);
 }
 
 .section-header {

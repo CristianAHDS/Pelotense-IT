@@ -62,9 +62,13 @@
   display: flex; align-items: center; gap: 14px;
   background: var(--color-surface); border: 1px solid var(--color-border);
   border-radius: var(--radius-lg); padding: 20px;
-  transition: box-shadow 0.2s;
+  transition: all 0.3s ease;
 }
-.metric-card:hover { box-shadow: var(--shadow); }
+.metric-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-border-light);
+  box-shadow: var(--shadow-lg);
+}
 
 .metric-icon {
   width: 44px; height: 44px; border-radius: var(--radius-sm);
@@ -87,9 +91,13 @@
 .report-card {
   background: var(--color-surface); border: 1px solid var(--color-border);
   border-radius: var(--radius-lg); padding: 24px;
-  box-shadow: var(--shadow-sm); transition: box-shadow 0.3s;
+  transition: all 0.3s ease;
 }
-.report-card:hover { box-shadow: var(--shadow); }
+.report-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-border-light);
+  box-shadow: var(--shadow-lg);
+}
 .report-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 18px; }
 
 /* Tables */
