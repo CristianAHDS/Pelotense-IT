@@ -1,0 +1,18 @@
+{
+  "name": "pelotense-it",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pelotense IT - Dashboard de Controle de Chamados de TI",
+  "author": "Cristian Raffi Cunha",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:front": "cd frontend && npm run dev",
+    "dev:back": "cd backend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "tauri": "cd frontend && npm run tauri",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
+  }
+}

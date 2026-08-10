@@ -1,0 +1,18 @@
+[package]
+name = "pelotense-it"
+version = "1.0.0"
+description = "Pelotense IT - Dashboard de Chamados"
+authors = ["Cristian Raffi Cunha"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[lib]
+name = "pelotense_it_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
