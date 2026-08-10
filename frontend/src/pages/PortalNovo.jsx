@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Save, Upload, X, File, Image, Film, Music } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
@@ -10,6 +10,27 @@ const API = '/api';
 export default function PortalNovo() {
   const navigate = useNavigate();
   const { add: addToast } = useToast();
+
+  useEffect(() => {
+    const handlePaste = (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            if (arquivos.length >= 5) {
+              setError('Máximo de 5 anexos por chamado.');
+              return;
+            }
+            setArquivos((prev) => [...prev, file]);
+          }
+        }
+      }
+    };
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [arquivos]);
   const fileInputRef = useRef(null);
   const [form, setForm] = useState({
     titulo: '', descricao: '', prioridade: 'media',

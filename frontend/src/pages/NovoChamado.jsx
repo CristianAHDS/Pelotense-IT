@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Save, Upload, X, File, Image, Film, Music, Tag } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
@@ -20,6 +20,27 @@ export default function NovoChamado() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { add: addToast } = useToast();
+
+  useEffect(() => {
+    const handlePaste = (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            if (arquivos.length >= 5) {
+              setError('Máximo de 5 anexos por chamado.');
+              return;
+            }
+            setArquivos((prev) => [...prev, file]);
+          }
+        }
+      }
+    };
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [arquivos]);
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files || []);
