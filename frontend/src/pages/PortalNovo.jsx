@@ -103,8 +103,19 @@ export default function PortalNovo() {
 
   return (
     <div className="portal-page anim-fadeIn">
-      <h1 className="portal-title">Novo Chamado</h1>
-      <p className="portal-sub">Descreva seu problema e entraremos em contato em breve</p>
+      <div className="portal-hero portal-hero-sm">
+        <div className="portal-particles">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="portal-particle" style={{
+              left: (10 + i * 35) + '%',
+              animationDelay: (i * 0.7) + 's',
+              animationDuration: (3 + i * 0.4) + 's',
+            }} />
+          ))}
+        </div>
+        <h1 className="portal-title">Novo Chamado</h1>
+        <p className="portal-sub">Descreva seu problema e entraremos em contato em breve</p>
+      </div>
 
       <form className="portal-form" onSubmit={handleSubmit}>
         {error && <div className="form-error">{error}</div>}

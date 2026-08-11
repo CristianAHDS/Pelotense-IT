@@ -18,17 +18,6 @@ const COLUNAS = [
 
 const hoje = () => new Date().toLocaleDateString('sv');
 
-function getSemana(data) {
-  const d = new Date(data);
-  d.setHours(0, 0, 0, 0);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  const seg = new Date(d.setDate(diff));
-  const dom = new Date(seg);
-  dom.setDate(dom.getDate() + 6);
-  return `${seg.toLocaleDateString('pt-BR')} - ${dom.toLocaleDateString('pt-BR')}`;
-}
-
 export default function Kanban() {
   const navigate = useNavigate();
   const [chamados, setChamados] = useState([]);
@@ -149,6 +138,17 @@ export default function Kanban() {
   };
 
   const arquivados = getArquivados();
+
+  const getGroupedArquivados = () => {
+    const grouped = {};
+    arquivados.forEach((c) => {
+      const dataRes = c.resolvido_em || c.criado_em;
+      const key = dataRes.slice(0, 10);
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(c);
+    });
+    return Object.entries(grouped).sort(([a], [b]) => b.localeCompare(a));
+  };
 
   if (loading) {
     return (
@@ -282,29 +282,32 @@ export default function Kanban() {
           </button>
 
           {logOpen && (
-            <div className="kanban-log-grid">
-              {arquivados.map((c) => {
-                const dataRes = c.resolvido_em || c.criado_em;
-                const dt = new Date(dataRes);
-                const mes = dt.toLocaleDateString('pt-BR', { month: 'long' });
-                const ano = dt.getFullYear();
-                const semana = getSemana(dataRes);
+            <div className="kanban-log-sections">
+              {getGroupedArquivados().map(([key, items]) => {
+                const dt = new Date(key + 'T00:00:00');
+                const label = dt.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
                 return (
-                  <div
-                    key={c.id}
-                    className="kanban-card kanban-card-sm"
-                    onClick={() => navigate(`/chamados/${c.id}`)}
-                  >
-                    <div className="card-header-row">
-                      <span className={`card-prioridade prioridade-${c.prioridade}`} />
-                      <span className="card-id">#{c.id}</span>
+                  <div key={key} className="kanban-log-day">
+                    <div className="kanban-log-day-header">
+                      <span className="log-day-label">{label}</span>
+                      <span className="log-day-count">{items.length} chamado{items.length > 1 ? 's' : ''}</span>
                     </div>
-                    <p className="card-titulo">{c.titulo}</p>
-                    <div className="card-log-info">
-                      <span>{dt.toLocaleDateString('pt-BR')}</span>
-                      <span className="card-log-semana">Semana: {semana}</span>
+                    <div className="kanban-log-grid">
+                      {items.map((c) => (
+                        <div
+                          key={c.id}
+                          className="kanban-card kanban-card-sm"
+                          onClick={() => navigate(`/chamados/${c.id}`)}
+                        >
+                          <div className="card-header-row">
+                            <span className={`card-prioridade prioridade-${c.prioridade}`} />
+                            <span className="card-id">#{c.id}</span>
+                          </div>
+                          <p className="card-titulo">{c.titulo}</p>
+                          <div className="card-log-meta">{c.solicitante}</div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="card-log-meta">{mes} de {ano}</div>
                   </div>
                 );
               })}

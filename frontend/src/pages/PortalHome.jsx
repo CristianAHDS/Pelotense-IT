@@ -33,6 +33,15 @@ export default function PortalHome() {
   return (
     <div className="portal-page anim-fadeIn">
       <div className="portal-hero">
+        <div className="portal-particles">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="portal-particle" style={{
+              left: (5 + i * 20) + '%',
+              animationDelay: (i * 0.6) + 's',
+              animationDuration: (3 + i * 0.4) + 's',
+            }} />
+          ))}
+        </div>
         <h1>Acompanhe seus chamados</h1>
         <p>Digite seu e-mail ou nome para visualizar seus chamados de TI</p>
         <form className="portal-search" onSubmit={buscar}>

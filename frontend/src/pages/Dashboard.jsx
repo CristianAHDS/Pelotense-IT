@@ -484,7 +484,7 @@ export default function Dashboard() {
               <span className='panel-badge'>{totalChamados} total</span>
             </div>
             <div className='donut-content'>
-              <DonutChart segments={donutSegments} size={130} strokeWidth={14} />
+              <DonutChart segments={donutSegments} size={160} strokeWidth={14} />
               <div className='donut-legend'>
               {donutSegments.map((s) => (
                 <div key={s.status} className='donut-legend-item'>
