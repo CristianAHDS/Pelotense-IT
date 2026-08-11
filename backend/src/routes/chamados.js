@@ -100,13 +100,87 @@ router.get('/stats', (req, res) => {
       params
     );
 
+    const hoje = new Date().toISOString().slice(0, 10);
+    const seteDiasAtras = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+    const quatorzeDiasAtras = new Date(Date.now() - 14 * 86400000).toISOString().slice(0, 10);
+
+    let trend = 0;
+    try {
+      const anterior = queryOne(
+        `SELECT COUNT(*) as count FROM chamados WHERE criado_em >= ? AND criado_em < ?`,
+        [quatorzeDiasAtras, seteDiasAtras]
+      );
+      const atual = queryOne(
+        `SELECT COUNT(*) as count FROM chamados WHERE criado_em >= ? AND criado_em <= ?`,
+        [seteDiasAtras, hoje]
+      );
+      if (anterior?.count > 0) {
+        trend = Math.round(((atual?.count || 0) - anterior.count) / anterior.count * 100);
+      }
+    } catch (_) {}
+
+    let resolvedTrend = 0;
+    try {
+      const antRes = queryOne(
+        `SELECT COUNT(*) as count FROM chamados WHERE resolvido_em >= ? AND resolvido_em < ?`,
+        [quatorzeDiasAtras, seteDiasAtras]
+      );
+      const atRes = queryOne(
+        `SELECT COUNT(*) as count FROM chamados WHERE resolvido_em >= ? AND resolvido_em <= ?`,
+        [seteDiasAtras, hoje]
+      );
+      if (antRes?.count > 0) {
+        resolvedTrend = Math.round(((atRes?.count || 0) - antRes.count) / antRes.count * 100);
+      }
+    } catch (_) {}
+
     res.json({
       porStatus, porPrioridade, porCategoria,
       totalPeriodo: totalPeriodo?.count || 0,
       tecnicos: tecnicos || [],
       slaMedio: slaMedio?.horas || 0,
       porDia: porDia || [],
+      trend,
+      resolvedTrend,
     });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/feed', (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 20;
+    const feed = query(
+      `SELECT h.*, c.titulo as chamado_titulo, c.status as chamado_status, c.prioridade as chamado_prioridade
+       FROM historico h
+       JOIN chamados c ON h.chamado_id = c.id
+       ORDER BY h.criado_em DESC LIMIT ?`,
+      [limit]
+    );
+    res.json(feed);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/emergencia', (req, res) => {
+  try {
+    const criticos = query(
+      `SELECT * FROM chamados WHERE status = 'aberto' AND prioridade = 'critica'
+       ORDER BY criado_em ASC LIMIT 10`
+    );
+    const parados = query(
+      `SELECT * FROM chamados WHERE status = 'pendente'
+       AND julianday('now') - julianday(atualizado_em) > 1
+       ORDER BY atualizado_em ASC LIMIT 10`
+    );
+    const antigos = query(
+      `SELECT * FROM chamados WHERE status IN ('aberto', 'em_andamento')
+       AND julianday('now') - julianday(criado_em) > 2
+       ORDER BY criado_em ASC LIMIT 10`
+    );
+    res.json({ criticos, parados, antigos });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
