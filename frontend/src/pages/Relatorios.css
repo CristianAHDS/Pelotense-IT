@@ -99,12 +99,7 @@
   display: flex; align-items: center; gap: 14px;
   background: var(--color-surface); border: 1px solid var(--color-border);
   border-radius: var(--radius-lg); padding: 20px;
-  transition: all 0.3s ease;
-}
-.metric-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--color-border-light);
-  box-shadow: var(--shadow-lg);
+  position: relative;
 }
 
 .metric-icon {
@@ -114,9 +109,44 @@
   flex-shrink: 0;
 }
 
-.metric-data { display: flex; flex-direction: column; }
+.metric-data { display: flex; flex-direction: column; position: relative; }
 .metric-value { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: var(--color-text); }
 .metric-label { font-size: 12px; color: var(--color-text-muted); }
+.metric-trend {
+  position: absolute; top: 0; right: -8px;
+  font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 100px;
+}
+.metric-trend.up { background: rgba(16,185,129,0.12); color: var(--color-success); }
+.metric-trend.down { background: rgba(244,63,94,0.12); color: var(--color-danger); }
+
+/* Filter Presets */
+.filter-presets {
+  display: flex; gap: 4px; margin-left: auto;
+}
+.preset-btn {
+  padding: 6px 14px; border-radius: 100px; border: 1px solid var(--color-border);
+  background: transparent; color: var(--color-text-muted); font-size: 12px;
+  font-weight: 600; cursor: pointer; transition: all 0.15s;
+}
+.preset-btn:hover { border-color: var(--color-primary); color: var(--color-primary-light); }
+.preset-btn.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+
+/* Summary */
+.report-summary {
+  display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap;
+}
+.summary-chip {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: 100px; padding: 8px 16px; font-size: 13px; font-weight: 600;
+}
+.summary-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.summary-label { color: var(--color-text-muted); }
+.summary-val { color: var(--color-text); margin-left: 2px; }
+
+/* Line Chart */
+.line-chart { display: block; }
+.chart-axis-label { font-size: 9px; fill: var(--color-text-muted); }
 
 /* Grid */
 .report-grid {
@@ -128,14 +158,19 @@
 .report-card {
   background: var(--color-surface); border: 1px solid var(--color-border);
   border-radius: var(--radius-lg); padding: 24px;
-  transition: all 0.3s ease;
-}
-.report-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--color-border-light);
-  box-shadow: var(--shadow-lg);
 }
 .report-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 18px; }
+.report-card-wide { grid-column: 1 / -1; }
+
+/* Simple Donut */
+.simple-donut-wrap { position: relative; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
+.simple-donut-center { position: absolute; display: flex; flex-direction: column; align-items: center; }
+.donut-num { font-size: 28px; font-weight: 800; line-height: 1; }
+.donut-sub { font-size: 11px; color: var(--color-text-muted); margin-top: 2px; }
+.donut-mini-legend { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.mini-legend-item { font-size: 11px; color: var(--color-text-secondary); display: flex; align-items: center; gap: 4px; text-transform: capitalize; }
+.mini-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.mini-legend-item b { color: var(--color-text); margin-left: 1px; }
 
 /* Tables */
 .report-table { width: 100%; border-collapse: collapse; }
@@ -173,6 +208,7 @@
 .chart-label { font-size: 9px; color: var(--color-text-muted); margin-top: 4px; writing-mode: vertical-rl; text-orientation: mixed; }
 
 .text-right { text-align: right; }
+.text-muted { color: var(--color-text-muted); }
 .capitalize { text-transform: capitalize; }
 
 @media (max-width: 768px) {
@@ -181,5 +217,9 @@
   .report-filters { flex-direction: column; align-items: stretch; }
   .report-actions { flex-direction: column; }
   .report-actions .btn { width: 100%; justify-content: center; }
-  .relatorios-page .page-header { flex-direction: column; gap: 12px; }
+  .relatorios-page .page-header { flex-direction: column; gap: 12px; padding: 18px 20px; }
+  .filter-presets { margin-left: 0; flex-wrap: wrap; }
+  .report-card-wide { grid-column: 1; }
+  .report-summary { gap: 6px; }
+  .summary-chip { padding: 6px 12px; font-size: 11px; }
 }

@@ -54,6 +54,18 @@ async function gerarRelatorioDiario() {
     [today]
   );
 
+  const slaPorPrioridade = query(
+    `SELECT prioridade, ROUND(AVG((julianday(resolvido_em) - julianday(criado_em)) * 24), 1) as horas, COUNT(*) as total
+     FROM chamados WHERE status = 'resolvido' AND resolvido_em IS NOT NULL
+     GROUP BY prioridade ORDER BY
+       CASE prioridade WHEN 'critica' THEN 1 WHEN 'alta' THEN 2 WHEN 'media' THEN 3 WHEN 'baixa' THEN 4 END`
+  );
+
+  const topSolicitantes = query(
+    `SELECT solicitante, COUNT(*) as total FROM chamados
+     GROUP BY solicitante ORDER BY total DESC LIMIT 5`
+  );
+
   const slaMedio = queryOne(
     `SELECT ROUND(AVG((julianday(resolvido_em) - julianday(criado_em)) * 24), 1) as horas
      FROM chamados WHERE status = 'resolvido' AND resolvido_em IS NOT NULL`
@@ -67,6 +79,14 @@ async function gerarRelatorioDiario() {
     const taxa = t.total > 0 ? Math.round((t.resolvidos / t.total) * 100) : 0;
     return `<tr><td style="padding:8px 12px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e2d47;">${t.tecnico}</td><td style="padding:8px 12px;text-align:right;font-size:13px;font-weight:700;color:#818cf8;border-bottom:1px solid #1e2d47;">${t.resolvidosHoje}</td><td style="padding:8px 12px;text-align:right;font-size:13px;font-weight:600;color:#94a3b8;border-bottom:1px solid #1e2d47;">${t.total}</td><td style="padding:8px 12px;text-align:right;font-size:13px;font-weight:700;color:#34d399;border-bottom:1px solid #1e2d47;">${t.resolvidos}</td><td style="padding:8px 12px;text-align:right;font-size:13px;font-weight:600;color:#818cf8;border-bottom:1px solid #1e2d47;">${taxa}%</td></tr>`;
   }).join('');
+
+  const slaPrioridadeRows = slaPorPrioridade.map(s =>
+    `<tr><td style="padding:8px 12px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e2d47;text-transform:capitalize;">${s.prioridade}</td><td style="padding:8px 12px;text-align:right;font-size:13px;font-weight:700;color:#38bdf8;border-bottom:1px solid #1e2d47;">${s.horas}h</td><td style="padding:8px 12px;text-align:right;font-size:13px;font-weight:600;color:#94a3b8;border-bottom:1px solid #1e2d47;">${s.total}</td></tr>`
+  ).join('');
+
+  const topSolRows = topSolicitantes.map((s, i) =>
+    `<tr><td style="padding:7px 12px;font-size:13px;color:#94a3b8;border-bottom:1px solid #1e2d47;font-weight:700;">${i + 1}º</td><td style="padding:7px 12px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e2d47;">${s.solicitante}</td><td style="padding:7px 12px;text-align:right;font-size:13px;font-weight:700;color:#818cf8;border-bottom:1px solid #1e2d47;">${s.total}</td></tr>`
+  ).join('');
 
   const criticosRows = criticos.length > 0
     ? criticos.map(c => `<tr><td style="padding:8px 12px;font-size:13px;color:#94a3b8;border-bottom:1px solid rgba(244,63,94,0.15);">#${c.id}</td><td style="padding:8px 12px;font-size:13px;color:#e8edf5;border-bottom:1px solid rgba(244,63,94,0.15);">${c.titulo}</td><td style="padding:8px 12px;font-size:13px;color:#94a3b8;border-bottom:1px solid rgba(244,63,94,0.15);">${c.tecnico || '—'}</td></tr>`).join('')
@@ -218,6 +238,45 @@ async function gerarRelatorioDiario() {
             ${tecnicosRows || '<tr><td colspan="5" style="padding:20px;text-align:center;color:#64748b;font-size:12px;">Nenhum técnico</td></tr>'}
           </table>
         </td></tr>
+      </table>
+
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+        <tr>
+          <td width="50%" style="padding:5px;vertical-align:top;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(22,29,47,0.5);border:1px solid #1e2d47;border-radius:16px;">
+              <tr><td style="padding:20px;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px;">
+                  <tr><td style="font-size:14px;font-weight:700;color:#e8edf5;">⚡ SLA por Prioridade</td></tr>
+                </table>
+                <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;">
+                  <tr style="border-bottom:1px solid #1e2d47;">
+                    <td style="padding:8px 12px;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;">Prioridade</td>
+                    <td style="padding:8px 12px;text-align:right;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;">SLA</td>
+                    <td style="padding:8px 12px;text-align:right;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;">Qtd</td>
+                  </tr>
+                  ${slaPrioridadeRows || '<tr><td colspan="3" style="padding:20px;text-align:center;color:#64748b;font-size:12px;">Sem dados</td></tr>'}
+                </table>
+              </td></tr>
+            </table>
+          </td>
+          <td width="50%" style="padding:5px;vertical-align:top;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(22,29,47,0.5);border:1px solid #1e2d47;border-radius:16px;">
+              <tr><td style="padding:20px;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px;">
+                  <tr><td style="font-size:14px;font-weight:700;color:#e8edf5;">🏆 Top 5 Solicitantes</td></tr>
+                </table>
+                <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;">
+                  <tr style="border-bottom:1px solid #1e2d47;">
+                    <td style="padding:7px 12px;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;">#</td>
+                    <td style="padding:7px 12px;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;">Solicitante</td>
+                    <td style="padding:7px 12px;text-align:right;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;">Chamados</td>
+                  </tr>
+                  ${topSolRows || '<tr><td colspan="3" style="padding:20px;text-align:center;color:#64748b;font-size:12px;">Sem dados</td></tr>'}
+                </table>
+              </td></tr>
+            </table>
+          </td>
+        </tr>
       </table>
 
       <!-- Totals -->
