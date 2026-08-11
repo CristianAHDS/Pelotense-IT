@@ -1,8 +1,45 @@
 .relatorios-page .page-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   margin-bottom: 24px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: 24px 28px;
+  position: relative;
+  overflow: hidden;
+}
+
+.relatorios-page .page-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(circle at 20% 50%, rgba(99,102,241,0.12) 0%, transparent 50%),
+              radial-gradient(circle at 80% 50%, rgba(16,185,129,0.08) 0%, transparent 50%);
+}
+
+.relatorios-page .page-header > :not(.header-particles) { position: relative; z-index: 1; }
+
+.header-particles { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.header-particle {
+  position: absolute; bottom: -6px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  opacity: 0;
+  animation: headerParticleFloat 4s ease-in-out infinite;
+}
+.header-particle:nth-child(odd) { background: var(--color-primary-light); width: 7px; height: 7px; }
+.header-particle:nth-child(even) { background: rgba(16,185,129,0.7); width: 5px; height: 5px; }
+@keyframes headerParticleFloat {
+  0% { opacity: 0; transform: translateY(0) scale(0); }
+  20% { opacity: 0.7; transform: translateY(-30px) scale(1.2); }
+  60% { opacity: 0.4; transform: translateY(-60px) scale(0.8); }
+  100% { opacity: 0; transform: translateY(-90px) scale(0.3); }
 }
 
 .relatorios-page .page-header h2 {
@@ -31,7 +68,7 @@
   color: #fff; box-shadow: 0 2px 8px var(--color-primary-glow);
 }
 
-.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px var(--color-primary-glow); }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px var(--color-primary-glow); color: #fff; }
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
 /* Filters */

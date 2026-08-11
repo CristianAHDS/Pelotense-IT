@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import React from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Send, Paperclip, Download, Trash2, Image, Timer, X as XIcon, Camera, Edit2, CheckSquare, PlusCircle, Check } from 'lucide-react';
+import { ArrowLeft, Send, Paperclip, Download, Trash2, Image, Timer, X as XIcon, Camera, Edit2, CheckSquare, PlusCircle, Check, Upload, FileImage } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import { applyWatermark } from '../utils/watermark';
 import './DetalheChamado.css';
@@ -58,6 +58,8 @@ export default function DetalheChamado() {
   const [novoCheck, setNovoCheck] = useState('');
   const [checklist, setChecklist] = useState([]);
   const [gamiData, setGamiData] = useState(null);
+  const [resolveDragOver, setResolveDragOver] = useState(false);
+  const resolveFileRef = useRef(null);
 
   const loadChamado = () => {
     fetch(`${API}/chamados/${id}`)
@@ -97,6 +99,41 @@ export default function DetalheChamado() {
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
   }, [chamado]);
+
+  useEffect(() => {
+    if (!showResolve) return;
+    const handlePaste = (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) setResolucaoImg(file);
+          break;
+        }
+      }
+    };
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [showResolve]);
+
+  useEffect(() => {
+    if (showResolve) return;
+    const handleComentPaste = (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) setComentImagem(file);
+          break;
+        }
+      }
+    };
+    window.addEventListener('paste', handleComentPaste);
+    return () => window.removeEventListener('paste', handleComentPaste);
+  }, [showResolve]);
 
   const handleStatusChange = async (novoStatus) => {
     if (novoStatus === 'resolvido') {
@@ -232,6 +269,15 @@ export default function DetalheChamado() {
       </Link>
 
       <div className="detalhe-header">
+        <div className="header-particles">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="header-particle" style={{
+              left: (5 + i * 20) + '%',
+              animationDelay: (i * 0.6) + 's',
+              animationDuration: (3 + i * 0.4) + 's',
+            }} />
+          ))}
+        </div>
         <div>
           {editing ? (
             <div className="edit-form">
@@ -431,17 +477,21 @@ export default function DetalheChamado() {
             <form className="comentario-form" onSubmit={enviarComentario}>
               <input value={comentario} onChange={(e) => setComentario(e.target.value)}
                 placeholder="Adicionar comentário..." />
-              <label className="comentario-img-btn" title="Anexar imagem">
+              <label className="comentario-img-btn" title="Anexar imagem (ou Ctrl+V)">
                 <Image size={16} />
                 <input type="file" accept="image/*" onChange={(e) => setComentImagem(e.target.files?.[0] || null)} hidden />
               </label>
-              {comentImagem && (
-                <span className="comentario-img-name">{comentImagem.name}</span>
-              )}
               <button type="submit" disabled={!comentario.trim() && !comentImagem}>
                 <Send size={16} />
               </button>
             </form>
+            {comentImagem && (
+              <div className="comentario-img-preview">
+                <FileImage size={14} />
+                <span>{comentImagem.name}</span>
+                <button onClick={() => setComentImagem(null)}><XIcon size={12} /></button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -540,14 +590,41 @@ export default function DetalheChamado() {
             <p className="modal-sub">Como o problema foi resolvido?</p>
             <textarea autoFocus rows={4} value={resolucao} onChange={(e) => setResolucao(e.target.value)}
               placeholder="Ex: Substituído cabo de rede com defeito, configurado novo IP..." />
-            <div className="resolve-upload-row">
-              <label className="resolve-img-btn">
-                <Camera size={14} /> Adicionar foto
-                <input type="file" accept="image/*" onChange={(e) => setResolucaoImg(e.target.files?.[0] || null)} hidden />
-              </label>
-              {resolucaoImg && (
-                <span className="resolve-img-name">{resolucaoImg.name} <button onClick={() => setResolucaoImg(null)}><XIcon size={12} /></button></span>
+            <div
+              className={`resolve-dropzone ${resolveDragOver ? 'drag-over' : ''} ${resolucaoImg ? 'has-file' : ''}`}
+              onClick={() => resolveFileRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); setResolveDragOver(true); }}
+              onDragLeave={() => setResolveDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setResolveDragOver(false);
+                const files = Array.from(e.dataTransfer.files || []);
+                const img = files.find((f) => f.type.startsWith('image/'));
+                if (img) setResolucaoImg(img);
+              }}
+            >
+              {resolucaoImg ? (
+                <div className="resolve-file-info">
+                  <FileImage size={18} />
+                  <span>{resolucaoImg.name}</span>
+                  <button className="resolve-file-remove" onClick={(e) => { e.stopPropagation(); setResolucaoImg(null); }}>
+                    <XIcon size={14} />
+                  </button>
+                </div>
+              ) : (
+                <div className="resolve-drop-hint">
+                  <Upload size={20} />
+                  <span>Arraste uma imagem aqui ou clique para selecionar</span>
+                  <small>Ou cole com Ctrl+V</small>
+                </div>
               )}
+              <input
+                ref={resolveFileRef}
+                type="file"
+                accept="image/*"
+                onChange={(e) => setResolucaoImg(e.target.files?.[0] || null)}
+                hidden
+              />
             </div>
             <div className="modal-actions">
               <button className="btn btn-ghost" onClick={() => setShowResolve(false)}>Cancelar</button>

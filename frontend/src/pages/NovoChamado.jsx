@@ -121,6 +121,15 @@ export default function NovoChamado() {
   return (
     <div className="novo-chamado-page">
       <div className="page-header">
+        <div className="header-particles">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="header-particle" style={{
+              left: (5 + i * 20) + '%',
+              animationDelay: (i * 0.6) + 's',
+              animationDuration: (3 + i * 0.4) + 's',
+            }} />
+          ))}
+        </div>
         <div>
           <h2>Novo Chamado</h2>
           <span className="page-subtitle">Registre uma nova solicitação</span>

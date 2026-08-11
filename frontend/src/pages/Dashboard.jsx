@@ -71,22 +71,6 @@ function timeAgo(dateStr) {
   return 'há ' + Math.floor(diff / 86400) + 'd';
 }
 
-function getInitials(name) {
-  if (!name) return '??';
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-function stringToColor(str) {
-  let hash = 0;
-  for (let i = 0; i < (str || '').length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const c = (hash & 0x00ffffff).toString(16).toUpperCase();
-  return '#' + '00000'.substring(0, 6 - c.length) + c;
-}
-
 
 function CountUp({ end, duration = 800 }) {
   const [val, setVal] = useState(0);
@@ -274,22 +258,29 @@ export default function Dashboard() {
       socket.on('chamado:created', loadData);
       socket.on('chamado:updated', loadData);
     }
+    const fetchWeather = (lat, lon) => {
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current_weather=true')
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.current_weather) {
+            setWeather({ temp: Math.round(data.current_weather.temperature), code: data.current_weather.weathercode });
+          }
+        })
+        .catch(() => {});
+    };
+
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          const { latitude, longitude } = pos.coords;
-          fetch('https://api.open-meteo.com/v1/forecast?latitude=' + latitude + '&longitude=' + longitude + '&current_weather=true')
-            .then((r) => r.json())
-            .then((data) => {
-              if (data.current_weather) {
-                setWeather({ temp: Math.round(data.current_weather.temperature), code: data.current_weather.weathercode });
-              }
-            })
-            .catch(() => {});
+          fetchWeather(pos.coords.latitude, pos.coords.longitude);
         },
-        () => {},
+        () => {
+          fetchWeather(-31.77, -52.34);
+        },
         { timeout: 5000 }
       );
+    } else {
+      fetchWeather(-31.77, -52.34);
     }
     return () => {
       if (socket) {
@@ -421,7 +412,7 @@ export default function Dashboard() {
           {cards.map(({ label, value, icon: Icon, color, filter, trend, pulse }) => (
             <div
               key={label}
-              className='stat-card glass-hover anim-fadeInUp'
+              className='stat-card anim-fadeInUp'
               onClick={() => navigate('/chamados' + (filter ? '?status=' + filter : ''))}
               role='button' tabIndex={0}
               onKeyDown={(e) => e.key === 'Enter' && navigate('/chamados' + (filter ? '?status=' + filter : ''))}
@@ -463,9 +454,6 @@ export default function Dashboard() {
                 recentes.map((c) => (
                   <Link key={c.id} to={'/chamados/' + c.id} className='recent-item'>
                     <div className='recent-left'>
-                      <div className='recent-avatar' style={{ background: stringToColor(c.solicitante) }}>
-                        {getInitials(c.solicitante)}
-                      </div>
                       <div className='recent-main'>
                         <div className='recent-top'>
                           <span className='recent-id'>#{c.id}</span>
@@ -542,7 +530,7 @@ export default function Dashboard() {
         {loading ? (
           <div className='home-panel home-panel-emergencia'><SkeletonPanel /></div>
         ) : (
-          <div className='home-panel home-panel-emergencia anim-fadeInUp glass-hover'>
+          <div className='home-panel home-panel-emergencia anim-fadeInUp'>
             <div className='panel-header'>
               <h3 style={{ display: 'flex', alignItems: 'center' }}>
                 <AlertTriangle size={14} style={{ marginRight: 6, color: '#f43f5e' }} />
@@ -591,7 +579,7 @@ export default function Dashboard() {
 
         {/* TMR Card */}
         {!loading && (
-          <Link to='/relatorios' className='tmr-card anim-fadeInUp glass-hover'>
+          <Link to='/relatorios' className='tmr-card anim-fadeInUp'>
             <div className='tmr-icon'><Clock size={24} /></div>
             <div className='tmr-info'>
               <span className='tmr-value'>{tmr}</span>
@@ -604,7 +592,7 @@ export default function Dashboard() {
         {loading ? (
           <div className='home-panel'><SkeletonPanel /></div>
         ) : (
-          <div className='home-panel anim-fadeInUp glass-hover'>
+          <div className='home-panel anim-fadeInUp'>
             <div className='panel-header'><h3>Chamados por Prioridade</h3></div>
             {stats?.porPrioridade && (
               <div className='bar-list'>
@@ -640,7 +628,7 @@ export default function Dashboard() {
 
         {/* Heatmap Calendar */}
         {!loading && (
-          <div className='home-panel home-panel-heatmap anim-fadeInUp glass-hover'>
+          <div className='home-panel home-panel-heatmap anim-fadeInUp'>
             <div className='panel-header'>
               <h3 style={{ display: 'flex', alignItems: 'center' }}>
                 Atividade (12 semanas)

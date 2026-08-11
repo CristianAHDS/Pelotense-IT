@@ -32,7 +32,7 @@ export default function Chamados() {
     status: searchParams.get('status') || '',
     prioridade: '',
   });
-  const limit = 15;
+  const limit = 10;
   const { add: addToast } = useToast();
 
   useEffect(() => {
@@ -68,6 +68,15 @@ export default function Chamados() {
   return (
     <div className="chamados-page">
       <div className="page-header">
+        <div className="header-particles">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="header-particle" style={{
+              left: (5 + i * 20) + '%',
+              animationDelay: (i * 0.6) + 's',
+              animationDuration: (3 + i * 0.4) + 's',
+            }} />
+          ))}
+        </div>
         <div>
           <h2>Chamados</h2>
           <span className="page-subtitle">{total} chamados encontrados</span>

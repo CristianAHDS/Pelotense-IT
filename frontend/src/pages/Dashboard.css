@@ -252,11 +252,6 @@
 .recent-item:hover { background: rgba(99,102,241,0.03); }
 .recent-item:first-child { background: rgba(99,102,241,0.04); border-left: 3px solid var(--color-primary); padding-left: 11px; }
 .recent-left { display: flex; align-items: center; gap: 10px; overflow: hidden; flex: 1; min-width: 0; }
-.recent-avatar {
-  width: 32px; height: 32px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0;
-}
 .recent-main { display: flex; flex-direction: column; overflow: hidden; flex: 1; min-width: 0; }
 .recent-top { display: flex; align-items: center; gap: 8px; }
 .recent-id { font-size: 12.5px; font-weight: 700; color: var(--color-primary-light); flex-shrink: 0; }

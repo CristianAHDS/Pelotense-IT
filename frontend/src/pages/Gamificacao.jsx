@@ -62,6 +62,15 @@ export default function Gamificacao() {
     <div className="gamificacao-page">
       <div className="gamificacao-hero">
         <div className="hero-bg" />
+        <div className="hero-particles">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="hero-particle" style={{
+              left: (5 + i * 20) + '%',
+              animationDelay: (i * 0.6) + 's',
+              animationDuration: (3 + i * 0.4) + 's',
+            }} />
+          ))}
+        </div>
         <div className="hero-content">
           <div className="hero-medal">{dados.medal}</div>
           <div className="hero-info">
