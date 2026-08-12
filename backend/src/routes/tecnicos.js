@@ -38,7 +38,7 @@ router.post('/', async (req, res) => {
 
     const usuarioExiste = queryOne('SELECT id FROM usuarios WHERE email = ?', [email.trim().toLowerCase()]);
     if (!usuarioExiste) {
-      const senha = 'ahoradosul2024';
+      const senha = '99y!DlS&7j';
       const hash = await bcrypt.hash(senha, 10);
       run('INSERT INTO usuarios (nome, email, senha, confirmado, trocar_senha, tipo) VALUES (?, ?, ?, 1, 1, ?)',
         [nome.trim(), email.trim().toLowerCase(), hash, tipo]);
@@ -76,7 +76,7 @@ router.post('/:id/resetar-senha', async (req, res) => {
     const tecnico = queryOne('SELECT * FROM tecnicos WHERE id = ?', [req.params.id]);
     if (!tecnico) return res.status(404).json({ error: 'Técnico não encontrado' });
 
-    const senha = 'ahoradosul2024';
+    const senha = '99y!DlS&7j';
     const hash = await bcrypt.hash(senha, 10);
     run('UPDATE usuarios SET senha = ?, trocar_senha = 1 WHERE email = ?', [hash, tecnico.email.trim().toLowerCase()]);
 

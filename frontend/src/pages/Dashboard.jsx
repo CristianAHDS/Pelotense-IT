@@ -76,16 +76,18 @@ function timeAgo(dateStr) {
 function CountUp({ end, duration = 800 }) {
   const [val, setVal] = useState(0);
   const raf = useRef(null);
-  const started = useRef(false);
+  const prevEnd = useRef(end);
+
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
+    if (prevEnd.current === end && val > 0) return;
+    prevEnd.current = end;
     const startTime = performance.now();
+    const startVal = val;
     const animate = (now) => {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
-      setVal(Math.round(end * eased));
+      setVal(Math.round(startVal + (end - startVal) * eased));
       if (progress < 1) raf.current = requestAnimationFrame(animate);
     };
     raf.current = requestAnimationFrame(animate);
@@ -195,9 +197,10 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [weather, setWeather] = useState(null);
   const [slide, setSlide] = useState(0);
+  const [turnosData, setTurnosData] = useState([]);
   const greeting = getGreeting();
   const { socket } = useSocket();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
 
   const todayStr = new Date().toLocaleDateString('sv');
   const hojeCriados = stats?.porDia?.find((d) => d.dia === todayStr)?.count || 0;
@@ -238,20 +241,42 @@ export default function Dashboard() {
   }, [weather, stats, greeting]);
 
   const loadData = () => {
+    const hoje = new Date().toISOString().slice(0, 10);
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    const safeFetch = (url) => fetch(url, { headers }).then(r => r.ok ? r.json() : Promise.reject(r.status)).catch(() => null);
+
     Promise.all([
-      fetch(API + '/chamados/stats').then((r) => r.json()),
-      fetch(API + '/chamados?limit=5').then((r) => r.json()),
-      fetch(API + '/chamados/feed?limit=12').then((r) => r.json()),
-      fetch(API + '/chamados/emergencia').then((r) => r.json()),
+      safeFetch(API + '/chamados/stats'),
+      safeFetch(API + '/chamados?limit=5'),
+      safeFetch(API + '/chamados/feed?limit=12'),
+      safeFetch(API + '/chamados/emergencia'),
+      safeFetch(API + '/chamados?limit=200&inicio=' + hoje + '&fim=' + hoje),
     ])
-      .then(([statsData, recentData, feedData, emergData]) => {
-        setStats(statsData);
-        setRecentes(recentData.chamados || []);
-        setFeed(Array.isArray(feedData) ? feedData : []);
-        setEmergencia(emergData);
+      .then(([statsData, recentData, feedData, emergData, hojeData]) => {
+        if (statsData) setStats(statsData);
+        if (recentData) setRecentes(recentData.chamados || []);
+        if (feedData) setFeed(Array.isArray(feedData) ? feedData : []);
+        if (emergData) setEmergencia(emergData);
+        if (hojeData) {
+          const chamadosHoje = hojeData.chamados || [];
+          let manha = 0, tarde = 0, noite = 0;
+          chamadosHoje.forEach((c) => {
+            const h = new Date(c.criado_em).getHours();
+            if (isNaN(h)) return;
+            if (h >= 6 && h < 12) manha++;
+            else if (h >= 12 && h < 18) tarde++;
+            else noite++;
+          });
+          setTurnosData([
+            { label: 'Manhã (6-12h)', count: manha, color: '#f59e0b' },
+            { label: 'Tarde (12-18h)', count: tarde, color: '#38bdf8' },
+            { label: 'Noite (18-6h)', count: noite, color: '#a78bfa' },
+          ]);
+        }
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => { console.error('Erro ao carregar dados:', err); setLoading(false); });
   };
 
   useEffect(() => {
@@ -317,7 +342,6 @@ export default function Dashboard() {
       return { ...s, color: colors[s.status] || '#6366f1' };
     });
 
-  const tmr = stats?.slaMedio ? stats.slaMedio + 'h' : '--';
   const sparkData = (stats?.porDia || []).slice(-14).map((d) => d.count);
 
   const handleTilt = useCallback((e) => {
@@ -646,15 +670,35 @@ export default function Dashboard() {
         )}
 
 
-        {/* TMR Card */}
-        {!loading && (
-          <Link to='/relatorios' className='tmr-card anim-fadeInUp'>
-            <div className='tmr-icon'><Clock size={24} /></div>
-            <div className='tmr-info'>
-              <span className='tmr-value'>{tmr}</span>
-              <span className='tmr-label'>Tempo Médio de Resolução</span>
+        {/* Por Turno */}
+        {loading ? (
+          <div className='home-panel'><SkeletonPanel /></div>
+        ) : (
+          <div className='home-panel anim-fadeInUp'>
+            <div className='panel-header'><h3>Chamados por Turno (Hoje)</h3></div>
+            <div className='bar-list'>
+              {turnosData.map((t) => {
+                const maxTurno = Math.max(...turnosData.map((d) => d.count), 1);
+                return (
+                  <div key={t.label} className='bar-item'>
+                    <div className='bar-label'>
+                      <span className='bar-name'>
+                        <span className='bar-dot' style={{ background: t.color }} />
+                        {t.label}
+                      </span>
+                      <span className='bar-count'>{t.count}</span>
+                    </div>
+                    <div className='bar-track'>
+                      <div
+                        className='bar-fill'
+                        style={{ width: ((t.count / maxTurno) * 100).toFixed(0) + '%', background: t.color }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          </Link>
+          </div>
         )}
 
         {/* Priority Bar Chart */}

@@ -35,10 +35,15 @@ async function initDatabase() {
       tecnico TEXT,
       criado_em TEXT DEFAULT (datetime('now','localtime')),
       atualizado_em TEXT DEFAULT (datetime('now','localtime')),
-      resolvido_em TEXT
+      resolvido_em TEXT,
+      tempo_em_andamento INTEGER DEFAULT 0,
+      inicio_em_andamento TEXT
     )
   `);
 
+  try { db.run('ALTER TABLE chamados ADD COLUMN resolucao TEXT'); } catch (_) {}
+  try { db.run('ALTER TABLE chamados ADD COLUMN tempo_em_andamento INTEGER DEFAULT 0'); } catch (_) {}
+  try { db.run('ALTER TABLE chamados ADD COLUMN inicio_em_andamento TEXT'); } catch (_) {}
   try { db.run('ALTER TABLE tecnicos ADD COLUMN tipo TEXT DEFAULT "TI"'); } catch (_) {}
   try { db.run('ALTER TABLE usuarios ADD COLUMN tipo TEXT DEFAULT "TI"'); } catch (_) {}
   try { db.run('ALTER TABLE usuarios ADD COLUMN trocar_senha INTEGER DEFAULT 0'); } catch (_) {}

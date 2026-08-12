@@ -1,6 +1,21 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import os from 'os';
+
+function getLocalIP() {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name] || []) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return 'localhost';
+}
+
+const ip = getLocalIP();
 
 export default defineConfig({
   plugins: [
@@ -42,3 +57,5 @@ export default defineConfig({
     sourcemap: !!process.env.TAURI_DEBUG,
   },
 });
+
+console.log('\n📱 Mobile: http://' + ip + ':5173');

@@ -301,6 +301,7 @@ export default function Relatorios() {
       { label: 'Noite (18-6h)', count: noite, color: '#a78bfa' },
     ];
   })();
+  const maxTurno = Math.max(...turnosData.map((d) => d.count), 1);
 
   const topSolicitantes = (() => {
     const map = {};
@@ -832,7 +833,7 @@ export default function Relatorios() {
                 <div className="h-bar-track">
                   <div
                     className="h-bar-fill turno-bar"
-                    style={{ width: '200px', background: t.color }}
+                    style={{ width: ((t.count / maxTurno) * 100).toFixed(0) + '%', background: t.color }}
                   />
                 </div>
                 <span className="h-bar-val">{t.count}</span>

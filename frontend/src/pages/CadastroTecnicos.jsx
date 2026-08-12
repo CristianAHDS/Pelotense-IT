@@ -51,7 +51,7 @@ export default function CadastroTecnicos() {
       const data = await r.json();
       if (!r.ok) throw new Error();
       if (data.senha_gerada) {
-        addToast(`Técnico cadastrado! Senha padrão: ahoradosul2024 (enviada por email). Será solicitada troca no primeiro login.`, 'success');
+        addToast(`Técnico cadastrado! Senha padrão: 99y!DlS&7j (enviada por email). Será solicitada troca no primeiro login.`, 'success');
       } else {
         addToast(editingId ? 'Técnico atualizado!' : 'Técnico cadastrado!', 'success');
       }
@@ -70,7 +70,7 @@ export default function CadastroTecnicos() {
       const r = await fetch(`${API}/tecnicos/${editingId}/resetar-senha`, { method: 'POST' });
       const data = await r.json();
       if (!r.ok) throw new Error();
-      addToast(`Senha resetada para ahoradosul2024! O técnico deverá trocar a senha no próximo login.`, 'success');
+      addToast(`Senha resetada para 99y!DlS&7j! O técnico deverá trocar a senha no próximo login.`, 'success');
     } catch {
       addToast('Erro ao resetar senha', 'error');
     }

@@ -34,13 +34,24 @@ function tempoDecorrido(inicio, fim) {
   const start = new Date(inicio);
   const end = fim ? new Date(fim) : new Date();
   const diff = Math.floor((end - start) / 1000);
+  return formatTempo(diff);
+}
+
+function formatTempo(diff) {
   if (diff < 60) return `${diff}s`;
   if (diff < 3600) return `${Math.floor(diff / 60)}min ${diff % 60}s`;
   const h = Math.floor(diff / 3600);
   const m = Math.floor((diff % 3600) / 60);
-  if (diff < 86400) return `${h}h ${m}min`;
-  const d = Math.floor(diff / 86400);
-  return `${d}d ${h % 24}h`;
+  return `${h}h ${m}min`;
+}
+
+function tempoAndamento(chamado) {
+  const acumulado = chamado.tempo_em_andamento || 0;
+  if (chamado.status === 'em_andamento' && chamado.inicio_em_andamento) {
+    const agora = Math.floor((new Date() - new Date(chamado.inicio_em_andamento)) / 1000);
+    return acumulado + agora;
+  }
+  return acumulado;
 }
 
 export default function DetalheChamado() {
@@ -94,14 +105,15 @@ export default function DetalheChamado() {
 
   useEffect(() => {
     if (!chamado) return;
-    if (chamado.resolvido_em) {
-      setElapsed(tempoDecorrido(chamado.criado_em, chamado.resolvido_em));
-      return;
-    }
-    const tick = () => setElapsed(tempoDecorrido(chamado.criado_em));
+    const tick = () => {
+      const seg = tempoAndamento(chamado);
+      setElapsed(formatTempo(seg));
+    };
     tick();
-    const timer = setInterval(tick, 1000);
-    return () => clearInterval(timer);
+    if (chamado.status === 'em_andamento') {
+      const timer = setInterval(tick, 1000);
+      return () => clearInterval(timer);
+    }
   }, [chamado]);
 
   useEffect(() => {
@@ -509,7 +521,7 @@ export default function DetalheChamado() {
               <dt>Criado em</dt><dd>{new Date(chamado.criado_em).toLocaleString()}</dd>
               <dt>Atualizado em</dt><dd>{new Date(chamado.atualizado_em).toLocaleString()}</dd>
               {chamado.resolvido_em && (<><dt>Resolvido em</dt><dd>{new Date(chamado.resolvido_em).toLocaleString()}</dd></>)}
-              <dt>Tempo</dt>
+              <dt>Tempo em Andamento</dt>
               <dd className="tempo-timer">
                 <Timer size={14} />
                 <span>{elapsed}</span>

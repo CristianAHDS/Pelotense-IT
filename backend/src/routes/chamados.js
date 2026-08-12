@@ -271,6 +271,13 @@ router.put('/:id', (req, res) => {
     const novoStatus = status || chamado.status;
     const usuario = tecnico || 'Sistema';
 
+    let tempoExtra = '';
+    if (novoStatus === 'em_andamento' && chamado.status !== 'em_andamento') {
+      tempoExtra = ', inicio_em_andamento = datetime(\'now\',\'localtime\')';
+    } else if (novoStatus !== 'em_andamento' && chamado.status === 'em_andamento' && chamado.inicio_em_andamento) {
+      tempoExtra = `, tempo_em_andamento = COALESCE(tempo_em_andamento, 0) + CAST((julianday('now','localtime') - julianday(inicio_em_andamento)) * 86400 AS INTEGER), inicio_em_andamento = NULL`;
+    }
+
     const params = [
       titulo ?? null, descricao ?? null, novoStatus,
       prioridade ?? null, categoria ?? null, tecnico ?? null, id
@@ -281,7 +288,7 @@ router.put('/:id', (req, res) => {
         `UPDATE chamados SET titulo = COALESCE(?, titulo), descricao = COALESCE(?, descricao),
          status = ?, prioridade = COALESCE(?, prioridade), categoria = COALESCE(?, categoria),
          tecnico = COALESCE(?, tecnico), atualizado_em = datetime('now','localtime'),
-         resolvido_em = datetime('now','localtime'), resolucao = COALESCE(?, resolucao) WHERE id = ?`,
+         resolvido_em = datetime('now','localtime'), resolucao = COALESCE(?, resolucao) ${tempoExtra} WHERE id = ?`,
         [...params.slice(0, 6), resolucao ?? null, id]
       );
       if (resolucao) {
@@ -295,7 +302,7 @@ router.put('/:id', (req, res) => {
       run(
         `UPDATE chamados SET titulo = COALESCE(?, titulo), descricao = COALESCE(?, descricao),
          status = ?, prioridade = COALESCE(?, prioridade), categoria = COALESCE(?, categoria),
-         tecnico = COALESCE(?, tecnico), atualizado_em = datetime('now','localtime') WHERE id = ?`,
+         tecnico = COALESCE(?, tecnico), atualizado_em = datetime('now','localtime') ${tempoExtra} WHERE id = ?`,
         params
       );
     }
