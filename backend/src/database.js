@@ -39,7 +39,9 @@ async function initDatabase() {
     )
   `);
 
-  try { db.run('ALTER TABLE chamados ADD COLUMN resolucao TEXT'); } catch (_) {}
+  try { db.run('ALTER TABLE tecnicos ADD COLUMN tipo TEXT DEFAULT "TI"'); } catch (_) {}
+  try { db.run('ALTER TABLE usuarios ADD COLUMN tipo TEXT DEFAULT "TI"'); } catch (_) {}
+  try { db.run('ALTER TABLE usuarios ADD COLUMN trocar_senha INTEGER DEFAULT 0'); } catch (_) {}
 
   db.run(`
     CREATE TABLE IF NOT EXISTS comentarios (
@@ -184,6 +186,32 @@ async function initDatabase() {
       destinatarios TEXT DEFAULT '',
       relatorio_hora TEXT DEFAULT '18:00',
       ativo INTEGER DEFAULT 0
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS tecnicos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nome TEXT NOT NULL,
+      email TEXT NOT NULL,
+      departamento TEXT DEFAULT 'TI',
+      tipo TEXT DEFAULT 'TI',
+      ativo INTEGER DEFAULT 1,
+      criado_em TEXT DEFAULT (datetime('now','localtime'))
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS usuarios (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nome TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      senha TEXT NOT NULL,
+      confirmado INTEGER DEFAULT 0,
+      token_confirmacao TEXT,
+      trocar_senha INTEGER DEFAULT 0,
+      tipo TEXT DEFAULT 'TI',
+      criado_em TEXT DEFAULT (datetime('now','localtime'))
     )
   `);
 

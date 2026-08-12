@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Ticket, Clock, CheckCircle, AlertTriangle, Plus, Columns, List, ArrowRight, Activity, ThermometerSun } from 'lucide-react';
 import { useSocket } from '../contexts/SocketContext';
+import { useAuth } from '../contexts/AuthContext';
 import { SkeletonCard, SkeletonPanel } from '../components/ui/Skeleton';
 import './Dashboard.css';
 
@@ -196,6 +197,7 @@ export default function Dashboard() {
   const [slide, setSlide] = useState(0);
   const greeting = getGreeting();
   const { socket } = useSocket();
+  const { user } = useAuth();
 
   const todayStr = new Date().toLocaleDateString('sv');
   const hojeCriados = stats?.porDia?.find((d) => d.dia === todayStr)?.count || 0;
@@ -208,7 +210,7 @@ export default function Dashboard() {
   const slides = [
     {
       emoji: weather ? weatherInfo.emoji : '🌤️',
-      title: greeting + ', Cristian',
+      title: greeting + ', ' + (user?.nome || 'Cristian'),
       text: weather
         ? (weatherInfo.label + ', ' + weather.temp + '°C — Confira o resumo dos chamados')
         : 'Carregando previsão... — Confira o resumo dos chamados',
@@ -473,6 +475,73 @@ export default function Dashboard() {
           </div>
         )}
 
+
+        {/* Category Donut Chart */}
+        {loading ? (
+          <div className='home-panel home-panel-donut'><SkeletonPanel /></div>
+        ) : (
+          <div className='home-panel home-panel-donut anim-fadeInUp'>
+            <div className='panel-header'><h3>Chamados por Categoria</h3></div>
+            <div className='donut-content'>
+              {stats?.porCategoria && (() => {
+                const catColors = {
+                  hardware: '#f59e0b', software: '#6366f1', rede: '#38bdf8', impressora: '#a78bfa',
+                  email: '#f43f5e', acesso: '#10b981', geral: '#64748b', evento: '#f97316',
+                  censura: '#ec4899', gravacao: '#8b5cf6', edicao: '#06b6d4', postagem: '#84cc16',
+                };
+                const catIcons = {
+                  hardware: '💻', software: '🖥️', rede: '🌐', impressora: '🖨️',
+                  email: '📧', acesso: '🔑', geral: '📋', evento: '🎪',
+                  censura: '🎥', gravacao: '🎙️', edicao: '✂️', postagem: '📡',
+                };
+                const data = stats.porCategoria;
+                const total = data.reduce((a, b) => a + b.count, 0) || 1;
+                const size = 170;
+                const strokeWidth = 18;
+                const radius = (size - strokeWidth) / 2;
+                const circ = 2 * Math.PI * radius;
+                return (
+                  <>
+                    <div className='donut-wrap'>
+                      <svg width={size} height={size} viewBox={'0 0 ' + size + ' ' + size}>
+                        {data.map((seg, i) => {
+                          const pct = seg.count / total;
+                          const dash = circ * pct;
+                          const offset = -circ * (data.slice(0, i).reduce((a, b) => a + b.count, 0) / total) + circ * 0.25;
+                          return (
+                            <circle
+                              key={i}
+                              cx={size / 2} cy={size / 2} r={radius}
+                              fill="none"
+                              stroke={catColors[seg.categoria] || '#6366f1'}
+                              strokeWidth={strokeWidth}
+                              strokeDasharray={dash + ' ' + (circ - dash)}
+                              strokeDashoffset={offset}
+                              strokeLinecap="round"
+                            />
+                          );
+                        })}
+                      </svg>
+                      <div className='donut-center'>
+                        <span className='donut-total'>{total}</span>
+                        <span className='donut-label'>chamados</span>
+                      </div>
+                    </div>
+                    <div className='donut-legend'>
+                      {data.slice(0, 6).map((c) => (
+                        <div key={c.categoria} className='donut-legend-item'>
+                          <span className='donut-legend-dot' style={{ background: catColors[c.categoria] || '#6366f1' }} />
+                          <span>{catIcons[c.categoria] || '📋'} {c.categoria}</span>
+                          <span className='donut-legend-count'>{c.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        )}
 
         {/* Donut Chart - Status */}
         {loading ? (

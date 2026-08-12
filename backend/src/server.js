@@ -9,6 +9,8 @@ const { initDatabase, queryOne } = require('./database');
 const chamadosRouter = require('./routes/chamados');
 const { router: gamificacaoRouter } = require('./routes/gamificacao');
 const emailRouter = require('./routes/email');
+const tecnicosRouter = require('./routes/tecnicos');
+const authRouter = require('./routes/auth');
 const { gerarRelatorioDiario } = require('./services/email');
 
 const app = express();
@@ -29,6 +31,8 @@ app.use((req, res, next) => {
 app.use('/api/chamados', chamadosRouter);
 app.use('/api/gamificacao', gamificacaoRouter);
 app.use('/api/email', emailRouter);
+app.use('/api/tecnicos', tecnicosRouter);
+app.use('/api/auth', authRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

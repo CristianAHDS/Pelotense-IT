@@ -1,4 +1,5 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
 import DashboardLayout from './components/Layout/DashboardLayout';
 import PortalLayout from './components/Layout/PortalLayout';
 import Dashboard from './pages/Dashboard';
@@ -9,13 +10,24 @@ import DetalheChamado from './pages/DetalheChamado';
 import Relatorios from './pages/Relatorios';
 import Gamificacao from './pages/Gamificacao';
 import Configuracoes from './pages/Configuracoes';
+import CadastroTecnicos from './pages/CadastroTecnicos';
 import PortalHome from './pages/PortalHome';
 import PortalNovo from './pages/PortalNovo';
+import Login from './pages/Login';
+
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div />;
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
+}
 
 export default function App() {
   return (
     <Routes>
-      <Route element={<DashboardLayout />}>
+      <Route path="/login" element={<Login />} />
+
+      <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/kanban" element={<Kanban />} />
         <Route path="/chamados" element={<Chamados />} />
@@ -24,7 +36,9 @@ export default function App() {
         <Route path="/relatorios" element={<Relatorios />} />
         <Route path="/gamificacao" element={<Gamificacao />} />
         <Route path="/configuracoes" element={<Configuracoes />} />
+        <Route path="/cadastro-tecnicos" element={<CadastroTecnicos />} />
       </Route>
+
       <Route element={<PortalLayout />}>
         <Route path="/portal" element={<PortalHome />} />
         <Route path="/portal/novo" element={<PortalNovo />} />

@@ -117,6 +117,9 @@ function SimpleDonut({ data = [], size = 140, strokeWidth = 16 }) {
     geral: '#64748b',
     evento: '#f97316',
     censura: '#ec4899',
+    gravacao: '#8b5cf6',
+    edicao: '#06b6d4',
+    postagem: '#84cc16',
   };
   let acc = 0;
   return (
@@ -781,6 +784,9 @@ export default function Relatorios() {
                         geral: '#64748b',
                         evento: '#f97316',
                         censura: '#ec4899',
+                        gravacao: '#8b5cf6',
+                        edicao: '#06b6d4',
+                        postagem: '#84cc16',
                       }[c.name] || '#6366f1',
                   }}
                 />

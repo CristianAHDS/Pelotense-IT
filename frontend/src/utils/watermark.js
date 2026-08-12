@@ -1,4 +1,4 @@
-export async function applyWatermark(file, tecnico = 'Cris') {
+export async function applyWatermark(file, tecnico = 'Cristian Raffi Cunha') {
   return new Promise((resolve, reject) => {
     if (!file.type.startsWith('image/')) {
       resolve(file);

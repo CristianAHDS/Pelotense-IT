@@ -1,0 +1,195 @@
+.cadastro-tecnicos-page { overflow-x: hidden; }
+
+.cadastro-tecnicos-page .page-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 28px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: 24px 28px;
+  position: relative;
+  overflow: hidden;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.cadastro-tecnicos-page .page-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(circle at 20% 50%, rgba(99,102,241,0.12) 0%, transparent 50%),
+              radial-gradient(circle at 80% 50%, rgba(16,185,129,0.08) 0%, transparent 50%);
+}
+
+.cadastro-tecnicos-page .page-header > :not(.header-particles) { position: relative; z-index: 1; }
+.cadastro-tecnicos-page .page-header h2 {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--color-text) 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.cadastro-tecnicos-page .page-subtitle { color: var(--color-text-muted); font-size: 13px; display: block; margin-top: 4px; }
+
+.ct-grid {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.ct-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+}
+
+.ct-card h3 {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ct-count {
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.ct-form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.ct-loading,
+.ct-empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.ct-table-wrap { overflow-x: auto; }
+
+.ct-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.ct-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ct-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.ct-table td:first-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ct-inactive td { opacity: 0.5; }
+
+.ct-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--color-primary), #818cf8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.ct-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ct-active-badge {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+
+.ct-inactive-badge {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.ct-row-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.ct-action-btn {
+  background: none;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  transition: all 0.15s;
+}
+
+.ct-action-btn:hover {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: var(--color-primary);
+  color: var(--color-primary-light);
+}
+
+.ct-action-btn.ct-delete:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+@media (max-width: 900px) {
+  .ct-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .cadastro-tecnicos-page .page-header {
+    padding: 18px 20px;
+  }
+  .cadastro-tecnicos-page .page-header h2 {
+    font-size: 20px;
+  }
+}

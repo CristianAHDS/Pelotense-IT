@@ -97,9 +97,9 @@
 .edit-desc:focus { border-color: var(--color-primary); }
 .edit-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .edit-row select {
-  background: var(--color-bg); border: 1px solid var(--color-border);
-  color: var(--color-text); padding: 8px 12px; border-radius: var(--radius-sm);
-  font-size: 13px; outline: none;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: var(--radius-sm);
 }
 .edit-row .btn { padding: 8px 16px; font-size: 12px; border-radius: var(--radius-sm); }
 .edit-row .btn-ghost { background: transparent; color: var(--color-text-muted); border: 1px solid var(--color-border); }

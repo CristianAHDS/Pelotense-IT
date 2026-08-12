@@ -1,18 +1,20 @@
 import { useState, useEffect } from 'react';
 import { Trophy, Award, Star, Zap, BarChart3, Target, TrendingUp, Clock, Shield, User } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import './Gamificacao.css';
 
 const API = '/api';
-const USUARIO = 'Cris';
 
 const CAT_ICONS = {
   hardware: '💻', software: '🖥️', rede: '🌐', impressora: '🖨️',
   email: '📧', acesso: '🔑', geral: '📋', evento: '🎪', censura: '🎥',
+  gravacao: '🎙️', edicao: '✂️', postagem: '📡',
 };
 
 const CAT_LABELS = {
   hardware: 'Hardware', software: 'Software', rede: 'Rede', impressora: 'Impressora',
   email: 'E-mail', acesso: 'Acesso', geral: 'Geral', evento: 'Evento', censura: 'Censura',
+  gravacao: 'Gravação', edicao: 'Edição', postagem: 'Postagem',
 };
 
 const BADGE_CATEGORIES = [
@@ -28,6 +30,8 @@ const NIVEL_MEDALS = {
 };
 
 export default function Gamificacao() {
+  const { user } = useAuth();
+  const USUARIO = user?.nome || 'Cristian Raffi Cunha';
   const [dados, setDados] = useState(null);
   const [ranking, setRanking] = useState([]);
   const [loading, setLoading] = useState(true);

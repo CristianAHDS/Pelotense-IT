@@ -3,15 +3,17 @@ import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Ticket, PlusCircle, BarChart3, Settings,
   Wrench, Columns, Menu, X, Bell, Sun, Moon, ChevronLeft, ChevronRight, Plus,
-  Play, Pause, Volume2, Trophy, Contrast,
+  Trophy, Contrast, UserCog, LogOut,
 } from 'lucide-react';
 import { useSocket } from '../../contexts/SocketContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import NetworkSpeed from '../ui/NetworkSpeed';
 import PageTransition from '../ui/PageTransition';
+import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import './DashboardLayout.css';
 
-const menuItems = [
+const mainMenuItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/kanban', icon: Columns, label: 'Kanban' },
   { to: '/chamados', icon: Ticket, label: 'Chamados' },
@@ -19,6 +21,10 @@ const menuItems = [
   { to: '/relatorios', icon: BarChart3, label: 'Relatórios' },
   { to: '/gamificacao', icon: Trophy, label: 'Gamificação' },
   { to: '/configuracoes', icon: Settings, label: 'Configurações' },
+];
+
+const adminMenuItems = [
+  { to: '/cadastro-tecnicos', icon: UserCog, label: 'Cadastro de Técnicos' },
 ];
 
 const breadcrumbMap = {
@@ -29,44 +35,24 @@ const breadcrumbMap = {
   '/relatorios': 'Relatórios',
   '/gamificacao': 'Gamificação',
   '/configuracoes': 'Configurações',
+  '/cadastro-tecnicos': 'Cadastro de Técnicos',
 };
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [nOpen, setNOpen] = useState(false);
-  const [radioPlaying, setRadioPlaying] = useState(false);
-  const [radioVolume, setRadioVolume] = useState(0.5);
-  const [radioAudio, setRadioAudio] = useState(null);
   const { notifications, clearNotifications } = useSocket();
   const { theme, toggle: toggleTheme } = useTheme();
   const location = useLocation();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const closeSidebar = () => setSidebarOpen(false);
   const unread = notifications.length;
 
   const isDetailPage = location.pathname.startsWith('/chamados/') && location.pathname !== '/chamados' && location.pathname !== '/chamados/novo';
   const currentLabel = breadcrumbMap[location.pathname] || (isDetailPage ? `Chamado #${location.pathname.split('/').pop()}` : '');
-
-  const toggleRadio = () => {
-    if (radioPlaying) {
-      if (radioAudio) { radioAudio.pause(); radioAudio.src = ''; setRadioAudio(null); }
-      setRadioPlaying(false);
-    } else {
-      const audio = new Audio('https://painel.audiotx.com.br/audio/radio.pelotense.aac');
-      audio.volume = radioVolume;
-      audio.play().catch(() => {});
-      audio.addEventListener('error', () => setRadioPlaying(false));
-      setRadioAudio(audio);
-      setRadioPlaying(true);
-    }
-  };
-
-  const handleVolume = (e) => {
-    const v = parseFloat(e.target.value);
-    setRadioVolume(v);
-    if (radioAudio) radioAudio.volume = v;
-  };
 
   return (
     <div className={`dashboard-layout ${collapsed ? 'sidebar-collapsed' : ''}`}>
@@ -83,11 +69,35 @@ export default function DashboardLayout() {
 
         {!collapsed && <div className="sidebar-section-label">Menu Principal</div>}
         <nav className="sidebar-nav">
-          {menuItems.map(({ to, icon: Icon, label }) => (
+          {mainMenuItems.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
               to={to}
               end={to === '/'}
+              onClick={closeSidebar}
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+              title={collapsed ? label : undefined}
+            >
+              <Icon size={18} />
+              {!collapsed && <span>{label}</span>}
+            </NavLink>
+          ))}
+        </nav>
+
+        {!collapsed ? (
+          <>
+            <div className="sidebar-divider" />
+            <div className="sidebar-section-label">Administração</div>
+          </>
+        ) : (
+          <div className="sidebar-divider" />
+        )}
+        <nav className="sidebar-nav">
+          {adminMenuItems.map(({ to, icon: Icon, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end
               onClick={closeSidebar}
               className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
               title={collapsed ? label : undefined}
@@ -107,36 +117,22 @@ export default function DashboardLayout() {
           </button>
         </div>
 
-        {!collapsed && (
-          <div className={`sidebar-radio ${radioPlaying ? 'playing' : ''}`}>
-            <div className="sidebar-radio-top">
-              <div className="radio-info">
-                <span className="radio-dot" />
-                <span>Rádio Pelotense</span>
-              </div>
-              <button className="radio-play-btn" onClick={toggleRadio} title={radioPlaying ? 'Parar' : 'Tocar'}>
-                {radioPlaying ? <Pause size={14} /> : <Play size={14} />}
-              </button>
-            </div>
-            {radioPlaying && (
-              <div className="radio-volume-row">
-                <Volume2 size={12} />
-                <input type="range" min="0" max="1" step="0.1" value={radioVolume} onChange={handleVolume} />
-              </div>
-            )}
-          </div>
-        )}
-
         <div className="sidebar-footer">
           <div className="sidebar-user">
-            <div className="user-avatar">CR</div>
+            <div className="user-avatar">{user ? user.nome.charAt(0).toUpperCase() : 'CR'}</div>
             {!collapsed && (
               <div className="user-info">
-                <span className="user-name">Cristian Raffi Cunha</span>
-                <span className="user-role">Administrador</span>
+                <span className="user-name">{user?.nome || 'Cristian Raffi Cunha'}</span>
+                <span className="user-role">{user?.tipo === 'radio' ? 'Téc. Rádio' : user?.tipo === 'audiovisual' ? 'Audiovisual' : 'TI'}</span>
               </div>
             )}
           </div>
+          {!collapsed && (
+            <button className="sidebar-logout-btn" onClick={() => { logout(); navigate('/login'); }} title="Sair">
+              <LogOut size={14} />
+              <span>Sair</span>
+            </button>
+          )}
         </div>
       </aside>
 
@@ -156,7 +152,7 @@ export default function DashboardLayout() {
       </header>
 
       <nav className="mobile-bottom-nav">
-        {menuItems.slice(0, 5).map(({ to, icon: Icon, label }) => (
+        {mainMenuItems.slice(0, 5).map(({ to, icon: Icon, label }) => (
           <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => `bottom-nav-link ${isActive ? 'active' : ''}`}>
             <Icon size={20} /><span>{label}</span>
           </NavLink>

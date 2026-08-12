@@ -1,6 +1,6 @@
 {
   "name": "pelotense-it-backend",
-  "version": "1.0.4",
+  "version": "1.0.8",
   "description": "Backend do Dashboard de Chamados de TI - Pelotense IT",
   "main": "src/server.js",
   "scripts": {
@@ -8,8 +8,10 @@
     "dev": "nodemon src/server.js"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "express": "^4.21.0",
+    "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
     "node-cron": "^4.6.0",
     "nodemailer": "^9.0.5",

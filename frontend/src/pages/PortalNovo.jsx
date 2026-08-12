@@ -165,6 +165,9 @@ export default function PortalNovo() {
               <option value="acesso">Acesso</option>
               <option value="evento">Evento</option>
               <option value="censura">Censura</option>
+              <option value="gravacao">Gravação</option>
+              <option value="edicao">Edição</option>
+              <option value="postagem">Postagem</option>
             </select>
           </div>
           <div className="form-group">

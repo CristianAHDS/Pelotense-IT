@@ -3,6 +3,7 @@ import React from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Send, Paperclip, Download, Trash2, Image, Timer, X as XIcon, Camera, Edit2, CheckSquare, PlusCircle, Check, Upload, FileImage } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
 import { applyWatermark } from '../utils/watermark';
 import './DetalheChamado.css';
 
@@ -19,6 +20,7 @@ const STATUS_MAP = {
 const CAT_AVATARS = {
   hardware: '💻', software: '🖥️', rede: '🌐', impressora: '🖨️',
   email: '📧', acesso: '🔑', geral: '📋', evento: '🎪', censura: '🎥',
+  gravacao: '🎙️', edicao: '✂️', postagem: '📡',
 };
 
 const PRIORIDADE_MAP = {
@@ -45,6 +47,8 @@ export default function DetalheChamado() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { add: addToast } = useToast();
+  const { user } = useAuth();
+  const tecnicoNome = user?.nome || 'Cristian Raffi Cunha';
   const [chamado, setChamado] = useState(null);
   const [comentario, setComentario] = useState('');
   const [comentImagem, setComentImagem] = useState(null);
@@ -72,7 +76,7 @@ export default function DetalheChamado() {
           fetch(`${API}/chamados/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tecnico: 'Cris' }),
+            body: JSON.stringify({ tecnico: tecnicoNome }),
           }).then((r) => r.json()).then(setChamado);
         }
       })
@@ -145,7 +149,7 @@ export default function DetalheChamado() {
     await fetch(`${API}/chamados/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: novoStatus, tecnico: 'Cris' }),
+      body: JSON.stringify({ status: novoStatus, tecnico: tecnicoNome }),
     });
     addToast(`Status alterado para ${STATUS_MAP[novoStatus]?.label || novoStatus}`, 'info');
     loadChamado();
@@ -156,7 +160,7 @@ export default function DetalheChamado() {
 
     if (resolucaoImg) {
       try {
-        const wm = await applyWatermark(resolucaoImg, 'Cris');
+        const wm = await applyWatermark(resolucaoImg, tecnicoNome);
         const fd = new FormData();
         fd.append('arquivos', wm);
         const r = await fetch(`${API}/chamados/${id}/anexos`, { method: 'POST', body: fd });
@@ -173,7 +177,7 @@ export default function DetalheChamado() {
     await fetch(`${API}/chamados/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'resolvido', tecnico: 'Cris', resolucao: textoResolucao || ' ' }),
+      body: JSON.stringify({ status: 'resolvido', tecnico: tecnicoNome, resolucao: textoResolucao || ' ' }),
     });
     setShowResolve(false);
     setResolucao('');
@@ -190,7 +194,7 @@ export default function DetalheChamado() {
 
     if (comentImagem) {
       const fd = new FormData();
-      const wm = await applyWatermark(comentImagem, 'Cris');
+      const wm = await applyWatermark(comentImagem, tecnicoNome);
       fd.append('arquivos', wm);
       try {
         const r = await fetch(`${API}/chamados/${id}/anexos`, { method: 'POST', body: fd });
@@ -206,7 +210,7 @@ export default function DetalheChamado() {
     await fetch(`${API}/chamados/${id}/comentarios`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ autor: 'Cris', texto }),
+      body: JSON.stringify({ autor: tecnicoNome, texto }),
     });
     setComentario('');
     setComentImagem(null);
@@ -288,6 +292,7 @@ export default function DetalheChamado() {
                   <option value="geral">Geral</option><option value="hardware">Hardware</option><option value="software">Software</option>
                   <option value="rede">Rede</option><option value="impressora">Impressora</option><option value="email">E-mail</option>
                   <option value="acesso">Acesso</option><option value="evento">Evento</option><option value="censura">Censura</option>
+                  <option value="gravacao">Gravação</option><option value="edicao">Edição</option><option value="postagem">Postagem</option>
                 </select>
                 <select value={editForm.prioridade} onChange={(e) => setEditForm({ ...editForm, prioridade: e.target.value })}>
                   <option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option><option value="critica">Crítica</option>
@@ -500,7 +505,7 @@ export default function DetalheChamado() {
             <h3>Informações</h3>
             <dl>
               <dt>Solicitante</dt><dd>{chamado.solicitante}</dd>
-              <dt>Técnico</dt><dd>{chamado.tecnico || 'Cris'}</dd>
+              <dt>Técnico</dt><dd>{chamado.tecnico || tecnicoNome}</dd>
               <dt>Criado em</dt><dd>{new Date(chamado.criado_em).toLocaleString()}</dd>
               <dt>Atualizado em</dt><dd>{new Date(chamado.atualizado_em).toLocaleString()}</dd>
               {chamado.resolvido_em && (<><dt>Resolvido em</dt><dd>{new Date(chamado.resolvido_em).toLocaleString()}</dd></>)}

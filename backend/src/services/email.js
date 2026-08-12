@@ -346,4 +346,57 @@ async function enviarTeste(config) {
   return true;
 }
 
-module.exports = { gerarRelatorioDiario, enviarTeste, resetTransporter };
+async function enviarBoasVindas(usuario) {
+  const config = queryOne('SELECT * FROM config_email WHERE id = 1');
+  if (!config || !config.smtp_user) return false;
+
+  const transport = getTransporter(config);
+  if (!transport) return false;
+
+  await transport.sendMail({
+    from: config.remetente,
+    to: usuario.email,
+    subject: 'Bem-vindo ao Pelotense IT!',
+    html: `<table width="100%" cellpadding="0" cellspacing="0" style="font-family:'Inter','Segoe UI',system-ui,sans-serif;background:#0a0e1a;background-image:radial-gradient(ellipse at 20% 0%,rgba(99,102,241,0.12) 0%,transparent 50%);-webkit-font-smoothing:antialiased;"><tr><td style="padding:40px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;margin:0 auto;background:rgba(22,29,47,0.5);border:1px solid rgba(99,102,241,0.15);border-radius:16px;">
+        <tr><td style="padding:32px;text-align:center;">
+          <div style="font-size:48px;margin-bottom:16px;">👋</div>
+          <h2 style="color:#e8edf5;font-size:20px;font-weight:800;margin:0 0 8px;">Bem-vindo, ${usuario.nome}!</h2>
+          <p style="color:#94a3b8;font-size:14px;margin:0 0 24px;line-height:1.6;">Sua conta no Pelotense IT foi criada com sucesso. Use suas credenciais para acessar o sistema de gestão de chamados.</p>
+          <p style="color:#64748b;font-size:12px;margin:24px 0 0;line-height:1.5;">Em caso de dúvidas, entre em contato com o administrador do sistema.</p>
+        </td></tr>
+      </table>
+    </td></tr></table>`,
+  });
+  return true;
+}
+
+async function enviarSenhaTecnico(tecnico, senha) {
+  const config = queryOne('SELECT * FROM config_email WHERE id = 1');
+  if (!config || !config.smtp_user) return false;
+
+  const transport = getTransporter(config);
+  if (!transport) return false;
+
+  await transport.sendMail({
+    from: config.remetente,
+    to: tecnico.email,
+    subject: 'Sua conta foi criada — Pelotense IT',
+    html: `<table width="100%" cellpadding="0" cellspacing="0" style="font-family:'Inter','Segoe UI',system-ui,sans-serif;background:#0a0e1a;background-image:radial-gradient(ellipse at 20% 0%,rgba(99,102,241,0.12) 0%,transparent 50%);-webkit-font-smoothing:antialiased;"><tr><td style="padding:40px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;margin:0 auto;background:rgba(22,29,47,0.5);border:1px solid rgba(16,185,129,0.15);border-radius:16px;">
+        <tr><td style="padding:32px;">
+          <h2 style="color:#e8edf5;font-size:18px;font-weight:800;margin:0 0 8px;">Olá, ${tecnico.nome}!</h2>
+          <p style="color:#94a3b8;font-size:14px;margin:0 0 24px;line-height:1.6;">Sua conta no Pelotense IT foi criada. Use as credenciais abaixo para fazer login. No primeiro acesso será solicitada a troca da senha.</p>
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.08);border-radius:8px;">
+            <tr><td style="padding:10px 16px;color:#94a3b8;font-size:12px;">Email</td><td style="padding:10px 16px;color:#e8edf5;font-size:13px;font-weight:600;">${tecnico.email}</td></tr>
+            <tr><td style="padding:10px 16px;color:#94a3b8;font-size:12px;">Senha</td><td style="padding:10px 16px;color:#e8edf5;font-size:13px;font-weight:600;">${senha}</td></tr>
+          </table>
+          <p style="color:#64748b;font-size:12px;margin:24px 0 0;line-height:1.5;">Você será solicitado a criar uma nova senha no primeiro login.</p>
+        </td></tr>
+      </table>
+    </td></tr></table>`,
+  });
+  return true;
+}
+
+module.exports = { gerarRelatorioDiario, enviarTeste, resetTransporter, enviarBoasVindas, enviarSenhaTecnico };

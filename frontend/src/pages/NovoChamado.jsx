@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Save, Upload, X, File, Image, Film, Music, Tag } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
 import { applyWatermark } from '../utils/watermark';
 import './NovoChamado.css';
 
@@ -9,6 +10,9 @@ const API = '/api';
 
 export default function NovoChamado() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const tecnicoNome = user?.nome || 'Cristian Raffi Cunha';
+  const tipo = user?.tipo || 'TI';
   const fileInputRef = useRef(null);
   const [form, setForm] = useState({
     titulo: '', descricao: '', prioridade: 'media',
@@ -95,7 +99,7 @@ export default function NovoChamado() {
       if (arquivos.length > 0) {
         const fd = new FormData();
         for (const f of arquivos) {
-          const wm = await applyWatermark(f, 'Cris');
+          const wm = await applyWatermark(f, tecnicoNome);
           fd.append('arquivos', wm);
         }
         await fetch(`${API}/chamados/${chamado.id}/anexos`, {
@@ -160,15 +164,22 @@ export default function NovoChamado() {
           <div className="form-group">
             <label htmlFor="categoria">Categoria</label>
             <select id="categoria" name="categoria" value={form.categoria} onChange={handleChange}>
-              <option value="geral">Geral</option>
-              <option value="hardware">Hardware</option>
-              <option value="software">Software</option>
-              <option value="rede">Rede</option>
-              <option value="impressora">Impressora</option>
-              <option value="email">E-mail</option>
-              <option value="acesso">Acesso</option>
-              <option value="evento">Evento</option>
-              <option value="censura">Censura</option>
+              {tipo === 'TI' && (
+                <>
+                  <option value="geral">Geral</option>
+                  <option value="hardware">Hardware</option>
+                  <option value="software">Software</option>
+                  <option value="rede">Rede</option>
+                  <option value="impressora">Impressora</option>
+                  <option value="email">E-mail</option>
+                  <option value="acesso">Acesso</option>
+                  <option value="evento">Evento</option>
+                  <option value="censura">Censura</option>
+                </>
+              )}
+              <option value="gravacao">Gravação</option>
+              <option value="edicao">Edição</option>
+              <option value="postagem">Postagem</option>
             </select>
           </div>
           <div className="form-group">
