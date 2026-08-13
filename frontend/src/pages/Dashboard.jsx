@@ -342,7 +342,7 @@ export default function Dashboard() {
       return { ...s, color: colors[s.status] || '#6366f1' };
     });
 
-  const sparkData = (stats?.porDia || []).slice(-14).map((d) => d.count);
+  const sparkData = (stats?.porDia || []).slice(-7).map((d) => d.count);
 
   const handleTilt = useCallback((e) => {
     const card = e.currentTarget;
@@ -651,7 +651,7 @@ export default function Dashboard() {
               {parados.length > 0 && (
                 <div>
                   <div className='emergencia-group-title'>
-                    <span className='dot' style={{ background: '#f59e0b' }} />Pendentes há +1 dia
+                    <span className='dot' style={{ background: '#f59e0b' }} />Pendentes
                   </div>
                   {parados.slice(0, 3).map((c) => (
                     <Link key={c.id} to={'/chamados/' + c.id} className='emergencia-item'>

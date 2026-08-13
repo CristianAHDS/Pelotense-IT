@@ -271,6 +271,10 @@
   opacity: 0.5;
 }
 
+.badge-card.locked .badge-card-icon {
+  filter: grayscale(1);
+}
+
 .badge-card-icon {
   font-size: 22px;
   flex-shrink: 0;
@@ -529,11 +533,103 @@
   font-size: 13px;
   text-align: center;
 }
-
 /* Loading */
 .loading {
   padding: 40px;
   text-align: center;
+  color: var(--color-text-muted);
+}
+
+/* Period filter */
+.period-filter {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+/* Próximo Badge */
+.next-badge-card {
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+.next-badge-body {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.next-badge-icon {
+  font-size: 34px;
+  line-height: 1;
+  flex-shrink: 0;
+  filter: drop-shadow(0 4px 10px rgba(245, 158, 11, 0.3));
+}
+
+.next-badge-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.next-badge-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.next-badge-desc {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.next-badge-faltam {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-warning);
+}
+
+/* Feed de conquistas */
+.feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.feed-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+}
+
+.feed-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.feed-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.feed-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.feed-date {
+  font-size: 10.5px;
   color: var(--color-text-muted);
 }
 

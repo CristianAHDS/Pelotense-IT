@@ -2,6 +2,77 @@ const express = require('express');
 const router = express.Router();
 const { query, queryOne, run } = require('../database');
 
+const NIVELES = [
+  { min: 0, nome: 'Iniciante', medal: '🌱' },
+  { min: 10, nome: 'Bronze', medal: '🥉' },
+  { min: 25, nome: 'Prata', medal: '🥈' },
+  { min: 50, nome: 'Ouro', medal: '🥇' },
+  { min: 100, nome: 'Esmeralda', medal: '💚' },
+  { min: 150, nome: 'Rubi', medal: '🔴' },
+  { min: 250, nome: 'Diamante', medal: '💎' },
+  { min: 400, nome: 'Lenda', medal: '👑' },
+];
+
+function getNivelInfo(totalResolvidos) {
+  let atual = NIVELES[0];
+  for (const n of NIVELES) {
+    if (totalResolvidos >= n.min) atual = n;
+  }
+  const idx = NIVELES.indexOf(atual);
+  const proximo = NIVELES[idx + 1] || null;
+  const progressoNivel = proximo
+    ? Math.min(100, Math.round(((totalResolvidos - atual.min) / (proximo.min - atual.min)) * 100))
+    : 100;
+  return {
+    nivel: atual.nome,
+    medal: atual.medal,
+    proximoNivel: proximo ? proximo.nome : 'Máximo',
+    pontosProximoNivel: proximo ? proximo.min - totalResolvidos : 0,
+    progressoNivel,
+  };
+}
+
+function criterioMin(badge) {
+  try { return JSON.parse(badge.criterio).min || 0; } catch (_) { return 0; }
+}
+
+function orderBadges(badges) {
+  return [...badges].sort((a, b) => {
+    if (a.categoria === b.categoria) {
+      if (a.categoria === 'volume') return criterioMin(a) - criterioMin(b);
+      return String(a.id).localeCompare(String(b.id));
+    }
+    return String(a.categoria).localeCompare(String(b.categoria));
+  });
+}
+
+function calcularStreak(diasAtivos, today) {
+  if (!diasAtivos.length) return 0;
+  const isWeekend = (d) => { const day = d.getDay(); return day === 0 || day === 6; };
+
+  let streak = 0;
+  const cursor = new Date(today + 'T00:00:00');
+  // Sábado e domingo não contam nem quebram a sequência.
+  // Concede um "dia de tolerância" apenas se hoje for dia útil e ainda não houver atividade.
+  let grace = !isWeekend(cursor);
+
+  for (let guard = 0; guard < 400; guard++) {
+    while (isWeekend(cursor)) cursor.setDate(cursor.getDate() - 1);
+    const checkStr = cursor.toISOString().slice(0, 10);
+    if (diasAtivos.includes(checkStr)) {
+      streak++;
+      grace = false;
+      cursor.setDate(cursor.getDate() - 1);
+    } else if (grace) {
+      grace = false;
+      cursor.setDate(cursor.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
 function verificarBadges(usuario) {
   const badges = query('SELECT * FROM badges ORDER BY categoria, id');
   const conquistados = new Set(
@@ -43,36 +114,11 @@ function verificarBadges(usuario) {
   const diasAtivos = query(
     `SELECT DISTINCT date(resolvido_em) as dia FROM chamados
      WHERE tecnico = ? AND status = 'resolvido' AND resolvido_em IS NOT NULL
-     ORDER BY dia DESC LIMIT 60`,
+     ORDER BY dia DESC LIMIT 400`,
     [usuario]
   ).map(r => r.dia);
 
-  let streak = 0;
-  if (diasAtivos.length > 0) {
-    const todayDate = new Date(today + 'T00:00:00');
-    let checkDate = new Date(todayDate);
-    for (let i = 0; i < diasAtivos.length; i++) {
-      const checkStr = checkDate.toISOString().slice(0, 10);
-      if (diasAtivos.includes(checkStr)) {
-        streak++;
-        checkDate.setDate(checkDate.getDate() - 1);
-      } else if (i === 0 && diasAtivos[0] === today) {
-        continue;
-      } else if (i === 0) {
-        const yesterday = new Date(todayDate);
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yestStr = yesterday.toISOString().slice(0, 10);
-        if (diasAtivos.includes(yestStr)) {
-          streak++;
-          checkDate.setDate(checkDate.getDate() - 2);
-        } else {
-          break;
-        }
-      } else {
-        break;
-      }
-    }
-  }
+  const streak = calcularStreak(diasAtivos, today);
 
   const CATEGORIAS_TODAS = ['hardware', 'software', 'rede', 'impressora', 'email', 'acesso', 'geral', 'evento', 'censura'];
 
@@ -129,7 +175,7 @@ function verificarBadges(usuario) {
 
 router.get('/badges', (req, res) => {
   try {
-    const badges = query('SELECT * FROM badges ORDER BY categoria, id');
+    const badges = orderBadges(query('SELECT * FROM badges'));
     res.json(badges);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -186,72 +232,58 @@ router.get('/usuario/:usuario', (req, res) => {
       [usuario]
     )?.c || 0;
 
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString().slice(0, 10);
+    const mesAtual = new Date().toISOString().slice(0, 7);
+
+    const resolvidosSemana = queryOne(
+      "SELECT COUNT(*) as c FROM chamados WHERE tecnico = ? AND status = 'resolvido' AND date(resolvido_em) >= ?",
+      [usuario, sevenDaysAgo]
+    )?.c || 0;
+
+    const resolvidosMes = queryOne(
+      "SELECT COUNT(*) as c FROM chamados WHERE tecnico = ? AND status = 'resolvido' AND substr(resolvido_em, 1, 7) = ?",
+      [usuario, mesAtual]
+    )?.c || 0;
+
     const diasAtivos = query(
       `SELECT DISTINCT date(resolvido_em) as dia FROM chamados
        WHERE tecnico = ? AND status = 'resolvido' AND resolvido_em IS NOT NULL
-       ORDER BY dia DESC LIMIT 60`,
+       ORDER BY dia DESC LIMIT 400`,
       [usuario]
     ).map(r => r.dia);
 
-    let streak = 0;
-    if (diasAtivos.length > 0) {
-      const todayDate = new Date(today + 'T00:00:00');
-      let checkDate = new Date(todayDate);
-      for (let i = 0; i < diasAtivos.length; i++) {
-        const checkStr = checkDate.toISOString().slice(0, 10);
-        if (diasAtivos.includes(checkStr)) {
-          streak++;
-          checkDate.setDate(checkDate.getDate() - 1);
-        } else if (i === 0 && diasAtivos[0] === today) {
-          continue;
-        } else if (i === 0) {
-          const yesterday = new Date(todayDate);
-          yesterday.setDate(yesterday.getDate() - 1);
-          const yestStr = yesterday.toISOString().slice(0, 10);
-          if (diasAtivos.includes(yestStr)) {
-            streak++;
-            checkDate.setDate(checkDate.getDate() - 2);
-          } else {
-            break;
-          }
-        } else {
-          break;
-        }
-      }
-    }
+    const streak = calcularStreak(diasAtivos, today);
 
-    const allBadges = query('SELECT * FROM badges ORDER BY categoria, id');
+    const allBadges = orderBadges(query('SELECT * FROM badges'));
     const conquistadosMap = {};
     badges.forEach(b => { conquistadosMap[b.id] = b; });
 
-    let nivel = 'Iniciante';
-    let medal = '🥉';
-    if (totalResolvidos >= 200) { nivel = 'Lenda'; medal = '👑'; }
-    else if (totalResolvidos >= 100) { nivel = 'Diamante'; medal = '💎'; }
-    else if (totalResolvidos >= 50) { nivel = 'Ouro'; medal = '🏆'; }
-    else if (totalResolvidos >= 25) { nivel = 'Prata'; medal = '🥇'; }
-    else if (totalResolvidos >= 10) { nivel = 'Bronze'; medal = '🥈'; }
+    const nivelInfo = getNivelInfo(totalResolvidos);
+    const nivel = nivelInfo.nivel;
+    const medal = nivelInfo.medal;
+    const proximoNivel = nivelInfo.proximoNivel;
+    const pontosProximoNivel = nivelInfo.pontosProximoNivel;
+    const progressoNivel = nivelInfo.progressoNivel;
 
-    const pontosProximoNivel = totalResolvidos < 10 ? 10 - totalResolvidos
-      : totalResolvidos < 25 ? 25 - totalResolvidos
-      : totalResolvidos < 50 ? 50 - totalResolvidos
-      : totalResolvidos < 100 ? 100 - totalResolvidos
-      : totalResolvidos < 200 ? 200 - totalResolvidos
-      : 0;
-
-    const proximoNivel = totalResolvidos < 10 ? 'Bronze'
-      : totalResolvidos < 25 ? 'Prata'
-      : totalResolvidos < 50 ? 'Ouro'
-      : totalResolvidos < 100 ? 'Diamante'
-      : totalResolvidos < 200 ? 'Lenda'
-      : 'Máximo';
-
-    const progressoNivel = totalResolvidos < 10 ? Math.round((totalResolvidos / 10) * 100)
-      : totalResolvidos < 25 ? Math.round(((totalResolvidos - 10) / 15) * 100)
-      : totalResolvidos < 50 ? Math.round(((totalResolvidos - 25) / 25) * 100)
-      : totalResolvidos < 100 ? Math.round(((totalResolvidos - 50) / 50) * 100)
-      : totalResolvidos < 200 ? Math.round(((totalResolvidos - 100) / 100) * 100)
-      : 100;
+    const conquistadosIds = new Set(Object.keys(conquistadosMap));
+    let proximoBadge = null;
+    for (const b of allBadges) {
+      if (conquistadosIds.has(b.id)) continue;
+      let faltam = null;
+      try {
+        const c = JSON.parse(b.criterio);
+        switch (c.tipo) {
+          case 'primeiro': faltam = totalResolvidos >= 1 ? 0 : 1; break;
+          case 'total': faltam = (c.min || 0) - totalResolvidos; break;
+          case 'categoria': faltam = (c.min || 0) - (porCategoria[c.categoria] || 0); break;
+          case 'prioridade': faltam = (c.min || 0) - (porPrioridade[c.prioridade] || 0); break;
+          default: break;
+        }
+      } catch (_) {}
+      if (faltam !== null && faltam > 0 && (!proximoBadge || faltam < proximoBadge.faltam)) {
+        proximoBadge = { ...b, faltam };
+      }
+    }
 
     res.json({
       usuario,
@@ -260,12 +292,15 @@ router.get('/usuario/:usuario', (req, res) => {
       slaMedio,
       resolvedHoje,
       resolvedNoturno,
+      resolvidosSemana,
+      resolvidosMes,
       streak,
       nivel,
       medal,
       pontosProximoNivel,
       proximoNivel,
       progressoNivel,
+      proximoBadge,
       badges: badges.map(b => ({ ...b, conquistado: true })),
       allBadges: allBadges.map(b => ({
         ...b,
@@ -299,13 +334,7 @@ router.get('/ranking', (req, res) => {
     ).forEach(r => { allBadgeCounts[r.usuario] = r.c; });
 
     const ranking = tecnicos.map(t => {
-      let nivel = 'Iniciante';
-      let medal = '🥉';
-      if (t.totalResolvidos >= 200) { nivel = 'Lenda'; medal = '👑'; }
-      else if (t.totalResolvidos >= 100) { nivel = 'Diamante'; medal = '💎'; }
-      else if (t.totalResolvidos >= 50) { nivel = 'Ouro'; medal = '🏆'; }
-      else if (t.totalResolvidos >= 25) { nivel = 'Prata'; medal = '🥇'; }
-      else if (t.totalResolvidos >= 10) { nivel = 'Bronze'; medal = '🥈'; }
+      const info = getNivelInfo(t.totalResolvidos);
 
       return {
         tecnico: t.tecnico,
@@ -313,8 +342,8 @@ router.get('/ranking', (req, res) => {
         totalAtendidos: t.totalAtendidos,
         slaMedio: t.slaMedio || 0,
         badges: allBadgeCounts[t.tecnico] || 0,
-        nivel,
-        medal,
+        nivel: info.nivel,
+        medal: info.medal,
       };
     });
 

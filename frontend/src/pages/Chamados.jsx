@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Plus, Eye, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import { SkeletonTable } from '../components/ui/Skeleton';
@@ -24,6 +24,7 @@ const PRIORIDADE_MAP = {
 
 export default function Chamados() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [chamados, setChamados] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -112,6 +113,16 @@ export default function Chamados() {
           <SkeletonTable rows={8} />
         ) : (
           <table className="table">
+            <colgroup>
+              <col style={{ width: '64px' }} />
+              <col style={{ width: '240px' }} />
+              <col style={{ width: '150px' }} />
+              <col style={{ width: '110px' }} />
+              <col style={{ width: '130px' }} />
+              <col style={{ width: '160px' }} />
+              <col style={{ width: '110px' }} />
+              <col style={{ width: '88px' }} />
+            </colgroup>
             <thead>
               <tr>
                 <th>#</th>
@@ -121,7 +132,7 @@ export default function Chamados() {
                 <th>Categoria</th>
                 <th>Solicitante</th>
                 <th>Criado em</th>
-                <th style={{ width: 80 }}></th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -131,7 +142,7 @@ export default function Chamados() {
                 </tr>
               ) : (
                 chamados.map((c) => (
-                  <tr key={c.id}>
+                  <tr key={c.id} className="table-row-clickable" onClick={() => navigate(`/chamados/${c.id}`)}>
                     <td className="cell-id">#{c.id}</td>
                     <td className="cell-title">{c.titulo}</td>
                     <td><span className={`badge ${STATUS_MAP[c.status]?.cls}`}>{STATUS_MAP[c.status]?.label}</span></td>
@@ -141,8 +152,8 @@ export default function Chamados() {
                     <td className="cell-date">{new Date(c.criado_em).toLocaleDateString()}</td>
                     <td>
                       <div className="row-actions">
-                        <Link to={`/chamados/${c.id}`} className="btn-icon btn-icon-edit" title="Ver detalhes"><Eye size={16} /></Link>
-                        <button className="btn-icon btn-icon-danger" title="Excluir chamado" onClick={() => handleDelete(c.id)}><Trash2 size={16} /></button>
+                        <Link to={`/chamados/${c.id}`} className="btn-icon btn-icon-edit" title="Ver detalhes" onClick={(e) => e.stopPropagation()}><Eye size={16} /></Link>
+                        <button className="btn-icon btn-icon-danger" title="Excluir chamado" onClick={(e) => { e.stopPropagation(); handleDelete(c.id); }}><Trash2 size={16} /></button>
                       </div>
                     </td>
                   </tr>

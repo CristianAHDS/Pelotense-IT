@@ -172,7 +172,6 @@ router.get('/emergencia', (req, res) => {
     );
     const parados = query(
       `SELECT * FROM chamados WHERE status = 'pendente'
-       AND julianday('now') - julianday(atualizado_em) > 1
        ORDER BY atualizado_em ASC LIMIT 10`
     );
     const antigos = query(

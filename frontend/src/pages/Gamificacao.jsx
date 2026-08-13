@@ -25,10 +25,6 @@ const BADGE_CATEGORIES = [
   { key: 'especial', label: 'Especial', icon: <Star size={16} />, color: '#8b5cf6' },
 ];
 
-const NIVEL_MEDALS = {
-  'Iniciante': '🥉', 'Bronze': '🥈', 'Prata': '🥇', 'Ouro': '🏆', 'Diamante': '💎', 'Lenda': '👑',
-};
-
 export default function Gamificacao() {
   const { user } = useAuth();
   const USUARIO = user?.nome || 'Cristian Raffi Cunha';
@@ -36,11 +32,12 @@ export default function Gamificacao() {
   const [ranking, setRanking] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtroCat, setFiltroCat] = useState(null);
+  const [periodo, setPeriodo] = useState('total');
 
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      fetch(`${API}/gamificacao/usuario/${USUARIO}`).then(r => r.json()),
+      fetch(`${API}/gamificacao/usuario/${encodeURIComponent(USUARIO)}`).then(r => r.json()),
       fetch(`${API}/gamificacao/ranking`).then(r => r.json()),
     ])
       .then(([userData, rankData]) => {
@@ -61,6 +58,13 @@ export default function Gamificacao() {
 
   const conquistados = allBadges.filter(b => b.conquistado).length;
   const total = allBadges.length;
+
+  const resolvidosDisplay = periodo === 'semana' ? (dados.resolvidosSemana ?? 0)
+    : periodo === 'mes' ? (dados.resolvidosMes ?? 0)
+    : dados.totalResolvidos;
+  const resolvidosLabel = periodo === 'semana' ? 'Últimos 7 dias'
+    : periodo === 'mes' ? 'Este mês'
+    : 'Resolvidos';
 
   return (
     <div className="gamificacao-page">
@@ -90,13 +94,18 @@ export default function Gamificacao() {
 
       <div className="gamificacao-grid">
         <div className="gamificacao-main">
+          <div className="period-filter">
+            <button className={`filter-pill ${periodo === 'total' ? 'active' : ''}`} onClick={() => setPeriodo('total')}>Total</button>
+            <button className={`filter-pill ${periodo === 'semana' ? 'active' : ''}`} onClick={() => setPeriodo('semana')}>Semana</button>
+            <button className={`filter-pill ${periodo === 'mes' ? 'active' : ''}`} onClick={() => setPeriodo('mes')}>Mês</button>
+          </div>
           <div className="stats-cards">
             <div className="stat-card">
               <div className="stat-icon" style={{ background: 'rgba(99,102,241,0.1)', color: '#818cf8' }}>
                 <Target size={20} />
               </div>
-              <div className="stat-value">{dados.totalResolvidos}</div>
-              <div className="stat-label">Resolvidos</div>
+              <div className="stat-value">{resolvidosDisplay}</div>
+              <div className="stat-label">{resolvidosLabel}</div>
             </div>
             <div className="stat-card">
               <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
@@ -207,6 +216,21 @@ export default function Gamificacao() {
         </div>
 
         <div className="gamificacao-sidebar">
+          {dados.proximoBadge && (
+            <div className="section-card next-badge-card">
+              <div className="section-header">
+                <h2><Target size={18} /> Próximo Badge</h2>
+              </div>
+              <div className="next-badge-body">
+                <div className="next-badge-icon">{dados.proximoBadge.icone}</div>
+                <div className="next-badge-info">
+                  <span className="next-badge-name">{dados.proximoBadge.nome}</span>
+                  <span className="next-badge-desc">{dados.proximoBadge.descricao}</span>
+                  <span className="next-badge-faltam">Faltam {dados.proximoBadge.faltam} chamado{dados.proximoBadge.faltam > 1 ? 's' : ''}</span>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="section-card">
             <div className="section-header">
               <h2><Trophy size={18} /> Ranking</h2>
@@ -225,6 +249,24 @@ export default function Gamificacao() {
                   <div className="ranking-level">
                     <span className="ranking-medal">{t.medal}</span>
                     <span className="ranking-nivel">{t.nivel}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="section-card">
+            <div className="section-header">
+              <h2><Award size={18} /> Conquistas Recentes</h2>
+            </div>
+            <div className="feed-list">
+              {(dados.badges || []).length === 0 && <p className="text-muted">Nenhum badge conquistado ainda.</p>}
+              {(dados.badges || []).slice(0, 6).map((b) => (
+                <div key={b.id} className="feed-item">
+                  <span className="feed-icon">{b.icone}</span>
+                  <div className="feed-info">
+                    <span className="feed-name">{b.nome}</span>
+                    <span className="feed-date">{b.conquistado_em ? new Date(b.conquistado_em).toLocaleDateString('pt-BR') : ''}</span>
                   </div>
                 </div>
               ))}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Ticket, PlusCircle, BarChart3, Settings,
@@ -16,8 +16,8 @@ import './DashboardLayout.css';
 const mainMenuItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/kanban', icon: Columns, label: 'Kanban' },
-  { to: '/chamados', icon: Ticket, label: 'Chamados' },
-  { to: '/chamados/novo', icon: PlusCircle, label: 'Novo Chamado' },
+  { to: '/chamados', icon: Ticket, label: 'Chamados', badge: true },
+  { to: '/chamados/novo', icon: PlusCircle, label: 'Novo Chamado', cta: true },
   { to: '/relatorios', icon: BarChart3, label: 'Relatórios' },
   { to: '/gamificacao', icon: Trophy, label: 'Gamificação' },
   { to: '/configuracoes', icon: Settings, label: 'Configurações' },
@@ -47,6 +47,19 @@ export default function DashboardLayout() {
   const location = useLocation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [abertosCount, setAbertosCount] = useState(0);
+
+  useEffect(() => {
+    fetch('/api/chamados/stats')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data) return;
+        const abertos = ['aberto', 'em_andamento', 'pendente'];
+        const count = (data.porStatus || []).reduce((acc, s) => acc + (abertos.includes(s.status) ? (s.count || 0) : 0), 0);
+        setAbertosCount(count);
+      })
+      .catch(() => {});
+  }, []);
 
   const closeSidebar = () => setSidebarOpen(false);
   const unread = notifications.length;
@@ -64,34 +77,29 @@ export default function DashboardLayout() {
           <div className="brand-icon">
             <img src="https://i.imgur.com/mfoPeJL.png" alt="Pelotense IT" className="brand-logo" />
           </div>
-          {!collapsed && <div className="brand-text"><h1>Pelotense IT</h1><span>Gestão de Chamados</span></div>}
+          <div className="brand-text"><h1>Pelotense IT</h1><span>Gestão de Chamados</span></div>
         </div>
 
-        {!collapsed && <div className="sidebar-section-label">Menu Principal</div>}
+        <div className="sidebar-section-label">Menu Principal</div>
         <nav className="sidebar-nav">
-          {mainMenuItems.map(({ to, icon: Icon, label }) => (
+          {mainMenuItems.map(({ to, icon: Icon, label, badge, cta }) => (
             <NavLink
               key={to}
               to={to}
               end={to === '/'}
               onClick={closeSidebar}
-              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}${cta ? ' cta' : ''}`}
               title={collapsed ? label : undefined}
             >
               <Icon size={18} />
-              {!collapsed && <span>{label}</span>}
+              <span className="link-label">{label}</span>
+              {badge && abertosCount > 0 && <span className="nav-badge">{abertosCount}</span>}
             </NavLink>
           ))}
         </nav>
 
-        {!collapsed ? (
-          <>
-            <div className="sidebar-divider" />
-            <div className="sidebar-section-label">Administração</div>
-          </>
-        ) : (
-          <div className="sidebar-divider" />
-        )}
+        <div className="sidebar-divider" />
+        <div className="sidebar-section-label">Administração</div>
         <nav className="sidebar-nav">
           {adminMenuItems.map(({ to, icon: Icon, label }) => (
             <NavLink
@@ -103,7 +111,7 @@ export default function DashboardLayout() {
               title={collapsed ? label : undefined}
             >
               <Icon size={18} />
-              {!collapsed && <span>{label}</span>}
+              <span className="link-label">{label}</span>
             </NavLink>
           ))}
         </nav>
@@ -120,19 +128,14 @@ export default function DashboardLayout() {
         <div className="sidebar-footer">
           <div className="sidebar-user">
             <div className="user-avatar">{user ? user.nome.charAt(0).toUpperCase() : 'CR'}</div>
-            {!collapsed && (
-              <div className="user-info">
-                <span className="user-name">{user?.nome || 'Cristian Raffi Cunha'}</span>
-                <span className="user-role">{user?.tipo === 'radio' ? 'Téc. Rádio' : user?.tipo === 'audiovisual' ? 'Audiovisual' : 'TI'}</span>
-              </div>
-            )}
+            <div className="user-info">
+              <span className="user-name">{user?.nome || 'Cristian Raffi Cunha'}</span>
+              <span className="user-role">{user?.tipo === 'radio' ? 'Téc. Rádio' : user?.tipo === 'audiovisual' ? 'Audiovisual' : 'TI'}</span>
+            </div>
           </div>
-          {!collapsed && (
-            <button className="sidebar-logout-btn" onClick={() => { logout(); navigate('/login'); }} title="Sair">
-              <LogOut size={14} />
-              <span>Sair</span>
-            </button>
-          )}
+          <button className="sidebar-logout-btn" onClick={() => { logout(); navigate('/login'); }} title="Sair">
+            <LogOut size={16} />
+          </button>
         </div>
       </aside>
 

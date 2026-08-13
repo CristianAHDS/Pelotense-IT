@@ -27,6 +27,8 @@ export default function Kanban() {
   const [creating, setCreating] = useState(null);
   const [novoCard, setNovoCard] = useState({ titulo: '', solicitante: '', prioridade: 'media' });
   const [logOpen, setLogOpen] = useState(false);
+  const [logMes, setLogMes] = useState('all');
+  const [logSemana, setLogSemana] = useState('all');
   const dragIdRef = useRef(null);
 
   const { add: addToast } = useToast();
@@ -139,15 +141,70 @@ export default function Kanban() {
 
   const arquivados = getArquivados();
 
-  const getGroupedArquivados = () => {
-    const grouped = {};
+  const getMeses = () => {
+    const meses = new Set();
     arquivados.forEach((c) => {
-      const dataRes = c.resolvido_em || c.criado_em;
-      const key = dataRes.slice(0, 10);
-      if (!grouped[key]) grouped[key] = [];
-      grouped[key].push(c);
+      const data = c.resolvido_em || c.criado_em;
+      if (data && data.slice(0, 7)) meses.add(data.slice(0, 7));
     });
-    return Object.entries(grouped).sort(([a], [b]) => b.localeCompare(a));
+    return Array.from(meses).sort((a, b) => b.localeCompare(a));
+  };
+
+  const getSemanas = () => {
+    if (logMes === 'all') return [];
+    const [ano, mes] = logMes.split('-').map(Number);
+    const diasNoMes = new Date(ano, mes, 0).getDate();
+    return Array.from({ length: Math.ceil(diasNoMes / 7) }, (_, i) => i + 1);
+  };
+
+  const formatMesLabel = (m) => {
+    const [ano, mes] = m.split('-').map(Number);
+    const label = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  };
+
+  const semanaLabel = (sem, mesKey) => {
+    const [ano, mes] = mesKey.split('-').map(Number);
+    const inicio = (sem - 1) * 7 + 1;
+    const fim = Math.min(sem * 7, new Date(ano, mes, 0).getDate());
+    const mesNome = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+    return `Semana ${sem} (${inicio}–${fim} ${mesNome})`;
+  };
+
+  const getSemana = (dateStr) => Math.ceil(parseInt(dateStr.slice(8, 10), 10) / 7);
+
+  const filteredArquivados = arquivados.filter((c) => {
+    const data = c.resolvido_em || c.criado_em;
+    if (!data) return true;
+    if (logMes !== 'all' && data.slice(0, 7) !== logMes) return false;
+    if (logMes !== 'all' && logSemana !== 'all' && getSemana(data) !== parseInt(logSemana, 10)) return false;
+    return true;
+  });
+
+  const getNestedArquivados = () => {
+    const meses = {};
+    filteredArquivados.forEach((c) => {
+      const dataRes = c.resolvido_em || c.criado_em;
+      const mesKey = dataRes.slice(0, 7);
+      const diaKey = dataRes.slice(0, 10);
+      const sem = getSemana(dataRes);
+      if (!meses[mesKey]) meses[mesKey] = {};
+      if (!meses[mesKey][sem]) meses[mesKey][sem] = {};
+      if (!meses[mesKey][sem][diaKey]) meses[mesKey][sem][diaKey] = [];
+      meses[mesKey][sem][diaKey].push(c);
+    });
+    return Object.keys(meses).sort((a, b) => b.localeCompare(a)).map((mesKey) => ({
+      mesKey,
+      semanas: Object.keys(meses[mesKey])
+        .map(Number)
+        .sort((a, b) => b - a)
+        .map((sem) => ({
+          sem,
+          dias: Object.keys(meses[mesKey][sem])
+            .sort((a, b) => b.localeCompare(a))
+            .map((diaKey) => ({ diaKey, items: meses[mesKey][sem][diaKey] })),
+        })),
+    }));
   };
 
   if (loading) {
@@ -282,35 +339,75 @@ export default function Kanban() {
           </button>
 
           {logOpen && (
+            <div className="kanban-log-filters">
+              <select className="log-select" value={logMes} onChange={(e) => { setLogMes(e.target.value); setLogSemana('all'); }}>
+                <option value="all">Todos os meses</option>
+                {getMeses().map((m) => (
+                  <option key={m} value={m}>{formatMesLabel(m)}</option>
+                ))}
+              </select>
+              <select className="log-select" value={logSemana} onChange={(e) => setLogSemana(e.target.value)} disabled={logMes === 'all'}>
+                <option value="all">Todas as semanas</option>
+                {getSemanas().map((s) => (
+                  <option key={s} value={s}>{semanaLabel(s, logMes)}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {logOpen && (
             <div className="kanban-log-sections">
-              {getGroupedArquivados().map(([key, items]) => {
-                const dt = new Date(key + 'T00:00:00');
-                const label = dt.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-                return (
-                  <div key={key} className="kanban-log-day">
-                    <div className="kanban-log-day-header">
-                      <span className="log-day-label">{label}</span>
-                      <span className="log-day-count">{items.length} chamado{items.length > 1 ? 's' : ''}</span>
-                    </div>
-                    <div className="kanban-log-grid">
-                      {items.map((c) => (
-                        <div
-                          key={c.id}
-                          className="kanban-card kanban-card-sm"
-                          onClick={() => navigate(`/chamados/${c.id}`)}
-                        >
-                          <div className="card-header-row">
-                            <span className={`card-prioridade prioridade-${c.prioridade}`} />
-                            <span className="card-id">#{c.id}</span>
-                          </div>
-                          <p className="card-titulo">{c.titulo}</p>
-                          <div className="card-log-meta">{c.solicitante}</div>
-                        </div>
-                      ))}
-                    </div>
+              {getNestedArquivados().length === 0 && (
+                <p className="text-muted">Nenhum chamado finalizado neste período.</p>
+              )}
+              {getNestedArquivados().map(({ mesKey, semanas }) => (
+                <div key={mesKey} className="kanban-log-month">
+                  <div className="kanban-log-month-header">
+                    <span className="log-month-label">{formatMesLabel(mesKey)}</span>
+                    <span className="log-day-count">
+                      {semanas.reduce((acc, s) => acc + s.dias.reduce((a, d) => a + d.items.length, 0), 0)} chamados
+                    </span>
                   </div>
-                );
-              })}
+                  {semanas.map(({ sem, dias }) => (
+                    <div key={sem} className="kanban-log-week">
+                      <div className="kanban-log-week-header">
+                        <span className="log-week-label">{semanaLabel(sem, mesKey)}</span>
+                        <span className="log-day-count">
+                          {dias.reduce((a, d) => a + d.items.length, 0)} chamado{dias.reduce((a, d) => a + d.items.length, 0) > 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      {dias.map(({ diaKey, items }) => {
+                        const dt = new Date(diaKey + 'T00:00:00');
+                        const label = dt.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                        return (
+                          <div key={diaKey} className="kanban-log-day">
+                            <div className="kanban-log-day-header">
+                              <span className="log-day-label">{label}</span>
+                              <span className="log-day-count">{items.length} chamado{items.length > 1 ? 's' : ''}</span>
+                            </div>
+                            <div className="kanban-log-grid">
+                              {items.map((c) => (
+                                <div
+                                  key={c.id}
+                                  className="kanban-card kanban-card-sm"
+                                  onClick={() => navigate(`/chamados/${c.id}`)}
+                                >
+                                  <div className="card-header-row">
+                                    <span className={`card-prioridade prioridade-${c.prioridade}`} />
+                                    <span className="card-id">#{c.id}</span>
+                                  </div>
+                                  <p className="card-titulo">{c.titulo}</p>
+                                  <div className="card-log-meta">{c.solicitante}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              ))}
             </div>
           )}
         </div>

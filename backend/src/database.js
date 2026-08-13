@@ -140,12 +140,14 @@ async function initDatabase() {
   if (existing[0]?.c === 0) {
     const inserts = [
       ["primeiro", "Primeiro Sangue", "Resolver o primeiro chamado", "🎯", "especial", '{"tipo":"primeiro"}'],
-      ["total_5", "Iniciante", "5 chamados resolvidos", "🥉", "volume", '{"tipo":"total","min":5}'],
-      ["total_10", "Bronze", "10 chamados resolvidos", "🥈", "volume", '{"tipo":"total","min":10}'],
-      ["total_25", "Prata", "25 chamados resolvidos", "🥇", "volume", '{"tipo":"total","min":25}'],
-      ["total_50", "Ouro", "50 chamados resolvidos", "🏆", "volume", '{"tipo":"total","min":50}'],
-      ["total_100", "Diamante", "100 chamados resolvidos", "💎", "volume", '{"tipo":"total","min":100}'],
-      ["total_200", "Lenda", "200 chamados resolvidos", "👑", "volume", '{"tipo":"total","min":200}'],
+      ["total_5", "Iniciante", "5 chamados resolvidos", "🌱", "volume", '{"tipo":"total","min":5}'],
+      ["total_10", "Bronze", "10 chamados resolvidos", "🥉", "volume", '{"tipo":"total","min":10}'],
+      ["total_25", "Prata", "25 chamados resolvidos", "🥈", "volume", '{"tipo":"total","min":25}'],
+      ["total_50", "Ouro", "50 chamados resolvidos", "🥇", "volume", '{"tipo":"total","min":50}'],
+      ["total_100", "Esmeralda", "100 chamados resolvidos", "💚", "volume", '{"tipo":"total","min":100}'],
+      ["total_150", "Rubi", "150 chamados resolvidos", "🔴", "volume", '{"tipo":"total","min":150}'],
+      ["total_250", "Diamante", "250 chamados resolvidos", "💎", "volume", '{"tipo":"total","min":250}'],
+      ["total_400", "Lenda", "400 chamados resolvidos", "👑", "volume", '{"tipo":"total","min":400}'],
       ["hardware_5", "Hardware Novice", "5 chamados de hardware resolvidos", "💻", "categoria", '{"tipo":"categoria","categoria":"hardware","min":5}'],
       ["hardware_10", "Hardware Expert", "10 chamados de hardware resolvidos", "🔧", "categoria", '{"tipo":"categoria","categoria":"hardware","min":10}'],
       ["software_5", "Software Novice", "5 chamados de software resolvidos", "💿", "categoria", '{"tipo":"categoria","categoria":"software","min":5}'],
@@ -179,6 +181,16 @@ async function initDatabase() {
         [id, nome, descricao, icone, categoria, criterio]);
     });
   }
+
+  run("UPDATE badges SET icone = '🌱' WHERE id = 'total_5'");
+  run("UPDATE badges SET icone = '🥉' WHERE id = 'total_10'");
+  run("UPDATE badges SET icone = '🥈' WHERE id = 'total_25'");
+  run("UPDATE badges SET icone = '🥇' WHERE id = 'total_50'");
+
+  run("UPDATE badges SET nome = 'Esmeralda', icone = '💚', descricao = '100 chamados resolvidos', criterio = '{\"tipo\":\"total\",\"min\":100}' WHERE id = 'total_100'");
+  run("UPDATE badges SET nome = 'Diamante', icone = '💎', descricao = '250 chamados resolvidos', criterio = '{\"tipo\":\"total\",\"min\":250}' WHERE id = 'total_200'");
+  run("INSERT OR IGNORE INTO badges (id, nome, descricao, icone, categoria, criterio) VALUES ('total_150', 'Rubi', '150 chamados resolvidos', '🔴', 'volume', '{\"tipo\":\"total\",\"min\":150}')");
+  run("INSERT OR IGNORE INTO badges (id, nome, descricao, icone, categoria, criterio) VALUES ('total_400', 'Lenda', '400 chamados resolvidos', '👑', 'volume', '{\"tipo\":\"total\",\"min\":400}')");
 
   db.run(`
     CREATE TABLE IF NOT EXISTS config_email (

@@ -97,7 +97,7 @@ export default function DetalheChamado() {
   useEffect(loadChamado, [id]);
 
   useEffect(() => {
-    fetch(`${API}/gamificacao/usuario/Cris`)
+    fetch(`${API}/gamificacao/usuario/${encodeURIComponent(tecnicoNome)}`)
       .then((r) => r.json())
       .then(setGamiData)
       .catch(() => {});
