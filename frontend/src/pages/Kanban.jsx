@@ -7,7 +7,9 @@ import { useToast } from '../contexts/ToastContext';
 import { SkeletonKanban } from '../components/ui/Skeleton';
 import './Kanban.css';
 
-const API = '/api';
+import { API_URL } from '../config';
+
+const API = API_URL;
 
 const COLUNAS = [
   { id: 'aberto', titulo: 'A Fazer', icon: AlertTriangle, cor: '#f59e0b', bgCor: '#f59e0b12' },

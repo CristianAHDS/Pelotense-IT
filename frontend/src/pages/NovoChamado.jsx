@@ -3,10 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { Save, Upload, X, File, Image, Film, Music, Tag, Bell, Calendar } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useOffline } from '../contexts/OfflineContext';
 import { applyWatermark } from '../utils/watermark';
 import './NovoChamado.css';
 
-const API = '/api';
+import { API_URL } from '../config';
+
+const API = API_URL;
 
 export default function NovoChamado() {
   const navigate = useNavigate();
@@ -27,6 +30,7 @@ export default function NovoChamado() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { add: addToast } = useToast();
+  const { isOnline, enqueue } = useOffline();
 
   useEffect(() => {
     const handlePaste = (e) => {
@@ -99,6 +103,18 @@ export default function NovoChamado() {
       if (agendarAlerta && alerta.data_hora) {
         body.alerta = { data_hora: alerta.data_hora.replace('T', ' '), mensagem: alerta.mensagem };
       }
+
+      if (!isOnline) {
+        enqueue({ url: `${API}/chamados`, method: 'POST', body });
+        if (arquivos.length > 0) {
+          addToast('Chamado salvo offline. Anexos serão enviados somente com conexão.', 'warning', 6000);
+        } else {
+          addToast('Chamado salvo offline e será sincronizado automaticamente.', 'warning', 6000);
+        }
+        navigate('/chamados');
+        return;
+      }
+
       const res = await fetch(`${API}/chamados`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -1,6 +1,7 @@
 import { Outlet, Link, NavLink } from 'react-router-dom';
 import { Ticket, Plus, Sun, Moon, Contrast } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
+import OfflineBanner from '../ui/OfflineBanner';
 import './PortalLayout.css';
 
 export default function PortalLayout() {
@@ -8,6 +9,7 @@ export default function PortalLayout() {
 
   return (
     <div className="portal-layout">
+      <OfflineBanner />
       <header className="portal-header">
         <Link to="/portal" className="portal-logo">
           <div className="portal-logo-icon">

@@ -2,10 +2,9 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import confetti from 'canvas-confetti';
 import { useToast } from './ToastContext';
+import { SOCKET_URL } from '../config';
 
 const SocketContext = createContext(null);
-
-const SOCKET_URL = `${window.location.protocol}//${window.location.hostname}:3001`;
 
 function dispararConfetti() {
   const duration = 3000;

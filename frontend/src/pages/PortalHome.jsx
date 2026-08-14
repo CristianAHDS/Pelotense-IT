@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import { Search, Eye, ExternalLink } from 'lucide-react';
 import './Portal.css';
 
-const API = '/api';
+import { API_URL } from '../config';
+
+const API = API_URL;
 
 const STATUS_MAP = {
   aberto: { label: 'Aberto', cls: 'badge-blue' },

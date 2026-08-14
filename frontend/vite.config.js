@@ -29,9 +29,30 @@ export default defineConfig({
         theme_color: '#0a0e1a',
         background_color: '#0a0e1a',
         display: 'standalone',
+        start_url: '/',
         icons: [
           { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+        ],
+      },
+      workbox: {
+        navigateFallback: '/index.html',
+        runtimeCaching: [
+          {
+            urlPattern: new RegExp('/api(/|$)'),
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'pelotense-api',
+              networkTimeoutSeconds: 5,
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 7,
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
         ],
       },
     }),

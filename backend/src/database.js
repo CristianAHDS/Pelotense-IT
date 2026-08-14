@@ -126,6 +126,31 @@ async function initDatabase() {
   `);
 
   db.run(`
+    CREATE TABLE IF NOT EXISTS projetos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nome TEXT NOT NULL,
+      descricao TEXT,
+      cor TEXT DEFAULT '#6366f1',
+      criado_em TEXT DEFAULT (datetime('now','localtime'))
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS projeto_tarefas (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      projeto_id INTEGER NOT NULL,
+      nome TEXT NOT NULL,
+      inicio TEXT NOT NULL,
+      fim TEXT NOT NULL,
+      progresso INTEGER DEFAULT 0,
+      responsavel TEXT,
+      cor TEXT DEFAULT '#38bdf8',
+      criado_em TEXT DEFAULT (datetime('now','localtime')),
+      FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE CASCADE
+    )
+  `);
+
+  db.run(`
     CREATE TABLE IF NOT EXISTS badges (
       id TEXT PRIMARY KEY,
       nome TEXT NOT NULL,

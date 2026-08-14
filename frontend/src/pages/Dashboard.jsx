@@ -6,7 +6,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { SkeletonCard, SkeletonPanel } from '../components/ui/Skeleton';
 import './Dashboard.css';
 
-const API = '/api';
+import { API_URL } from '../config';
+
+const API = API_URL;
 
 const STATUS_MAP = {
   aberto: { label: 'Aberto', cls: 'badge-blue' },

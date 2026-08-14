@@ -3,7 +3,9 @@ import { UserCog, Plus, Trash2, Check, X, KeyRound } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import './CadastroTecnicos.css';
 
-const API = '/api';
+import { API_URL } from '../config';
+
+const API = API_URL;
 
 const AREA_LABELS = { TI: 'TI', radio: 'Téc. Rádio', audiovisual: 'Audiovisual' };
 

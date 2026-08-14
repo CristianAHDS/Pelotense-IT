@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import { UserPlus, Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react';
 import './Login.css';
 
-const API = '/api';
+import { API_URL } from '../config';
+
+const API = API_URL;
 
 export default function Register() {
   const [nome, setNome] = useState('');

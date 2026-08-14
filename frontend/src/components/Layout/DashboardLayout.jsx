@@ -9,6 +9,7 @@ import { useSocket } from '../../contexts/SocketContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import NetworkSpeed from '../ui/NetworkSpeed';
 import PageTransition from '../ui/PageTransition';
+import OfflineBanner from '../ui/OfflineBanner';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './DashboardLayout.css';
@@ -69,6 +70,7 @@ export default function DashboardLayout() {
 
   return (
     <div className={`dashboard-layout ${collapsed ? 'sidebar-collapsed' : ''}`}>
+      <OfflineBanner />
       {sidebarOpen && <div className="sidebar-overlay" onClick={closeSidebar} />}
 
       <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>

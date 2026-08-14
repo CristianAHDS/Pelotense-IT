@@ -4,10 +4,13 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Send, Paperclip, Download, Trash2, Image, Timer, X as XIcon, Camera, Edit2, CheckSquare, PlusCircle, Check, Upload, FileImage } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useOffline } from '../contexts/OfflineContext';
 import { applyWatermark } from '../utils/watermark';
 import './DetalheChamado.css';
 
-const API = '/api';
+import { API_URL } from '../config';
+
+const API = API_URL;
 
 const STATUS_MAP = {
   aberto: { label: 'Aberto', cls: 'badge-blue', emoji: '📥' },
@@ -59,6 +62,7 @@ export default function DetalheChamado() {
   const navigate = useNavigate();
   const { add: addToast } = useToast();
   const { user } = useAuth();
+  const { isOnline, enqueue } = useOffline();
   const tecnicoNome = user?.nome || 'Cristian Raffi Cunha';
   const [chamado, setChamado] = useState(null);
   const [comentario, setComentario] = useState('');
@@ -170,6 +174,22 @@ export default function DetalheChamado() {
   const confirmarResolucao = async () => {
     let textoResolucao = resolucao.trim();
 
+    if (!isOnline) {
+      if (resolucaoImg) {
+        addToast('Resolução salva sem anexo (offline).', 'warning', 6000);
+      }
+      enqueue({
+        url: `${API}/chamados/${id}`,
+        method: 'PUT',
+        body: { status: 'resolvido', tecnico: tecnicoNome, resolucao: textoResolucao || ' ' },
+      });
+      setShowResolve(false);
+      setResolucao('');
+      setResolucaoImg(null);
+      addToast('Resolução salva offline e será sincronizada.', 'warning', 6000);
+      return;
+    }
+
     if (resolucaoImg) {
       try {
         const wm = await applyWatermark(resolucaoImg, tecnicoNome);
@@ -203,6 +223,21 @@ export default function DetalheChamado() {
     if (!comentario.trim() && !comentImagem) return;
 
     let texto = comentario.trim();
+
+    if (!isOnline) {
+      if (comentImagem) {
+        addToast('Comentário salvo sem anexo (offline).', 'warning', 6000);
+      }
+      enqueue({
+        url: `${API}/chamados/${id}/comentarios`,
+        method: 'POST',
+        body: { autor: tecnicoNome, texto: texto || ' ' },
+      });
+      setComentario('');
+      setComentImagem(null);
+      addToast('Comentário salvo offline e será sincronizado.', 'warning', 6000);
+      return;
+    }
 
     if (comentImagem) {
       const fd = new FormData();

@@ -4,7 +4,9 @@ import { LogIn, Mail, Lock, AlertCircle, KeyRound, ArrowRight } from 'lucide-rea
 import { useAuth } from '../contexts/AuthContext';
 import './Login.css';
 
-const API = '/api';
+import { API_URL } from '../config';
+
+const API = API_URL;
 
 export default function Login() {
   const { login, user, token } = useAuth();

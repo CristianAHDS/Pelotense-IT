@@ -5,7 +5,9 @@ import { useToast } from '../contexts/ToastContext';
 import { SkeletonTable } from '../components/ui/Skeleton';
 import './Chamados.css';
 
-const API = '/api';
+import { API_URL } from '../config';
+
+const API = API_URL;
 
 const STATUS_MAP = {
   aberto: { label: 'Aberto', cls: 'badge-blue' },

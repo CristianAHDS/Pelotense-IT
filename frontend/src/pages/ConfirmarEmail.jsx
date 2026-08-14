@@ -3,7 +3,9 @@ import { Link, useParams } from 'react-router-dom';
 import { CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import './Login.css';
 
-const API = '/api';
+import { API_URL } from '../config';
+
+const API = API_URL;
 
 export default function ConfirmarEmail() {
   const { token } = useParams();

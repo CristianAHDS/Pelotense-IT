@@ -3,7 +3,9 @@ import { useToast } from '../contexts/ToastContext';
 import { version } from '../../package.json';
 import './Configuracoes.css';
 
-const API = '/api';
+import { API_URL } from '../config';
+
+const API = API_URL;
 
 export default function Configuracoes() {
   const { add: addToast } = useToast();

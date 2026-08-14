@@ -11,6 +11,7 @@ const { router: gamificacaoRouter } = require('./routes/gamificacao');
 const emailRouter = require('./routes/email');
 const tecnicosRouter = require('./routes/tecnicos');
 const authRouter = require('./routes/auth');
+const projetosRouter = require('./routes/projetos');
 const { gerarRelatorioDiario, enviarAlerta } = require('./services/email');
 
 const app = express();
@@ -33,6 +34,7 @@ app.use('/api/gamificacao', gamificacaoRouter);
 app.use('/api/email', emailRouter);
 app.use('/api/tecnicos', tecnicosRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/projetos', projetosRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

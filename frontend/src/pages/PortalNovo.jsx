@@ -5,7 +5,9 @@ import { useToast } from '../contexts/ToastContext';
 import { applyWatermark } from '../utils/watermark';
 import './Portal.css';
 
-const API = '/api';
+import { API_URL } from '../config';
+
+const API = API_URL;
 
 export default function PortalNovo() {
   const navigate = useNavigate();

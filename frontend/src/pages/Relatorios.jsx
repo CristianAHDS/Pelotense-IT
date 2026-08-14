@@ -11,7 +11,9 @@ import {
 import { jsPDF } from 'jspdf';
 import './Relatorios.css';
 
-const API = '/api';
+import { API_URL } from '../config';
+
+const API = API_URL;
 
 const statusLabels = {
   aberto: 'Aberto',

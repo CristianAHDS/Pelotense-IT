@@ -3,7 +3,9 @@ import { Trophy, Award, Star, Zap, BarChart3, Target, TrendingUp, Clock, Shield,
 import { useAuth } from '../contexts/AuthContext';
 import './Gamificacao.css';
 
-const API = '/api';
+import { API_URL } from '../config';
+
+const API = API_URL;
 
 const CAT_ICONS = {
   hardware: '💻', software: '🖥️', rede: '🌐', impressora: '🖨️',
