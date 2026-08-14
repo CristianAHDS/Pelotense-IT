@@ -6,6 +6,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { OfflineProvider } from './contexts/OfflineContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { SplashProvider } from './contexts/SplashContext';
 import App from './App';
 import './index.css';
 
@@ -20,9 +21,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <ToastProvider>
           <OfflineProvider>
             <SocketProvider>
-              <AuthProvider>
-                <App />
-              </AuthProvider>
+              <SplashProvider>
+                <AuthProvider>
+                  <App />
+                </AuthProvider>
+              </SplashProvider>
             </SocketProvider>
           </OfflineProvider>
         </ToastProvider>

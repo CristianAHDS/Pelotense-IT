@@ -1,22 +1,8 @@
-import { useEffect, useState } from 'react';
 import './SplashScreen.css';
 
-export default function SplashScreen({ onDone, delay = 2200 }) {
-  const [leaving, setLeaving] = useState(false);
-
-  useEffect(() => {
-    const t = setTimeout(() => setLeaving(true), delay);
-    return () => clearTimeout(t);
-  }, [delay]);
-
-  useEffect(() => {
-    if (!leaving) return;
-    const t = setTimeout(onDone, 550);
-    return () => clearTimeout(t);
-  }, [leaving, onDone]);
-
+export default function SplashScreen({ leaving = false }) {
   return (
-    <div className={`splash-screen ${leaving ? 'splash-leave' : ''}`} style={{ '--splash-delay': `${delay}ms` }}>
+    <div className={`splash-screen ${leaving ? 'splash-leave' : ''}`}>
       <div className="splash-glow" />
       <div className="splash-content">
         <div className="splash-logo-wrap">

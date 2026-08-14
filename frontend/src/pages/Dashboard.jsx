@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Ticket, Clock, CheckCircle, AlertTriangle, Plus, Columns, List, ArrowRight, Activity, ThermometerSun } from 'lucide-react';
 import { useSocket } from '../contexts/SocketContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useSplash } from '../contexts/SplashContext';
 import { SkeletonCard, SkeletonPanel } from '../components/ui/Skeleton';
 import './Dashboard.css';
 
@@ -203,6 +204,7 @@ export default function Dashboard() {
   const greeting = getGreeting();
   const { socket } = useSocket();
   const { user, token } = useAuth();
+  const { hide: hideSplash } = useSplash();
 
   const todayStr = new Date().toLocaleDateString('sv');
   const hojeCriados = stats?.porDia?.find((d) => d.dia === todayStr)?.count || 0;
@@ -277,8 +279,9 @@ export default function Dashboard() {
           ]);
         }
         setLoading(false);
+        hideSplash();
       })
-      .catch((err) => { console.error('Erro ao carregar dados:', err); setLoading(false); });
+      .catch((err) => { console.error('Erro ao carregar dados:', err); setLoading(false); hideSplash(); });
   };
 
   useEffect(() => {

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogIn, Mail, Lock, AlertCircle, KeyRound, UserPlus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import SplashScreen from '../components/ui/SplashScreen';
+import { useSplash } from '../contexts/SplashContext';
 import './Login.css';
 
 import { API_URL } from '../config';
@@ -11,12 +11,12 @@ const API = API_URL;
 
 export default function Login() {
   const { login, loginAsGuest, user, token } = useAuth();
+  const { show: showSplash } = useSplash();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [splash, setSplash] = useState(false);
 
   const [showTrocarSenha, setShowTrocarSenha] = useState(false);
   const [senhaAtual, setSenhaAtual] = useState('');
@@ -44,7 +44,8 @@ export default function Login() {
         setSenhaAtual(senha);
         setShowTrocarSenha(true);
       } else {
-        setSplash(true);
+        showSplash();
+        navigate('/', { replace: true });
       }
     } catch {
       setError('Erro de conexão. Tente novamente.');
@@ -55,7 +56,8 @@ export default function Login() {
 
   const handleGuest = () => {
     loginAsGuest();
-    setSplash(true);
+    showSplash();
+    navigate('/', { replace: true });
   };
 
   const handleTrocarSenha = async (e) => {
@@ -83,7 +85,8 @@ export default function Login() {
       }
       const updatedUser = { ...user, trocar_senha: false };
       login(token, updatedUser);
-      setSplash(true);
+      showSplash();
+      navigate('/', { replace: true });
     } catch {
       setTrocarError('Erro de conexão');
     } finally {
@@ -178,8 +181,6 @@ export default function Login() {
           </form>
         )}
       </div>
-
-      {splash && <SplashScreen onDone={() => navigate('/', { replace: true })} />}
     </div>
   );
 }
