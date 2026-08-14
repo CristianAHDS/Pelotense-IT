@@ -114,6 +114,18 @@ async function initDatabase() {
   `);
 
   db.run(`
+    CREATE TABLE IF NOT EXISTS alertas (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      chamado_id INTEGER NOT NULL,
+      data_hora TEXT NOT NULL,
+      mensagem TEXT,
+      enviado INTEGER DEFAULT 0,
+      criado_em TEXT DEFAULT (datetime('now','localtime')),
+      FOREIGN KEY (chamado_id) REFERENCES chamados(id) ON DELETE CASCADE
+    )
+  `);
+
+  db.run(`
     CREATE TABLE IF NOT EXISTS badges (
       id TEXT PRIMARY KEY,
       nome TEXT NOT NULL,

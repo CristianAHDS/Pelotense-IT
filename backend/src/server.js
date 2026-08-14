@@ -5,13 +5,13 @@ const cron = require('node-cron');
 const fs = require('fs');
 const path = require('path');
 const { Server } = require('socket.io');
-const { initDatabase, queryOne } = require('./database');
+const { initDatabase, queryOne, query, run } = require('./database');
 const chamadosRouter = require('./routes/chamados');
 const { router: gamificacaoRouter } = require('./routes/gamificacao');
 const emailRouter = require('./routes/email');
 const tecnicosRouter = require('./routes/tecnicos');
 const authRouter = require('./routes/auth');
-const { gerarRelatorioDiario } = require('./services/email');
+const { gerarRelatorioDiario, enviarAlerta } = require('./services/email');
 
 const app = express();
 const server = http.createServer(app);
@@ -70,6 +70,53 @@ initDatabase().then(() => {
 
   cron.schedule('0 * * * *', fazerBackup);
   console.log('[CRON] Backup automático agendado a cada 1 hora');
+
+  async function verificarAlertas() {
+    try {
+      const alertas = query(
+        `SELECT a.*, c.titulo, c.solicitante, c.prioridade, c.status
+         FROM alertas a JOIN chamados c ON a.chamado_id = c.id
+         WHERE a.enviado = 0 AND a.data_hora <= datetime('now','localtime')`
+      );
+      for (const alerta of alertas) {
+        run('UPDATE alertas SET enviado = 1 WHERE id = ?', [alerta.id]);
+
+        let chamado = queryOne('SELECT * FROM chamados WHERE id = ?', [alerta.chamado_id]);
+        if (chamado && ['aberto', 'pendente'].includes(chamado.status)) {
+          run(
+            `UPDATE chamados SET status = 'em_andamento', atualizado_em = datetime('now','localtime'),
+             inicio_em_andamento = datetime('now','localtime') WHERE id = ?`,
+            [alerta.chamado_id]
+          );
+          try {
+            run('INSERT INTO historico (chamado_id, acao, descricao, usuario) VALUES (?, ?, ?, ?)', [
+              alerta.chamado_id, 'status', 'Status alterado para "Em Andamento" (alerta agendado)', 'Sistema'
+            ]);
+          } catch (_) {}
+          chamado = queryOne('SELECT * FROM chamados WHERE id = ?', [alerta.chamado_id]);
+          io.emit('chamado:updated', chamado);
+        }
+
+        io.emit('alerta:disparado', {
+          id: alerta.id,
+          chamado_id: alerta.chamado_id,
+          titulo: alerta.titulo,
+          solicitante: alerta.solicitante,
+          prioridade: alerta.prioridade,
+          status: chamado ? chamado.status : alerta.status,
+          mensagem: alerta.mensagem,
+          data_hora: alerta.data_hora,
+        });
+        enviarAlerta(alerta).catch((err) => console.error('[ALERTA] Erro ao enviar e-mail:', err.message));
+      }
+    } catch (err) {
+      console.error('[ALERTA] Erro ao verificar alertas:', err.message);
+    }
+  }
+
+  cron.schedule('* * * * *', verificarAlertas);
+  console.log('[CRON] Verificação de alertas agendada a cada 1 minuto');
+  verificarAlertas();
 
   app.get('/api/backup', (req, res) => {
     fazerBackup();

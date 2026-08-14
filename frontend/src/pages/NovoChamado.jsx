@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Save, Upload, X, File, Image, Film, Music, Tag } from 'lucide-react';
+import { Save, Upload, X, File, Image, Film, Music, Tag, Bell, Calendar } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { applyWatermark } from '../utils/watermark';
@@ -14,6 +14,7 @@ export default function NovoChamado() {
   const tecnicoNome = user?.nome || 'Cristian Raffi Cunha';
   const tipo = user?.tipo || 'TI';
   const fileInputRef = useRef(null);
+  const alertaDateRef = useRef(null);
   const [form, setForm] = useState({
     titulo: '', descricao: '', prioridade: 'media',
     categoria: 'geral', solicitante: '',
@@ -21,6 +22,8 @@ export default function NovoChamado() {
   const [arquivos, setArquivos] = useState([]);
   const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState('');
+  const [agendarAlerta, setAgendarAlerta] = useState(false);
+  const [alerta, setAlerta] = useState({ data_hora: '', mensagem: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { add: addToast } = useToast();
@@ -85,13 +88,21 @@ export default function NovoChamado() {
       setError('Preencha todos os campos obrigatórios.');
       return;
     }
+    if (agendarAlerta && !alerta.data_hora) {
+      setError('Informe a data e hora do alerta agendado.');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
+      const body = { ...form, tags };
+      if (agendarAlerta && alerta.data_hora) {
+        body.alerta = { data_hora: alerta.data_hora.replace('T', ' '), mensagem: alerta.mensagem };
+      }
       const res = await fetch(`${API}/chamados`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, tags }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error((await res.json()).error);
       const chamado = await res.json();
@@ -214,6 +225,56 @@ export default function NovoChamado() {
                   <button type="button" onClick={() => removeTag(t)}><X size={12} /></button>
                 </span>
               ))}
+            </div>
+          )}
+        </div>
+
+        <div className="form-group">
+          <label className="alerta-toggle-label">
+            <input
+              type="checkbox"
+              className="alerta-checkbox"
+              checked={agendarAlerta}
+              onChange={(e) => setAgendarAlerta(e.target.checked)}
+            />
+            <Bell size={15} /> Agendar alerta para este chamado
+          </label>
+          {agendarAlerta && (
+            <div className="alerta-fields">
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="alerta-data">Data e hora do alerta *</label>
+                  <div className="datetime-picker-wrap">
+                    <input
+                      id="alerta-data"
+                      ref={alertaDateRef}
+                      type="datetime-local"
+                      value={alerta.data_hora}
+                      onChange={(e) => setAlerta({ ...alerta, data_hora: e.target.value })}
+                      onClick={() => { try { alertaDateRef.current?.showPicker?.(); } catch (_) {} }}
+                    />
+                    <button
+                      type="button"
+                      className="datetime-picker-btn"
+                      onClick={() => { try { alertaDateRef.current?.showPicker?.(); } catch (_) {} }}
+                      title="Abrir calendário"
+                    >
+                      <Calendar size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="form-group">
+                <label htmlFor="alerta-mensagem">Mensagem do alerta</label>
+                <input
+                  id="alerta-mensagem"
+                  type="text"
+                  value={alerta.mensagem}
+                  onChange={(e) => setAlerta({ ...alerta, mensagem: e.target.value })}
+                  placeholder="Ex: Verificar status do chamado"
+                />
+              </div>
+              <p className="alerta-hint">O alerta será disparado por e-mail e na tela do sistema na data e hora definidas.</p>
             </div>
           )}
         </div>

@@ -399,4 +399,51 @@ async function enviarSenhaTecnico(tecnico, senha) {
   return true;
 }
 
-module.exports = { gerarRelatorioDiario, enviarTeste, resetTransporter, enviarBoasVindas, enviarSenhaTecnico };
+function formatarDataHora(str) {
+  if (!str) return '';
+  const [d, t] = str.split(' ');
+  const [y, m, dia] = (d || '').split('-');
+  const [h, min] = (t || '').split(':');
+  return `${dia}/${m}/${y} às ${h}:${min}`;
+}
+
+async function enviarAlerta(alerta) {
+  const config = queryOne('SELECT * FROM config_email WHERE id = 1');
+  if (!config || !config.smtp_user) return { enviado: false, erro: 'Configuração SMTP incompleta' };
+
+  const transport = getTransporter(config);
+  if (!transport) return { enviado: false, erro: 'Configuração SMTP inválida' };
+
+  const dests = (config.destinatarios || '').split(',').map(d => d.trim()).filter(Boolean);
+  if (dests.length === 0) return { enviado: false, erro: 'Nenhum destinatário configurado' };
+
+  const html = `
+<table width="100%" cellpadding="0" cellspacing="0" style="font-family:'Inter','Segoe UI',system-ui,sans-serif;background:#0a0e1a;background-image:radial-gradient(ellipse at 20% 0%,rgba(245,158,11,0.12) 0%,transparent 50%);-webkit-font-smoothing:antialiased;"><tr><td style="padding:40px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:0 auto;background:rgba(22,29,47,0.5);border:1px solid rgba(245,158,11,0.15);border-radius:16px;">
+    <tr><td style="padding:32px;">
+      <div style="font-size:44px;margin-bottom:16px;text-align:center;">⏰</div>
+      <h2 style="color:#e8edf5;font-size:20px;font-weight:800;margin:0 0 8px;text-align:center;">Alerta de Chamado</h2>
+      <p style="color:#94a3b8;font-size:14px;margin:0 0 24px;text-align:center;line-height:1.6;">Um alerta agendado foi disparado para o chamado abaixo.</p>
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.08);border-radius:8px;margin-bottom:16px;">
+        <tr><td style="padding:10px 16px;color:#94a3b8;font-size:12px;">Chamado</td><td style="padding:10px 16px;color:#e8edf5;font-size:13px;font-weight:700;">#${alerta.chamado_id} — ${alerta.titulo}</td></tr>
+        <tr><td style="padding:10px 16px;color:#94a3b8;font-size:12px;">Solicitante</td><td style="padding:10px 16px;color:#e8edf5;font-size:13px;font-weight:600;">${alerta.solicitante}</td></tr>
+        <tr><td style="padding:10px 16px;color:#94a3b8;font-size:12px;">Prioridade</td><td style="padding:10px 16px;color:#e8edf5;font-size:13px;font-weight:600;text-transform:capitalize;">${alerta.prioridade}</td></tr>
+        <tr><td style="padding:10px 16px;color:#94a3b8;font-size:12px;">Agendado para</td><td style="padding:10px 16px;color:#e8edf5;font-size:13px;font-weight:600;">${formatarDataHora(alerta.data_hora)}</td></tr>
+      </table>
+      ${alerta.mensagem ? `<table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.1);border-radius:8px;"><tr><td style="padding:14px 16px;color:#fbbf24;font-size:13px;">📝 ${alerta.mensagem}</td></tr></table>` : ''}
+      <p style="color:#64748b;font-size:12px;margin:24px 0 0;text-align:center;line-height:1.5;">Acesse o Pelotense IT para visualizar o chamado completo.</p>
+    </td></tr>
+  </table>
+</td></tr></table>`;
+
+  await transport.sendMail({
+    from: config.remetente,
+    to: dests.join(', '),
+    subject: `⏰ Alerta — Chamado #${alerta.chamado_id}: ${alerta.titulo}`,
+    html,
+  });
+
+  return { enviado: true };
+}
+
+module.exports = { gerarRelatorioDiario, enviarTeste, resetTransporter, enviarBoasVindas, enviarSenhaTecnico, enviarAlerta };

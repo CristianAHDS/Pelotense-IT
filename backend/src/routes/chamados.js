@@ -215,7 +215,12 @@ router.get('/:id', (req, res) => {
       checklist = query('SELECT * FROM checklist WHERE chamado_id = ? ORDER BY criado_em ASC', [parseInt(req.params.id)]);
     } catch (_) {}
 
-    res.json({ ...chamado, comentarios, anexos, tags, historico, checklist });
+    let alertas = [];
+    try {
+      alertas = query('SELECT * FROM alertas WHERE chamado_id = ? ORDER BY data_hora ASC', [parseInt(req.params.id)]);
+    } catch (_) {}
+
+    res.json({ ...chamado, comentarios, anexos, tags, historico, checklist, alertas });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -223,7 +228,7 @@ router.get('/:id', (req, res) => {
 
 router.post('/', (req, res) => {
   try {
-    const { titulo, descricao, prioridade, categoria, solicitante, tags } = req.body;
+    const { titulo, descricao, prioridade, categoria, solicitante, tags, alerta } = req.body;
     if (!titulo || !descricao || !solicitante) {
       return res.status(400).json({ error: 'Título, descrição e solicitante são obrigatórios' });
     }
@@ -234,6 +239,13 @@ router.post('/', (req, res) => {
     );
 
     const novoId = getLastID('chamados');
+
+    if (alerta && alerta.data_hora) {
+      try {
+        run('INSERT INTO alertas (chamado_id, data_hora, mensagem) VALUES (?, ?, ?)',
+          [novoId, alerta.data_hora, alerta.mensagem || '']);
+      } catch (_) {}
+    }
 
     if (Array.isArray(tags) && tags.length > 0) {
       tags.forEach((tagNome) => {

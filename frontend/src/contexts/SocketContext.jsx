@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import confetti from 'canvas-confetti';
+import { useToast } from './ToastContext';
 
 const SocketContext = createContext(null);
 
@@ -33,6 +34,7 @@ function dispararConfetti() {
 export function SocketProvider({ children }) {
   const socketRef = useRef(null);
   const [notifications, setNotifications] = useState([]);
+  const { add: addToast } = useToast();
 
   useEffect(() => {
     const socket = io(SOCKET_URL, { transports: ['websocket', 'polling'] });
@@ -44,6 +46,14 @@ export function SocketProvider({ children }) {
 
     socket.on('chamado:updated', (chamado) => {
       addNotification(`Chamado #${chamado.id} atualizado`, 'updated');
+    });
+
+    socket.on('alerta:disparado', (data) => {
+      const msg = data.mensagem
+        ? `⏰ Alerta chamado #${data.chamado_id}: ${data.mensagem}`
+        : `⏰ Alerta agendado disparado para o chamado #${data.chamado_id}: ${data.titulo}`;
+      addNotification(msg, 'alert');
+      addToast(msg, 'warning', 8000);
     });
 
     socket.on('badges:conquistados', (data) => {
