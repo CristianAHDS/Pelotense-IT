@@ -77,6 +77,19 @@ cd frontend && npm run tauri dev
 
 > Requer Rust e build tools instalados.
 
+### Deploy no Netlify (PWA estático)
+
+O frontend está configurado para publicar como site estático no Netlify (o `netlify.toml` define `base: frontend`, `command: npm run build` e `publish: dist`). O backend (Express + SQLite) deve continuar rodando em um servidor próprio, pois o Netlify não persiste o banco em arquivo.
+
+Configuração de variáveis de ambiente no Netlify (*Site settings → Environment variables*):
+
+| Variável | Descrição |
+|----------|-----------|
+| `VITE_API_URL` | URL base da API. Ex.: `http://SEU_IP:3001/api`. Se vazio, usa o proxy local (`/api`). |
+| `VITE_SOCKET_URL` | URL do Socket.IO. Ex.: `http://SEU_IP:3001`. Se vazio, é derivado de `VITE_API_URL` ou `hostname:3001`. |
+
+> O backend já libera CORS (`cors()`), permitindo o frontend no Netlify acessar a API na rede local.
+
 ## Funcionalidades
 
 ### Dashboard Admin (`/`)
@@ -120,7 +133,29 @@ cd frontend && npm run tauri dev
 
 ### PWA
 - Instalável como app standalone
-- Service worker para cache offline
+- Service worker para cache offline (arquivos estáticos e respostas `GET /api/*`)
+
+## Modo Offline com Sincronização
+
+O sistema continua funcionando sem conexão (PWA) e sincroniza as alterações quando a rede volta.
+
+**Detecção de conexão**
+- O `OfflineContext` escuta os eventos `online`/`offline` do navegador e exibe um banner no topo (vermelho = sem conexão, âmbar = sincronizando pendências).
+
+**Leitura offline (visualizar dados sem internet)**
+- O service worker guarda em cache as respostas de `GET /api/*` usando a estratégia `NetworkFirst`: tenta a rede por 5s e, se falhar, serve o que já estava em cache. Chamados/páginas já visitados continuam visíveis offline.
+- Os arquivos estáticos do app são pré-cacheados, então ele abre normalmente sem internet.
+
+**Escrita offline (fila de sincronização)**
+1. Sem conexão, as ações de **criar chamado**, **comentar** e **resolver** são gravadas na fila em `localStorage` (`pelotense-offline-queue`) como uma operação `{ url, method, body }`.
+2. Um aviso é exibido; se houver anexos, eles são descartados com aviso (arquivos não são enfileirados de forma confiável no navegador).
+3. Quando a conexão volta (evento `online`), o `OfflineContext` repassa a fila em ordem, reenviando cada operação via `fetch` e removendo as que tiverem sucesso.
+4. O contador de pendências aparece no banner até a fila zerar.
+
+**Sessão offline**
+- O `AuthContext` salva o usuário em `localStorage` (`pelotense_user`), mantendo o usuário logado mesmo offline; ao reconectar, os dados são atualizados via `/auth/me`.
+
+> O sync reenvia apenas **texto/JSON**. Anexos (imagens/vídeos) exigem conexão ativa.
 
 ## API Endpoints
 
@@ -137,6 +172,13 @@ cd frontend && npm run tauri dev
 | GET | `/api/chamados/anexos/:filename` | Download de anexo |
 | DELETE | `/api/chamados/anexos/:id` | Remover anexo |
 | GET | `/api/chamados/tags/list` | Listar tags |
+| GET | `/api/projetos` | Listar projetos com tarefas |
+| POST | `/api/projetos` | Criar projeto |
+| PUT | `/api/projetos/:id` | Atualizar projeto |
+| DELETE | `/api/projetos/:id` | Excluir projeto |
+| POST | `/api/projetos/:id/tarefas` | Criar tarefa no projeto |
+| PUT | `/api/projetos/tarefas/:id` | Atualizar tarefa |
+| DELETE | `/api/projetos/tarefas/:id` | Excluir tarefa |
 | GET | `/api/health` | Health check |
 
 ## Autor
