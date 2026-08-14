@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, Mail, Lock, AlertCircle, KeyRound, ArrowRight } from 'lucide-react';
+import { LogIn, Mail, Lock, AlertCircle, KeyRound, UserPlus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import SplashScreen from '../components/ui/SplashScreen';
 import './Login.css';
 
 import { API_URL } from '../config';
@@ -9,12 +10,13 @@ import { API_URL } from '../config';
 const API = API_URL;
 
 export default function Login() {
-  const { login, user, token } = useAuth();
+  const { login, loginAsGuest, user, token } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [splash, setSplash] = useState(false);
 
   const [showTrocarSenha, setShowTrocarSenha] = useState(false);
   const [senhaAtual, setSenhaAtual] = useState('');
@@ -42,13 +44,18 @@ export default function Login() {
         setSenhaAtual(senha);
         setShowTrocarSenha(true);
       } else {
-        navigate('/', { replace: true });
+        setSplash(true);
       }
     } catch {
       setError('Erro de conexão. Tente novamente.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGuest = () => {
+    loginAsGuest();
+    setSplash(true);
   };
 
   const handleTrocarSenha = async (e) => {
@@ -76,7 +83,7 @@ export default function Login() {
       }
       const updatedUser = { ...user, trocar_senha: false };
       login(token, updatedUser);
-      navigate('/', { replace: true });
+      setSplash(true);
     } catch {
       setTrocarError('Erro de conexão');
     } finally {
@@ -161,9 +168,18 @@ export default function Login() {
               <LogIn size={16} />
               {loading ? 'Entrando...' : 'Entrar'}
             </button>
+
+            <div className="auth-divider"><span>ou</span></div>
+
+            <button type="button" className="auth-btn auth-btn-guest" onClick={handleGuest}>
+              <UserPlus size={16} />
+              Entrar como convidado
+            </button>
           </form>
         )}
       </div>
+
+      {splash && <SplashScreen onDone={() => navigate('/', { replace: true })} />}
     </div>
   );
 }

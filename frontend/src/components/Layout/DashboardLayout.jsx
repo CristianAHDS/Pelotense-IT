@@ -132,7 +132,7 @@ export default function DashboardLayout() {
             <div className="user-avatar">{user ? user.nome.charAt(0).toUpperCase() : 'CR'}</div>
             <div className="user-info">
               <span className="user-name">{user?.nome || 'Cristian Raffi Cunha'}</span>
-              <span className="user-role">{user?.tipo === 'radio' ? 'Téc. Rádio' : user?.tipo === 'audiovisual' ? 'Audiovisual' : 'TI'}</span>
+              <span className="user-role">{user?.tipo === 'radio' ? 'Téc. Rádio' : user?.tipo === 'audiovisual' ? 'Audiovisual' : user?.tipo === 'convidado' ? 'Convidado' : 'TI'}</span>
             </div>
           </div>
           <button className="sidebar-logout-btn" onClick={() => { logout(); navigate('/login'); }} title="Sair">

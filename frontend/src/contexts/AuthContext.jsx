@@ -5,6 +5,8 @@ const AuthContext = createContext(null);
 
 const API = API_URL;
 
+const GUEST_USER = { nome: 'Convidado', tipo: 'convidado', guest: true };
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
@@ -13,6 +15,12 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const savedToken = localStorage.getItem('pelotense_token');
     const savedUser = localStorage.getItem('pelotense_user');
+    const isGuest = localStorage.getItem('pelotense_guest') === '1';
+    if (isGuest) {
+      try { setUser(savedUser ? JSON.parse(savedUser) : GUEST_USER); } catch (_) { setUser(GUEST_USER); }
+      setLoading(false);
+      return;
+    }
     if (savedToken) {
       setToken(savedToken);
       if (savedUser) {
@@ -41,19 +49,29 @@ export function AuthProvider({ children }) {
   const login = useCallback((newToken, userData) => {
     localStorage.setItem('pelotense_token', newToken);
     localStorage.setItem('pelotense_user', JSON.stringify(userData));
+    localStorage.removeItem('pelotense_guest');
     setToken(newToken);
     setUser(userData);
+  }, []);
+
+  const loginAsGuest = useCallback(() => {
+    localStorage.setItem('pelotense_guest', '1');
+    localStorage.setItem('pelotense_user', JSON.stringify(GUEST_USER));
+    localStorage.removeItem('pelotense_token');
+    setToken(null);
+    setUser(GUEST_USER);
   }, []);
 
   const logout = useCallback(() => {
     localStorage.removeItem('pelotense_token');
     localStorage.removeItem('pelotense_user');
+    localStorage.removeItem('pelotense_guest');
     setToken(null);
     setUser(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, loginAsGuest, logout }}>
       {children}
     </AuthContext.Provider>
   );
