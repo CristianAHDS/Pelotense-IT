@@ -346,6 +346,78 @@ async function enviarTeste(config) {
   return true;
 }
 
+function sanitizarHtml(str) {
+  return String(str || '')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+    .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '');
+}
+
+async function enviarPersonalizado({ para, assunto, mensagem, arquivos }) {
+  const config = queryOne('SELECT * FROM config_email WHERE id = 1');
+  if (!config || !config.smtp_user || !config.smtp_pass) {
+    return { enviado: false, erro: 'Configuração SMTP incompleta' };
+  }
+
+  const transport = getTransporter(config);
+  if (!transport) return { enviado: false, erro: 'Configuração SMTP inválida' };
+
+  const dests = (para || config.destinatarios || '')
+    .split(',')
+    .map((d) => d.trim())
+    .filter(Boolean);
+
+  if (dests.length === 0) return { enviado: false, erro: 'Nenhum destinatário informado' };
+  if (!assunto) return { enviado: false, erro: 'Assunto não informado' };
+
+  const corpoBruto = sanitizarHtml(mensagem);
+  const corpo = corpoBruto.trim()
+    ? String(corpoBruto).replace(/\r?\n/g, '<br>')
+    : '<p style="margin:0;">&nbsp;</p>';
+
+  const anexos = (arquivos || []).map((f) => ({
+    filename: f.originalname || f.filename,
+    path: f.path,
+  }));
+
+  const html = `<table width="100%" cellpadding="0" cellspacing="0" style="font-family:'Inter','Segoe UI',system-ui,sans-serif;background:#0a0e1a;background-image:radial-gradient(ellipse at 20% 0%,rgba(99,102,241,0.12) 0%,transparent 50%);-webkit-font-smoothing:antialiased;"><tr><td style="padding:40px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:rgba(22,29,47,0.5);border:1px solid rgba(99,102,241,0.15);border-radius:16px;">
+      <tr><td style="padding:32px;">
+        <table cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+          <tr>
+            <td style="width:48px;height:48px;background:rgba(99,102,241,0.12);border-radius:12px;text-align:center;vertical-align:middle;">
+              <img src="https://i.imgur.com/mfoPeJL.png" alt="Pelotense IT" width="48" height="48" style="display:block;border-radius:12px;">
+            </td>
+            <td style="padding-left:14px;">
+              <div style="color:#e8edf5;font-size:16px;font-weight:800;">Pelotense IT</div>
+              <div style="color:#64748b;font-size:12px;">Gestão de Chamados</div>
+            </td>
+          </tr>
+        </table>
+        <h2 style="color:#e8edf5;font-size:18px;font-weight:800;margin:0 0 16px;">${String(assunto).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</h2>
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.08);border-radius:8px;">
+          <tr><td style="padding:20px;color:#cbd5e1;font-size:14px;line-height:1.7;">${corpo}</td></tr>
+        </table>
+        ${anexos.length > 0 ? `<p style="color:#64748b;font-size:12px;margin:16px 0 0;">📎 ${anexos.length} anexo(s) incluído(s).</p>` : ''}
+        <p style="color:#64748b;font-size:11px;margin:24px 0 0;line-height:1.5;">Enviado via <strong style="color:#818cf8;">Pelotense IT Dashboard</strong> em ${new Date().toLocaleString('pt-BR')}</p>
+      </td></tr>
+    </table>
+  </td></tr></table>`;
+
+  try {
+    await transport.sendMail({
+      from: config.remetente,
+      to: dests.join(', '),
+      subject: assunto,
+      html,
+      attachments: anexos,
+    });
+    return { enviado: true };
+  } catch (err) {
+    return { enviado: false, erro: err.message };
+  }
+}
+
 async function enviarBoasVindas(usuario) {
   const config = queryOne('SELECT * FROM config_email WHERE id = 1');
   if (!config || !config.smtp_user) return false;
@@ -446,4 +518,4 @@ async function enviarAlerta(alerta) {
   return { enviado: true };
 }
 
-module.exports = { gerarRelatorioDiario, enviarTeste, resetTransporter, enviarBoasVindas, enviarSenhaTecnico, enviarAlerta };
+module.exports = { gerarRelatorioDiario, enviarTeste, resetTransporter, enviarBoasVindas, enviarSenhaTecnico, enviarAlerta, enviarPersonalizado };

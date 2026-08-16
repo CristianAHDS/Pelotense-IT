@@ -5,12 +5,14 @@
   "description": "Pelotense IT - Dashboard de Controle de Chamados de TI",
   "author": "Cristian Raffi Cunha",
   "scripts": {
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev": "concurrently -n backend,frontend,evolution -c blue,green,magenta \"npm run backend\" \"npm run dev:front\" \"npm run evolution\"",
+    "dev:back": "concurrently -n backend,evolution -c blue,magenta \"npm run backend\" \"npm run evolution\"",
     "dev:front": "cd frontend && npm run dev",
-    "dev:back": "cd backend && npm run dev",
+    "backend": "cd backend && npm run dev",
+    "evolution": "cd evolution-api && npm start",
     "build": "cd frontend && npm run build",
     "tauri": "cd frontend && npm run tauri",
-    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install"
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install && cd ../evolution-api && npm install --legacy-peer-deps"
   },
   "devDependencies": {
     "concurrently": "^9.0.1"

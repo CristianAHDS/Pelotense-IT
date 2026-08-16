@@ -12,6 +12,7 @@ const emailRouter = require('./routes/email');
 const tecnicosRouter = require('./routes/tecnicos');
 const authRouter = require('./routes/auth');
 const projetosRouter = require('./routes/projetos');
+const whatsappRouter = require('./routes/whatsapp');
 const { gerarRelatorioDiario, enviarAlerta } = require('./services/email');
 
 const app = express();
@@ -35,6 +36,7 @@ app.use('/api/email', emailRouter);
 app.use('/api/tecnicos', tecnicosRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/projetos', projetosRouter);
+app.use('/api/whatsapp', whatsappRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

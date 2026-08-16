@@ -11,6 +11,8 @@ import Relatorios from './pages/Relatorios';
 import Gamificacao from './pages/Gamificacao';
 import Configuracoes from './pages/Configuracoes';
 import CadastroTecnicos from './pages/CadastroTecnicos';
+import EnviarEmail from './pages/EnviarEmail';
+import Whatsapp from './pages/Whatsapp';
 import PortalHome from './pages/PortalHome';
 import PortalNovo from './pages/PortalNovo';
 import Login from './pages/Login';
@@ -37,6 +39,8 @@ export default function App() {
         <Route path="/gamificacao" element={<Gamificacao />} />
         <Route path="/configuracoes" element={<Configuracoes />} />
         <Route path="/cadastro-tecnicos" element={<CadastroTecnicos />} />
+        <Route path="/enviar-email" element={<EnviarEmail />} />
+        <Route path="/whatsapp" element={<Whatsapp />} />
       </Route>
 
       <Route element={<PortalLayout />}>

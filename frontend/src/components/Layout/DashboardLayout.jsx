@@ -3,7 +3,7 @@ import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Ticket, PlusCircle, BarChart3, Settings,
   Wrench, Columns, Menu, X, Bell, Sun, Moon, ChevronLeft, ChevronRight, Plus,
-  Trophy, Contrast, UserCog, LogOut,
+  Trophy, Contrast, UserCog, LogOut, Mail, MessageCircle,
 } from 'lucide-react';
 import { useSocket } from '../../contexts/SocketContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -26,6 +26,8 @@ const mainMenuItems = [
 
 const adminMenuItems = [
   { to: '/cadastro-tecnicos', icon: UserCog, label: 'Cadastro de Técnicos' },
+  { to: '/enviar-email', icon: Mail, label: 'Envio de E-mails' },
+  { to: '/whatsapp', icon: MessageCircle, label: 'WhatsApp' },
 ];
 
 const breadcrumbMap = {
@@ -37,6 +39,8 @@ const breadcrumbMap = {
   '/gamificacao': 'Gamificação',
   '/configuracoes': 'Configurações',
   '/cadastro-tecnicos': 'Cadastro de Técnicos',
+  '/enviar-email': 'Envio de E-mails',
+  '/whatsapp': 'WhatsApp',
 };
 
 export default function DashboardLayout() {

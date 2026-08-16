@@ -269,10 +269,40 @@ async function initDatabase() {
     )
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS config_whatsapp (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      ativo INTEGER DEFAULT 0,
+      api_url TEXT DEFAULT 'http://localhost:8080',
+      api_key TEXT DEFAULT 'vz5fUF8aVxo2IAY0jkCLJ1Ks7SWHZMi6',
+      instance TEXT DEFAULT 'pelotense',
+      numeros_permitidos TEXT DEFAULT '[]',
+      criado_em TEXT DEFAULT (datetime('now','localtime'))
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS whatsapp_sessoes (
+      numero TEXT PRIMARY KEY,
+      estado TEXT DEFAULT 'menu',
+      dados TEXT DEFAULT '{}',
+      atualizado_em TEXT DEFAULT (datetime('now','localtime'))
+    )
+  `);
+
   const existingConfig = query("SELECT COUNT(*) as c FROM config_email");
   if (existingConfig[0]?.c === 0) {
     run(`INSERT INTO config_email (id) VALUES (1)`);
   }
+
+  const existingWhats = query("SELECT COUNT(*) as c FROM config_whatsapp");
+  if (existingWhats[0]?.c === 0) {
+    run(`INSERT INTO config_whatsapp (id) VALUES (1)`);
+  }
+
+  run("UPDATE config_whatsapp SET api_url = 'http://localhost:8080' WHERE api_url IS NULL OR api_url = ''");
+  run("UPDATE config_whatsapp SET api_key = 'vz5fUF8aVxo2IAY0jkCLJ1Ks7SWHZMi6' WHERE api_key IS NULL OR api_key = ''");
+  run("UPDATE config_whatsapp SET instance = 'pelotense' WHERE instance IS NULL OR instance = ''");
 
   save();
 }

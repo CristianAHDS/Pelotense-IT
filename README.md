@@ -35,6 +35,7 @@ Pelotense IT/
 │   │   └── main.jsx           # Entry point
 │   ├── src-tauri/             # Configuração Tauri
 │   └── package.json
+├── evolution-api/             # Evolution API (gateway WhatsApp) — v1.8.2
 ├── package.json               # Scripts de orquestração
 └── README.md
 ```
@@ -48,21 +49,36 @@ Pelotense IT/
 ### Instalação
 
 ```bash
-# Instalar dependências de todos os módulos
+# Instalar dependências de todos os módulos (backend, frontend e evolution-api)
 npm run install:all
+```
+
+> A pasta `evolution-api/` não é versionada (está no `.gitignore`). Se ela não existir no seu clone, baixe a Evolution API antes de instalar:
+
+```bash
+git clone --branch 1.8.2 --depth 1 https://github.com/EvolutionAPI/evolution-api.git evolution-api
+cd evolution-api
+npm install --legacy-peer-deps
 ```
 
 ### Desenvolvimento
 
 ```bash
-# Terminal 1 - Backend (porta 3001)
-cd backend && npm run dev
+# Sobe backend + frontend + Evolution API (WhatsApp) de uma vez
+npm run dev
 
-# Terminal 2 - Frontend (porta 1420)
-cd frontend && npm run dev
+# Ou apenas backend + Evolution API (WhatsApp)
+npm run dev:back
+
+# Ou apenas frontend
+npm run dev:front
 ```
 
-Acesse: `http://localhost:1420`
+- Backend: `http://localhost:3001`
+- Frontend: `http://localhost:1420`
+- Evolution API (WhatsApp): `http://localhost:8080` (Manager em `http://localhost:8080/manager`)
+
+Acesse o frontend em: `http://localhost:1420`
 
 ### Acesso mobile (mesma rede)
 
@@ -157,6 +173,67 @@ O sistema continua funcionando sem conexão (PWA) e sincroniza as alterações q
 
 > O sync reenvia apenas **texto/JSON**. Anexos (imagens/vídeos) exigem conexão ativa.
 
+## Chatbot WhatsApp (Evolution API)
+
+O sistema inclui uma aba de administração (**Administração → WhatsApp**) que integra um chatbot de atendimento de chamados via WhatsApp, usando a [Evolution API](https://github.com/EvolutionAPI/evolution-api) (v1.8.2, SQLite — sem banco externo).
+
+### Como funciona
+
+- O bot só responde aos números cadastrados na lista **Números autorizados** (com DDI, ex.: `5511999999999`). Qualquer número fora dessa lista é ignorado.
+- Menu interativo do bot:
+  - `1` — Consultar status de um chamado (informando o número do chamado)
+  - `2` — Abrir um novo chamado (título + descrição)
+  - `3` — Falar com atendente
+- Os chamados abertos pelo bot entram na fila normal do sistema (solicitante `WhatsApp <número>`).
+
+### Configurando a Evolution API
+
+1. **Configuração do servidor** — crie `evolution-api/src/env.yml` a partir do exemplo (ou use o que já vem pronto neste repositório):
+
+   ```bash
+   cd evolution-api
+   Copy-Item src\dev-env.yml src\env.yml
+   ```
+
+   No arquivo `src/env.yml`, os campos principais são:
+
+   ```yaml
+   SERVER:
+     TYPE: http
+     PORT: 8080
+   AUTHENTICATION:
+     TYPE: apikey
+     API_KEY:
+       KEY: vz5fUF8aVxo2IAY0jkCLJ1Ks7SWHZMi6
+   LANGUAGE: "pt-BR"
+   ```
+
+2. **Subir a Evolution API** (junto com o backend):
+
+   ```bash
+   npm run dev:back
+   ```
+
+   A Evolution API sobe em `http://localhost:8080`.
+
+3. **Parear o WhatsApp**:
+   - Abra o Manager: `http://localhost:8080/manager` (login padrão: `admin` / `evolution`).
+   - Crie uma instância (ex.: `pelotense`).
+   - Escaneie o QR Code com o WhatsApp do celular (*Aparelhos conectados → Conectar um aparelho*).
+   - Na instância, configure o **Webhook**:
+     - URL: `http://localhost:3001/api/whatsapp/webhook`
+     - Eventos: `MESSAGES_UPSERT`.
+
+4. **Preencher a aba WhatsApp** no Pelotense IT (**Administração → WhatsApp**):
+   - **URL da Evolution API:** `http://localhost:8080`
+   - **API Key:** `vz5fUF8aVxo2IAY0jkCLJ1Ks7SWHZMi6`
+   - **Instância:** `pelotense`
+   - **Ativar bot:** ligar o toggle
+   - **Números autorizados:** adicionar os números com DDI
+   - Clique em **Salvar Configurações** e use **Enviar teste** para validar.
+
+> Se o backend e a Evolution API rodarem em máquinas diferentes, troque `localhost:3001` pelo IP/domínio do servidor do backend na URL do webhook.
+
 ## API Endpoints
 
 | Método | Rota | Descrição |
@@ -179,6 +256,15 @@ O sistema continua funcionando sem conexão (PWA) e sincroniza as alterações q
 | POST | `/api/projetos/:id/tarefas` | Criar tarefa no projeto |
 | PUT | `/api/projetos/tarefas/:id` | Atualizar tarefa |
 | DELETE | `/api/projetos/tarefas/:id` | Excluir tarefa |
+| GET | `/api/email/config` | Configuração SMTP |
+| PUT | `/api/email/config` | Salvar configuração SMTP |
+| POST | `/api/email/teste` | Enviar e-mail de teste |
+| POST | `/api/email/relatorio` | Disparar relatório diário |
+| POST | `/api/email/enviar` | Enviar e-mail personalizado (com anexos) |
+| GET | `/api/whatsapp/config` | Configuração do chatbot WhatsApp |
+| PUT | `/api/whatsapp/config` | Salvar configuração do chatbot |
+| POST | `/api/whatsapp/teste` | Enviar mensagem de teste do bot |
+| POST | `/api/whatsapp/webhook` | Webhook da Evolution API (recebe mensagens) |
 | GET | `/api/health` | Health check |
 
 ## Autor
