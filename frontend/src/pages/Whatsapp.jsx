@@ -9,6 +9,7 @@ import {
   Link2,
   Power,
   ShieldCheck,
+  RefreshCw,
 } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import './Whatsapp.css';
@@ -21,7 +22,7 @@ export default function Whatsapp() {
   const { add: addToast } = useToast();
   const [config, setConfig] = useState({
     ativo: false,
-    api_url: 'http://localhost:8080',
+    api_url: 'http://localhost:8081',
     api_key: 'vz5fUF8aVxo2IAY0jkCLJ1Ks7SWHZMi6',
     instance: 'pelotense',
     numeros_permitidos: [],
@@ -30,6 +31,20 @@ export default function Whatsapp() {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testNumero, setTestNumero] = useState('');
+  const [status, setStatus] = useState(null);
+  const [checking, setChecking] = useState(false);
+
+  const loadStatus = async () => {
+    setChecking(true);
+    try {
+      const r = await fetch(`${API}/whatsapp/status`);
+      setStatus(await r.json());
+    } catch {
+      setStatus({ conectado: false, erro: 'Não foi possível verificar a conexão' });
+    } finally {
+      setChecking(false);
+    }
+  };
 
   useEffect(() => {
     fetch(`${API}/whatsapp/config`)
@@ -37,13 +52,17 @@ export default function Whatsapp() {
       .then((data) =>
         setConfig({
           ativo: !!data.ativo,
-          api_url: data.api_url || 'http://localhost:8080',
+          api_url: data.api_url || 'http://localhost:8081',
           api_key: data.api_key || 'vz5fUF8aVxo2IAY0jkCLJ1Ks7SWHZMi6',
           instance: data.instance || 'pelotense',
           numeros_permitidos: data.numeros_permitidos || [],
         }),
       )
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    loadStatus();
   }, []);
 
   const webhookUrl = /^https?:\/\//.test(API)
@@ -139,6 +158,41 @@ export default function Whatsapp() {
       </div>
 
       <div className="wa-grid">
+        <div className="wa-card wa-card-full wa-status-card">
+          <h3>
+            <MessageCircle size={16} /> Status da conexão
+          </h3>
+          <div className="wa-conn">
+            <span className={`wa-conn-dot ${status?.conectado ? 'on' : 'off'}`} />
+            <div className="wa-conn-info">
+              {status?.conectado ? (
+                <>
+                  <span className="wa-conn-title">Conectado</span>
+                  <span className="wa-conn-meta">
+                    Número do bot: <strong>{status.numero || '—'}</strong>
+                    {status.instancia ? ` · Instância: ${status.instancia}` : ''}
+                    {status.nome ? ` · ${status.nome}` : ''}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="wa-conn-title">Desconectado</span>
+                  <span className="wa-conn-meta">
+                    {status?.erro || status?.estado || 'Instância não conectada. Escaneie o QR Code no Manager.'}
+                  </span>
+                </>
+              )}
+            </div>
+            <button
+              className="btn btn-outline"
+              onClick={loadStatus}
+              disabled={checking}
+            >
+              <RefreshCw size={15} /> {checking ? 'Verificando...' : 'Verificar'}
+            </button>
+          </div>
+        </div>
+
         <div className="wa-card">
           <h3>
             <MessageCircle size={16} /> Conexão com a Evolution API
@@ -159,7 +213,7 @@ export default function Whatsapp() {
             <label>URL da Evolution API</label>
             <input
               type="text"
-              placeholder="http://localhost:8080"
+              placeholder="http://localhost:8081"
               value={config.api_url}
               onChange={(e) =>
                 setConfig({ ...config, api_url: e.target.value })

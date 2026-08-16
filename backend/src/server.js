@@ -38,7 +38,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/projetos', projetosRouter);
 app.use('/api/whatsapp', whatsappRouter);
 
-app.get('/api/health', (req, res) => {
+app.all('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 

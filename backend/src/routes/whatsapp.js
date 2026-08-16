@@ -1,6 +1,15 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const router = express.Router();
 const { query, queryOne, run, getLastID } = require('../database');
+
+const LOG_FILE = path.join(__dirname, '..', '..', 'whatsapp.log');
+function log(...args) {
+  const line = `[${new Date().toLocaleTimeString('pt-BR')}] ${args.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')}`;
+  console.log('[WHATSAPP]', ...args);
+  try { fs.appendFileSync(LOG_FILE, line + '\n'); } catch (_) {}
+}
 
 const MENU = `🤖 *Pelotense IT — Assistente Virtual*
 
@@ -118,16 +127,41 @@ function getSessao(numero) {
   return queryOne('SELECT * FROM whatsapp_sessoes WHERE numero = ?', [numero]);
 }
 
+async function fetchInstances(config) {
+  const base = String(config.api_url || '').replace(/\/+$/, '');
+  const r = await fetch(`${base}/instance/fetchInstances`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json', apikey: config.api_key },
+  });
+  if (!r.ok) throw new Error(`Evolution API respondeu ${r.status}`);
+  const data = await r.json();
+  const list = Array.isArray(data) ? data : [data];
+  return list.map((i) => i?.instance).filter(Boolean);
+}
+
+async function resolveInstanceName(config) {
+  const instances = await fetchInstances(config);
+  if (instances.length === 0) return config.instance || null;
+  if (config.instance && instances.some((i) => i.instanceName === config.instance)) {
+    return config.instance;
+  }
+  const open = instances.find((i) => i.status === 'open');
+  if (open) return open.instanceName;
+  return instances[0].instanceName;
+}
+
 async function enviarMensagem(config, numero, texto) {
-  if (!config.api_url || !config.api_key || !config.instance) {
+  if (!config.api_url || !config.api_key) {
     throw new Error('Configuração da Evolution API incompleta');
   }
+  const instanceName = await resolveInstanceName(config);
+  if (!instanceName) throw new Error('Nenhuma instância encontrada na Evolution API');
   const base = String(config.api_url).replace(/\/+$/, '');
-  const url = `${base}/message/sendText/${config.instance}`;
+  const url = `${base}/message/sendText/${instanceName}`;
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', apikey: config.api_key },
-    body: JSON.stringify({ number: numero, text: texto }),
+    body: JSON.stringify({ number: numero, textMessage: { text: texto } }),
   });
   if (!res.ok) {
     throw new Error(`Evolution API respondeu ${res.status}`);
@@ -181,31 +215,76 @@ router.post('/teste', async (req, res) => {
   }
 });
 
+// Status da conexão
+router.get('/status', async (req, res) => {
+  try {
+    const config = getConfig();
+    if (!config.api_url || !config.api_key) {
+      return res.json({ conectado: false, numero: null, nome: null, instancia: null, estado: null });
+    }
+    const instances = await fetchInstances(config);
+    const inst =
+      instances.find((i) => i.instanceName === config.instance) ||
+      instances.find((i) => i.status === 'open') ||
+      instances[0] ||
+      {};
+    const owner = inst.owner || inst.ownerJid || inst.integration?.number || '';
+    const numero = String(owner).split('@')[0].replace(/\D/g, '');
+    const nome = inst.profileName && inst.profileName !== 'not loaded' ? inst.profileName : null;
+    res.json({
+      conectado: inst.status === 'open',
+      numero: numero || null,
+      nome,
+      instancia: inst.instanceName || null,
+      estado: inst.status || null,
+    });
+  } catch (err) {
+    res.json({ conectado: false, numero: null, nome: null, instancia: null, estado: null, erro: err.message });
+  }
+});
+
 // Webhook da Evolution API
 router.post('/webhook', (req, res) => {
   res.status(200).json({ ok: true });
   try {
     const body = req.body || {};
+    log('Webhook recebido:', JSON.stringify(body).slice(0, 600));
+
     const data = body.data || body;
     const key = data.key || {};
-    if (key.fromMe) return;
+    if (key.fromMe) {
+      log('Mensagem própria (fromMe=true) — ignorada');
+      return;
+    }
 
-    const jid = key.remoteJid;
+    const jid = key.senderPn || key.remoteJid;
     const message = data.message || {};
     const texto = message.conversation || (message.extendedTextMessage && message.extendedTextMessage.text) || '';
-    if (!jid || !texto) return;
+    if (!jid || !texto) {
+      log('Sem jid ou texto — ignorada. jid=', jid, 'texto=', texto);
+      return;
+    }
 
     const numero = normalizarNumero(jid);
     const config = getConfig();
-    if (!config.ativo) return;
-    if (!config.numeros_permitidos.includes(numero)) return; // número fora do range → não responde
+    log('Mensagem de', numero, ':', texto, '| ativo=', config.ativo, '| permitidos=', config.numeros_permitidos);
+
+    if (!config.ativo) {
+      log('Bot desativado — ignorada');
+      return;
+    }
+    if (!config.numeros_permitidos.includes(numero)) {
+      log('Número', numero, 'NÃO autorizado — ignorada');
+      return;
+    }
 
     const resposta = processarMensagem(numero, texto);
-    enviarMensagem(config, numero, resposta).catch((err) =>
-      console.error('[WHATSAPP] Erro ao responder:', err.message)
-    );
+    log('Enviando resposta para', numero, ':', resposta.slice(0, 80));
+    enviarMensagem(config, numero, resposta)
+      .then(() => log('Resposta enviada com sucesso para', numero))
+      .catch((err) => log('Erro ao responder:', err.message));
   } catch (err) {
-    console.error('[WHATSAPP] Erro no webhook:', err.message);
+    log('Erro no webhook:', err.message);
   }
 });
 

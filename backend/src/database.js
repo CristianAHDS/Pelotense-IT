@@ -273,7 +273,7 @@ async function initDatabase() {
     CREATE TABLE IF NOT EXISTS config_whatsapp (
       id INTEGER PRIMARY KEY CHECK (id = 1),
       ativo INTEGER DEFAULT 0,
-      api_url TEXT DEFAULT 'http://localhost:8080',
+      api_url TEXT DEFAULT 'http://localhost:8081',
       api_key TEXT DEFAULT 'vz5fUF8aVxo2IAY0jkCLJ1Ks7SWHZMi6',
       instance TEXT DEFAULT 'pelotense',
       numeros_permitidos TEXT DEFAULT '[]',
@@ -300,9 +300,9 @@ async function initDatabase() {
     run(`INSERT INTO config_whatsapp (id) VALUES (1)`);
   }
 
-  run("UPDATE config_whatsapp SET api_url = 'http://localhost:8080' WHERE api_url IS NULL OR api_url = ''");
+  run("UPDATE config_whatsapp SET api_url = 'http://localhost:8081' WHERE api_url IS NULL OR api_url = '' OR api_url = 'http://localhost:8080'");
   run("UPDATE config_whatsapp SET api_key = 'vz5fUF8aVxo2IAY0jkCLJ1Ks7SWHZMi6' WHERE api_key IS NULL OR api_key = ''");
-  run("UPDATE config_whatsapp SET instance = 'pelotense' WHERE instance IS NULL OR instance = ''");
+  run("UPDATE config_whatsapp SET instance = 'pelotense' WHERE instance IS NULL OR instance = '' OR instance = 'IT'");
 
   save();
 }

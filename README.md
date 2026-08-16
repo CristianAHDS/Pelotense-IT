@@ -76,7 +76,7 @@ npm run dev:front
 
 - Backend: `http://localhost:3001`
 - Frontend: `http://localhost:1420`
-- Evolution API (WhatsApp): `http://localhost:8080` (Manager em `http://localhost:8080/manager`)
+- Evolution API (WhatsApp): `http://localhost:8081` (Manager em `http://localhost:8081/manager`)
 
 Acesse o frontend em: `http://localhost:1420`
 
@@ -200,7 +200,7 @@ O sistema inclui uma aba de administração (**Administração → WhatsApp**) q
    ```yaml
    SERVER:
      TYPE: http
-     PORT: 8080
+     PORT: 8081
    AUTHENTICATION:
      TYPE: apikey
      API_KEY:
@@ -214,10 +214,10 @@ O sistema inclui uma aba de administração (**Administração → WhatsApp**) q
    npm run dev:back
    ```
 
-   A Evolution API sobe em `http://localhost:8080`.
+   A Evolution API sobe em `http://localhost:8081`.
 
 3. **Parear o WhatsApp**:
-   - Abra o Manager: `http://localhost:8080/manager` (login padrão: `admin` / `evolution`).
+   - Abra o Manager: `http://localhost:8081/manager` (login padrão: `admin` / `evolution`).
    - Crie uma instância (ex.: `pelotense`).
    - Escaneie o QR Code com o WhatsApp do celular (*Aparelhos conectados → Conectar um aparelho*).
    - Na instância, configure o **Webhook**:
@@ -225,7 +225,7 @@ O sistema inclui uma aba de administração (**Administração → WhatsApp**) q
      - Eventos: `MESSAGES_UPSERT`.
 
 4. **Preencher a aba WhatsApp** no Pelotense IT (**Administração → WhatsApp**):
-   - **URL da Evolution API:** `http://localhost:8080`
+   - **URL da Evolution API:** `http://localhost:8081`
    - **API Key:** `vz5fUF8aVxo2IAY0jkCLJ1Ks7SWHZMi6`
    - **Instância:** `pelotense`
    - **Ativar bot:** ligar o toggle
@@ -233,6 +233,12 @@ O sistema inclui uma aba de administração (**Administração → WhatsApp**) q
    - Clique em **Salvar Configurações** e use **Enviar teste** para validar.
 
 > Se o backend e a Evolution API rodarem em máquinas diferentes, troque `localhost:3001` pelo IP/domínio do servidor do backend na URL do webhook.
+
+### Limitações conhecidas
+
+- **Contatos com número oculto ("lid")**: contatos que ativam a privacidade *"Quem pode ver meu número" → Ninguém* no WhatsApp usam um identificador `@lid` em vez do número. A Evolution API **v1.8.2** (Baileys 6.7.18) não consegue responder a esse tipo de contato de forma confiável — a mensagem é aceita pelo servidor, mas a entrega ao contato pode falhar. O bot identifica o número autorizado corretamente (via campo `senderPn`), mas a resposta volta pelo número de telefone.
+  - **Solução de contorno**: o contato desativa o "ocultar número" (`Configurações → Privacidade → Número de telefone → Todos`).
+  - **Solução definitiva**: migrar para a Evolution API v2 (que tem melhor suporte a `lid`), o que exige PostgreSQL/MySQL.
 
 ## API Endpoints
 
