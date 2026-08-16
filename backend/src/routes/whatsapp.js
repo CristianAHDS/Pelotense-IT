@@ -2,7 +2,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const router = express.Router();
-const { query, queryOne, run, getLastID } = require('../database');
+const { query, queryOne, run } = require('../database');
 
 const LOG_FILE = path.join(__dirname, '..', '..', 'whatsapp.log');
 function log(...args) {
@@ -96,12 +96,12 @@ function processarMensagem(numero, texto) {
   if (sessao.estado === 'abrir_desc') {
     const titulo = dados.titulo || 'Chamado via WhatsApp';
     const desc = texto.trim();
+    const id = (queryOne('SELECT MAX(id) as m FROM chamados')?.m || 0) + 1;
     run(
-      `INSERT INTO chamados (titulo, descricao, status, prioridade, categoria, solicitante, criado_em, atualizado_em)
-       VALUES (?, ?, 'aberto', 'media', 'geral', ?, datetime('now','localtime'), datetime('now','localtime'))`,
-      [titulo, desc, `WhatsApp ${numero}`]
+      `INSERT INTO chamados (id, titulo, descricao, status, prioridade, categoria, solicitante, criado_em, atualizado_em)
+       VALUES (?, ?, ?, 'aberto', 'media', 'geral', ?, datetime('now','localtime'), datetime('now','localtime'))`,
+      [id, titulo, desc, `WhatsApp ${numero}`]
     );
-    const id = getLastID('chamados');
     setSessao(numero, 'menu', {});
     return `✅ Chamado #${id} aberto com sucesso!\n\n📋 *${titulo}*\n📝 ${desc}\n\nA equipe de TI irá atendê-lo em breve. Digite "menu" para mais opções.`;
   }

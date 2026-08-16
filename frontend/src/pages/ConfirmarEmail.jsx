@@ -26,7 +26,7 @@ export default function ConfirmarEmail() {
     <div className="auth-page">
       <div className="auth-container">
         <div className="auth-header">
-          <img src="https://i.imgur.com/mfoPeJL.png" alt="Pelotense IT" className="auth-logo" />
+          <img src="/pelotense_it_icone_app_sem_fundo.png" alt="Pelotense IT" className="auth-logo" />
           <h1>Pelotense IT</h1>
           <span>Gestão de Chamados</span>
         </div>

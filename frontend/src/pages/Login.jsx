@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, Mail, Lock, AlertCircle, KeyRound, UserPlus } from 'lucide-react';
+import { LogIn, Mail, Lock, AlertCircle, KeyRound, UserPlus, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSplash } from '../contexts/SplashContext';
+import { useToast } from '../contexts/ToastContext';
 import './Login.css';
 
 import { API_URL } from '../config';
@@ -12,9 +13,11 @@ const API = API_URL;
 export default function Login() {
   const { login, loginAsGuest, user, token } = useAuth();
   const { show: showSplash } = useSplash();
+  const { add: addToast } = useToast();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [mostrarSenha, setMostrarSenha] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -98,7 +101,7 @@ export default function Login() {
     <div className="auth-page">
       <div className="auth-container">
         <div className="auth-header">
-          <img src="https://i.imgur.com/mfoPeJL.png" alt="Pelotense IT" className="auth-logo" />
+          <img src="/pelotense_it_icone_app_sem_fundo.png" alt="Pelotense IT" className="auth-logo" />
           <h1>Pelotense IT</h1>
           <span>Gestão de Chamados</span>
         </div>
@@ -159,12 +162,22 @@ export default function Login() {
             <div className="auth-field">
               <Lock size={16} className="auth-field-icon" />
               <input
-                type="password"
+                type={mostrarSenha ? 'text' : 'password'}
+                className="has-toggle"
                 placeholder="Senha"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 required
               />
+              <button type="button" className="auth-field-toggle" onClick={() => setMostrarSenha(!mostrarSenha)} title={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}>
+                {mostrarSenha ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+
+            <div className="auth-forgot">
+              <button type="button" className="auth-forgot-link" onClick={() => addToast('Para redefinir a senha, contate o administrador do sistema.', 'info')}>
+                Esqueci minha senha
+              </button>
             </div>
 
             <button type="submit" className="auth-btn" disabled={loading}>

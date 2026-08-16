@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { UserCog, Plus, Trash2, Check, X, KeyRound } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 import './CadastroTecnicos.css';
 
 import { API_URL } from '../config';
@@ -16,6 +17,7 @@ export default function CadastroTecnicos() {
   const [form, setForm] = useState({ nome: '', email: '', departamento: 'TI', ativo: true });
   const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const loadTecnicos = () => {
     fetch(`${API}/tecnicos`)
@@ -78,7 +80,10 @@ export default function CadastroTecnicos() {
     }
   };
 
-  const handleDelete = async (id) => {
+  const confirmDelete = async () => {
+    const id = deleteTarget;
+    setDeleteTarget(null);
+    if (!id) return;
     try {
       const r = await fetch(`${API}/tecnicos/${id}`, { method: 'DELETE' });
       if (!r.ok) throw new Error();
@@ -201,7 +206,7 @@ export default function CadastroTecnicos() {
                           <button className="ct-action-btn" onClick={() => handleEdit(t)} title="Editar">
                             <UserCog size={14} />
                           </button>
-                          <button className="ct-action-btn ct-delete" onClick={() => handleDelete(t.id)} title="Remover">
+                          <button className="ct-action-btn ct-delete" onClick={() => setDeleteTarget(t.id)} title="Remover">
                             <Trash2 size={14} />
                           </button>
                         </div>
@@ -214,6 +219,14 @@ export default function CadastroTecnicos() {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Remover técnico"
+        message="Tem certeza que deseja remover este técnico? Esta ação não pode ser desfeita."
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

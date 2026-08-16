@@ -2,6 +2,17 @@
 
 Sistema completo de gestão de chamados de suporte técnico com dashboard, kanban, relatórios e portal do cliente.
 
+![JavaScript](https://img.shields.io/badge/JavaScript-323330?style=for-the-badge&logo=javascript&logoColor=F7DF1E)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)
+![Node.js](https://img.shields.io/badge/Node%20js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Express.js](https://img.shields.io/badge/Express%20js-000000?style=for-the-badge&logo=express&logoColor=white)
+![Socket.io](https://img.shields.io/badge/Socket.io-010101?&style=for-the-badge&logo=Socket.io&logoColor=white)
+![SQLite](https://img.shields.io/badge/Sqlite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
+![Netlify](https://img.shields.io/badge/Netlify-00C7B7?style=for-the-badge&logo=netlify&logoColor=white)
+![Tauri](https://img.shields.io/badge/Tauri-FFC131?style=for-the-badge&logo=Tauri&logoColor=white)
+![WhatsApp](https://img.shields.io/badge/WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)
+
 ## Tecnologias
 
 | Camada | Tecnologia |
@@ -272,6 +283,15 @@ O sistema inclui uma aba de administração (**Administração → WhatsApp**) q
 | POST | `/api/whatsapp/teste` | Enviar mensagem de teste do bot |
 | POST | `/api/whatsapp/webhook` | Webhook da Evolution API (recebe mensagens) |
 | GET | `/api/health` | Health check |
+
+## Logotipo
+
+Os logotipos do sistema ficam em `frontend/public/`:
+
+- <img src="frontend/public/pelotense_it_icone_app_sem_fundo.png" width="48" alt="Ícone sem fundo" /> `pelotense_it_icone_app_sem_fundo.png` — ícone sem fundo (usado no sistema e no PWA)
+- <img src="frontend/public/pelotense_it_icone_app.png" width="48" alt="Ícone de app" /> `pelotense_it_icone_app.png` — ícone de app
+- <img src="frontend/public/pelotense_it_colorido.png" width="140" alt="Colorido" /> `pelotense_it_colorido.png` — versão colorida (com texto)
+- <img src="frontend/public/pelotense_it_monocromatico.png" width="140" alt="Monocromático" /> `pelotense_it_monocromatico.png` — versão monocromática (fundo escuro)
 
 ## Autor
 

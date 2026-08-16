@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Plus, Eye, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { Plus, Eye, ChevronLeft, ChevronRight, Trash2, Search } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import { SkeletonTable } from '../components/ui/Skeleton';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
+import EmptyState from '../components/ui/EmptyState';
 import './Chamados.css';
 
 import { API_URL } from '../config';
@@ -35,12 +37,21 @@ export default function Chamados() {
     status: searchParams.get('status') || '',
     prioridade: '',
   });
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const limit = 10;
   const { add: addToast } = useToast();
 
   useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  useEffect(() => {
     setLoading(true);
     const params = new URLSearchParams({ page, limit, ...filters });
+    if (debouncedSearch) params.set('busca', debouncedSearch);
     fetch(`${API}/chamados?${params}`)
       .then((r) => r.json())
       .then((data) => {
@@ -49,23 +60,32 @@ export default function Chamados() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [page, filters]);
+  }, [page, filters, debouncedSearch]);
 
   const totalPages = Math.ceil(total / limit);
 
-  const handleDelete = async (id) => {
-    if (!confirm('Tem certeza que deseja excluir este chamado?')) return;
-    await fetch(`${API}/chamados/${id}`, { method: 'DELETE' });
-    addToast(`Chamado #${id} excluído`, 'success');
-    setLoading(true);
-    const params = new URLSearchParams({ page, limit, ...filters });
-    fetch(`${API}/chamados?${params}`)
-      .then((r) => r.json())
-      .then((data) => {
-        setChamados(data.chamados);
-        setTotal(data.total);
-        setLoading(false);
-      });
+  const confirmDelete = async () => {
+    const id = deleteTarget;
+    setDeleteTarget(null);
+    if (!id) return;
+    try {
+      const r = await fetch(`${API}/chamados/${id}`, { method: 'DELETE' });
+      if (!r.ok) throw new Error();
+      addToast(`Chamado #${id} excluído`, 'success');
+      setLoading(true);
+      const params = new URLSearchParams({ page, limit, ...filters });
+      if (debouncedSearch) params.set('busca', debouncedSearch);
+      fetch(`${API}/chamados?${params}`)
+        .then((r) => r.json())
+        .then((data) => {
+          setChamados(data.chamados);
+          setTotal(data.total);
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    } catch {
+      addToast('Erro ao excluir chamado', 'error');
+    }
   };
 
   return (
@@ -90,6 +110,15 @@ export default function Chamados() {
       </div>
 
       <div className="filters-bar">
+        <div className="search-input">
+          <Search size={16} />
+          <input
+            type="text"
+            placeholder="Buscar por título, solicitante ou nº..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
         <select
           value={filters.status}
           onChange={(e) => { setFilters({ ...filters, status: e.target.value }); setPage(1); }}
@@ -113,6 +142,13 @@ export default function Chamados() {
       <div className="table-container">
         {loading ? (
           <SkeletonTable rows={8} />
+        ) : chamados.length === 0 ? (
+          <EmptyState
+            icon={search.trim() ? '🔍' : '📋'}
+            title="Nenhum chamado encontrado"
+            description={search.trim() ? `Nada corresponde a "${search}".` : 'Ajuste os filtros ou crie um novo chamado.'}
+            action={<Link to="/chamados/novo" className="btn btn-primary"><Plus size={16} /> Novo Chamado</Link>}
+          />
         ) : (
           <table className="table">
             <colgroup>
@@ -138,29 +174,23 @@ export default function Chamados() {
               </tr>
             </thead>
             <tbody>
-              {chamados.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="empty-cell">📋 Nenhum chamado encontrado.</td>
+              {chamados.map((c) => (
+                <tr key={c.id} className="table-row-clickable" onClick={() => navigate(`/chamados/${c.id}`)}>
+                  <td className="cell-id">#{c.id}</td>
+                  <td className="cell-title">{c.titulo}</td>
+                  <td><span className={`badge ${STATUS_MAP[c.status]?.cls}`}>{STATUS_MAP[c.status]?.label}</span></td>
+                  <td><span className={`badge ${PRIORIDADE_MAP[c.prioridade]?.cls}`}>{PRIORIDADE_MAP[c.prioridade]?.label}</span></td>
+                  <td><span className="badge badge-gray">{c.categoria}</span></td>
+                  <td>{c.solicitante}</td>
+                  <td className="cell-date">{new Date(c.criado_em).toLocaleDateString()}</td>
+                  <td>
+                    <div className="row-actions">
+                      <Link to={`/chamados/${c.id}`} className="btn-icon btn-icon-edit" title="Ver detalhes" onClick={(e) => e.stopPropagation()}><Eye size={16} /></Link>
+                      <button className="btn-icon btn-icon-danger" title="Excluir chamado" onClick={(e) => { e.stopPropagation(); setDeleteTarget(c.id); }}><Trash2 size={16} /></button>
+                    </div>
+                  </td>
                 </tr>
-              ) : (
-                chamados.map((c) => (
-                  <tr key={c.id} className="table-row-clickable" onClick={() => navigate(`/chamados/${c.id}`)}>
-                    <td className="cell-id">#{c.id}</td>
-                    <td className="cell-title">{c.titulo}</td>
-                    <td><span className={`badge ${STATUS_MAP[c.status]?.cls}`}>{STATUS_MAP[c.status]?.label}</span></td>
-                    <td><span className={`badge ${PRIORIDADE_MAP[c.prioridade]?.cls}`}>{PRIORIDADE_MAP[c.prioridade]?.label}</span></td>
-                    <td><span className="badge badge-gray">{c.categoria}</span></td>
-                    <td>{c.solicitante}</td>
-                    <td className="cell-date">{new Date(c.criado_em).toLocaleDateString()}</td>
-                    <td>
-                      <div className="row-actions">
-                        <Link to={`/chamados/${c.id}`} className="btn-icon btn-icon-edit" title="Ver detalhes" onClick={(e) => e.stopPropagation()}><Eye size={16} /></Link>
-                        <button className="btn-icon btn-icon-danger" title="Excluir chamado" onClick={(e) => { e.stopPropagation(); handleDelete(c.id); }}><Trash2 size={16} /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
+              ))}
             </tbody>
           </table>
         )}
@@ -177,6 +207,14 @@ export default function Chamados() {
           </button>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Excluir chamado"
+        message={`Tem certeza que deseja excluir o chamado #${deleteTarget}? Esta ação não pode ser desfeita.`}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { UserPlus, Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react';
+import { UserPlus, Mail, Lock, User, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import './Login.css';
 
 import { API_URL } from '../config';
@@ -11,6 +11,7 @@ export default function Register() {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [mostrarSenha, setMostrarSenha] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -43,7 +44,7 @@ export default function Register() {
     <div className="auth-page">
       <div className="auth-container">
         <div className="auth-header">
-          <img src="https://i.imgur.com/mfoPeJL.png" alt="Pelotense IT" className="auth-logo" />
+          <img src="/pelotense_it_icone_app_sem_fundo.png" alt="Pelotense IT" className="auth-logo" />
           <h1>Pelotense IT</h1>
           <span>Gestão de Chamados</span>
         </div>
@@ -90,13 +91,17 @@ export default function Register() {
           <div className="auth-field">
             <Lock size={16} className="auth-field-icon" />
             <input
-              type="password"
+              type={mostrarSenha ? 'text' : 'password'}
+              className="has-toggle"
               placeholder="Senha (mínimo 6 caracteres)"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               required
               minLength={6}
             />
+            <button type="button" className="auth-field-toggle" onClick={() => setMostrarSenha(!mostrarSenha)} title={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}>
+              {mostrarSenha ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
           </div>
 
           <button type="submit" className="auth-btn" disabled={loading}>

@@ -18,6 +18,14 @@ import { API_URL } from '../config';
 
 const API = API_URL;
 
+function maskPhone(v) {
+  const d = v.replace(/\D/g, '').slice(0, 13);
+  if (d.length < 3) return d;
+  if (d.length < 5) return `+${d.slice(0, 2)} (${d.slice(2)})`;
+  if (d.length < 11) return `+${d.slice(0, 2)} (${d.slice(2, 4)}) ${d.slice(4)}`;
+  return `+${d.slice(0, 2)} (${d.slice(2, 4)}) ${d.slice(4, d.length - 4)}-${d.slice(d.length - 4)}`;
+}
+
 export default function Whatsapp() {
   const { add: addToast } = useToast();
   const [config, setConfig] = useState({
@@ -255,9 +263,9 @@ export default function Whatsapp() {
           <div className="wa-number-add">
             <input
               type="text"
-              placeholder="5511999999999"
+              placeholder="+55 (53) 98469-4379"
               value={novoNumero}
-              onChange={(e) => setNovoNumero(e.target.value)}
+              onChange={(e) => setNovoNumero(maskPhone(e.target.value))}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') addNumero();
               }}
@@ -318,9 +326,9 @@ export default function Whatsapp() {
               <label>Número para teste</label>
               <input
                 type="text"
-                placeholder="5511999999999"
+                placeholder="+55 (53) 98469-4379"
                 value={testNumero}
-                onChange={(e) => setTestNumero(e.target.value)}
+                onChange={(e) => setTestNumero(maskPhone(e.target.value))}
               />
             </div>
             <button

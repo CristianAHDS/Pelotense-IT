@@ -321,3 +321,29 @@ select:disabled {
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--glass-border);
 }
+
+/* ===== ACESSIBILIDADE & MICRO-INTERAÇÕES ===== */
+html { scroll-behavior: smooth; }
+
+:focus-visible {
+  outline: 2px solid var(--color-primary-light);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+button, [role="button"], .btn, .btn-primary, .btn-outline, .btn-ghost {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:active, .btn:active, .btn-primary:active, .btn-outline:active, .btn-ghost:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

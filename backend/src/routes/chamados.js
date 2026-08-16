@@ -32,13 +32,18 @@ const upload = multer({
 
 router.get('/', (req, res) => {
   try {
-    const { status, prioridade, categoria, page = 1, limit = 20 } = req.query;
+    const { status, prioridade, categoria, page = 1, limit = 20, busca } = req.query;
     const conditions = [];
     const params = [];
 
     if (status) { conditions.push('status = ?'); params.push(status); }
     if (prioridade) { conditions.push('prioridade = ?'); params.push(prioridade); }
     if (categoria) { conditions.push('categoria = ?'); params.push(categoria); }
+    if (busca) {
+      const like = `%${busca}%`;
+      conditions.push('(titulo LIKE ? OR solicitante LIKE ? OR CAST(id AS TEXT) LIKE ?)');
+      params.push(like, like, like);
+    }
 
     const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
     const offset = (parseInt(page) - 1) * parseInt(limit);
@@ -233,12 +238,12 @@ router.post('/', (req, res) => {
       return res.status(400).json({ error: 'Título, descrição e solicitante são obrigatórios' });
     }
 
-    run(
-      'INSERT INTO chamados (titulo, descricao, prioridade, categoria, solicitante) VALUES (?, ?, ?, ?, ?)',
-      [titulo, descricao, prioridade || 'media', categoria || 'geral', solicitante]
-    );
+    const novoId = (queryOne('SELECT MAX(id) as m FROM chamados')?.m || 0) + 1;
 
-    const novoId = getLastID('chamados');
+    run(
+      'INSERT INTO chamados (id, titulo, descricao, prioridade, categoria, solicitante) VALUES (?, ?, ?, ?, ?, ?)',
+      [novoId, titulo, descricao, prioridade || 'media', categoria || 'geral', solicitante]
+    );
 
     if (alerta && alerta.data_hora) {
       try {
