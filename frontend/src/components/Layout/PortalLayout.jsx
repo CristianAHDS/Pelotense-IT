@@ -13,7 +13,7 @@ export default function PortalLayout() {
       <header className="portal-header">
         <Link to="/portal" className="portal-logo">
           <div className="portal-logo-icon">
-            <img src="/pelotense_it_icone_app_sem_fundo.png" alt="Pelotense IT" className="portal-logo-img" />
+            <img src="/pelotense_it_icone_app_sem_fundo_monochromatico.png" alt="Pelotense IT" className="portal-logo-img" />
           </div>
           <div>
             <h1>Pelotense IT</h1>

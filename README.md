@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="frontend/public/pelotense_it_colorido.png" alt="Pelotense IT" width="220" />
+</p>
+
 # Pelotense IT - Dashboard de Chamados de TI
 
 Sistema completo de gestão de chamados de suporte técnico com dashboard, kanban, relatórios e portal do cliente.
@@ -289,6 +293,7 @@ O sistema inclui uma aba de administração (**Administração → WhatsApp**) q
 Os logotipos do sistema ficam em `frontend/public/`:
 
 - <img src="frontend/public/pelotense_it_icone_app_sem_fundo.png" width="48" alt="Ícone sem fundo" /> `pelotense_it_icone_app_sem_fundo.png` — ícone sem fundo (usado no sistema e no PWA)
+- <img src="frontend/public/pelotense_it_icone_app_sem_fundo_monochromatico.png" width="48" alt="Ícone monocromático sem fundo" /> `pelotense_it_icone_app_sem_fundo_monochromatico.png` — ícone monocromático sem fundo (sidebar/cabeçalho)
 - <img src="frontend/public/pelotense_it_icone_app.png" width="48" alt="Ícone de app" /> `pelotense_it_icone_app.png` — ícone de app
 - <img src="frontend/public/pelotense_it_colorido.png" width="140" alt="Colorido" /> `pelotense_it_colorido.png` — versão colorida (com texto)
 - <img src="frontend/public/pelotense_it_monocromatico.png" width="140" alt="Monocromático" /> `pelotense_it_monocromatico.png` — versão monocromática (fundo escuro)

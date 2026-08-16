@@ -81,7 +81,7 @@ export default function DashboardLayout() {
         <button className="sidebar-close" onClick={closeSidebar}><X size={20} /></button>
         <div className="sidebar-brand">
           <div className="brand-icon">
-            <img src="/pelotense_it_icone_app_sem_fundo.png" alt="Pelotense IT" className="brand-logo" />
+            <img src="/pelotense_it_icone_app_sem_fundo_monochromatico.png" alt="Pelotense IT" className="brand-logo" />
           </div>
           <div className="brand-text"><h1>Pelotense IT</h1><span>Gestão de Chamados</span></div>
         </div>
@@ -147,7 +147,7 @@ export default function DashboardLayout() {
 
       <header className="mobile-header">
         <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}><Menu size={22} /></button>
-        <div className="mobile-brand"><img src="/pelotense_it_icone_app_sem_fundo.png" alt="Pelotense IT" className="mobile-brand-logo" /><span>Pelotense IT</span></div>
+        <div className="mobile-brand"><img src="/pelotense_it_icone_app_sem_fundo_monochromatico.png" alt="Pelotense IT" className="mobile-brand-logo" /><span>Pelotense IT</span></div>
         <div className="mobile-header-actions">
           <NetworkSpeed />
           <button className="notif-btn" onClick={toggleTheme} title={theme === 'dark' ? 'Modo claro' : theme === 'light' ? 'Alto contraste' : 'Modo escuro'}>
