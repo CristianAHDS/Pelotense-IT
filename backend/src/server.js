@@ -26,6 +26,9 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+const LOGOS_DIR = path.join(__dirname, '..', '..', 'logos');
+app.use('/assets', express.static(LOGOS_DIR));
+
 app.use((req, res, next) => {
   req.io = io;
   next();

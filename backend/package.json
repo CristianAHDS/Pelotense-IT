@@ -1,6 +1,6 @@
 {
   "name": "pelotense-it-backend",
-  "version": "1.0.22",
+  "version": "1.0.23",
   "description": "Backend do Dashboard de Chamados de TI - Pelotense IT",
   "main": "src/server.js",
   "scripts": {

@@ -14,15 +14,15 @@ function log(...args) {
   } catch (_) {}
 }
 
-const MENU = `🤖 *Pelotense IT — Assistente Virtual*
-
-Olá! Como posso ajudar?
+const MENU = `Olá! Como posso ajudar?
 
 1️⃣ Consultar status de chamado
 2️⃣ Abrir novo chamado
 3️⃣ Falar com atendente
 
 Digite o número da opção desejada.`;
+
+const LOGO_PATH = path.join(__dirname, '..', '..', '..', 'logos', 'pelotense_it_colorido.png');
 
 const STATUS_LABELS = {
   aberto: '🟢 Aberto',
@@ -293,6 +293,38 @@ async function enviarMensagem(config, numero, texto) {
   return { mensagemId, status };
 }
 
+async function enviarMensagemComImagem(config, numero, caption) {
+  if (!config.api_url || !config.api_key) {
+    throw new Error('Configuração da Evolution API incompleta');
+  }
+  if (!fs.existsSync(LOGO_PATH)) {
+    throw new Error('Logo não encontrado: ' + LOGO_PATH);
+  }
+  const media = fs.readFileSync(LOGO_PATH).toString('base64');
+  const instanceName = await resolveInstanceName(config);
+  if (!instanceName)
+    throw new Error('Nenhuma instância encontrada na Evolution API');
+  const base = String(config.api_url).replace(/\/+$/, '');
+  const url = `${base}/message/sendMedia/${instanceName}`;
+  const destino = getJidPara(numero);
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', apikey: config.api_key },
+    body: JSON.stringify({
+      number: destino,
+      mediaMessage: {
+        mediatype: 'image',
+        media,
+        caption,
+        mimetype: 'image/png',
+      },
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`Evolution API respondeu ${res.status}`);
+  }
+}
+
 // Configuração
 router.get('/config', (req, res) => {
   try {
@@ -486,13 +518,23 @@ router.post('/webhook', (req, res) => {
     const resposta = processarMensagem(numero, texto);
     updateLid(numero, lid);
     if (!resposta) {
-      log('Atendimento humano em andamento — bot em silêncio para', numero);
+      run(
+        'INSERT INTO whatsapp_mensagens (numero, origem, conteudo) VALUES (?, ?, ?)',
+        [numero, 'cliente', texto],
+      );
+      log('Atendimento humano em andamento — mensagem do cliente salva para', numero);
       return;
     }
     log('Enviando resposta para', numero, ':', resposta.slice(0, 80));
-    enviarMensagem(config, numero, resposta)
-      .then(() => log('Resposta enviada com sucesso para', numero))
-      .catch((err) => log('Erro ao responder:', err.message));
+    if (resposta === MENU) {
+      enviarMensagemComImagem(config, numero, resposta)
+        .then(() => log('Menu com logo enviado com sucesso para', numero))
+        .catch((err) => log('Erro ao enviar menu:', err.message));
+    } else {
+      enviarMensagem(config, numero, resposta)
+        .then(() => log('Resposta enviada com sucesso para', numero))
+        .catch((err) => log('Erro ao responder:', err.message));
+    }
   } catch (err) {
     log('Erro no webhook:', err.message);
   }
@@ -505,6 +547,40 @@ router.get('/sessoes', (req, res) => {
       "SELECT * FROM whatsapp_sessoes WHERE estado = 'humano' ORDER BY atualizado_em DESC",
     );
     res.json(sessoes);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Mensagens de um atendimento humano
+router.get('/chat/:numero', (req, res) => {
+  try {
+    const numero = normalizarNumero(req.params.numero);
+    const msgs = query(
+      'SELECT * FROM whatsapp_mensagens WHERE numero = ? ORDER BY id ASC',
+      [numero],
+    );
+    res.json(msgs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Enviar resposta pelo sistema para um atendimento humano
+router.post('/chat/:numero/enviar', async (req, res) => {
+  try {
+    const numero = normalizarNumero(req.params.numero);
+    const texto = String(req.body.texto || '').trim();
+    if (!texto) {
+      return res.status(400).json({ error: 'Mensagem vazia' });
+    }
+    const config = getConfig();
+    await enviarMensagem(config, numero, texto);
+    run(
+      'INSERT INTO whatsapp_mensagens (numero, origem, conteudo) VALUES (?, ?, ?)',
+      [numero, 'atendente', texto],
+    );
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

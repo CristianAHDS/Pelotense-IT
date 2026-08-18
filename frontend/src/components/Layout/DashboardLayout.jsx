@@ -57,7 +57,8 @@ export default function DashboardLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [abertosCount, setAbertosCount] = useState(0);
-  const [atendimentosAbertos, setAtendimentosAbertos] = useState(0);
+  const [atendimentos, setAtendimentos] = useState([]);
+  const atendimentosAbertos = atendimentos.length;
 
   const isAdminRoute = adminMenuItems.some((i) => location.pathname === i.to);
   useEffect(() => {
@@ -80,7 +81,7 @@ export default function DashboardLayout() {
     const load = () => {
       fetch('/api/whatsapp/sessoes')
         .then((r) => (r.ok ? r.json() : []))
-        .then((d) => setAtendimentosAbertos(Array.isArray(d) ? d.length : 0))
+        .then((d) => setAtendimentos(Array.isArray(d) ? d : []))
         .catch(() => {});
     };
     load();
@@ -182,7 +183,7 @@ export default function DashboardLayout() {
         <div className="mobile-brand"><img src="/pelotense_it_icone_app_sem_fundo_monochromatico.png" alt="Pelotense IT" className="mobile-brand-logo" /><span>Pelotense IT</span></div>
         <div className="mobile-header-actions">
           {atendimentosAbertos > 0 && (
-            <NavLink to="/whatsapp" className="notif-btn whatsapp-alert-btn" title="Atendimento humano em andamento">
+            <NavLink to={atendimentos.length === 1 ? `/whatsapp/chat/${atendimentos[0].numero}` : '/whatsapp'} className="notif-btn whatsapp-alert-btn" title="Atendimento humano em andamento">
               <MessageCircle size={18} />
               <span className="whatsapp-alert-badge">{atendimentosAbertos}</span>
             </NavLink>
@@ -220,7 +221,7 @@ export default function DashboardLayout() {
           </div>
           <div className="top-bar-right">
             {atendimentosAbertos > 0 && (
-              <NavLink to="/whatsapp" className="notif-btn whatsapp-alert-btn" title="Atendimento humano em andamento">
+              <NavLink to={atendimentos.length === 1 ? `/whatsapp/chat/${atendimentos[0].numero}` : '/whatsapp'} className="notif-btn whatsapp-alert-btn" title="Atendimento humano em andamento">
                 <MessageCircle size={16} />
                 <span className="whatsapp-alert-badge">{atendimentosAbertos}</span>
               </NavLink>

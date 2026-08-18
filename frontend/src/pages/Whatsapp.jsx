@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   MessageCircle,
   Plus,
@@ -157,7 +158,12 @@ export default function Whatsapp() {
       const r = await fetch(`${API}/whatsapp/config`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config),
+        body: JSON.stringify({
+          ativo: config.ativo,
+          api_url: config.api_url,
+          api_key: config.api_key,
+          instance: config.instance,
+        }),
       });
       if (!r.ok) throw new Error();
       addToast('Configurações do WhatsApp salvas!', 'success');
@@ -165,6 +171,19 @@ export default function Whatsapp() {
       addToast('Erro ao salvar configurações', 'error');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const persistirListas = async (numeros, prefixos) => {
+    try {
+      const r = await fetch(`${API}/whatsapp/config`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ numeros_permitidos: numeros, prefixos }),
+      });
+      if (!r.ok) throw new Error();
+    } catch {
+      addToast('Erro ao salvar a lista de números', 'error');
     }
   };
 
@@ -178,18 +197,22 @@ export default function Whatsapp() {
       addToast('Número já está na lista', 'error');
       return;
     }
+    const novaLista = [...config.numeros_permitidos, n];
     setConfig((c) => ({
       ...c,
-      numeros_permitidos: [...c.numeros_permitidos, n],
+      numeros_permitidos: novaLista,
     }));
     setNovoNumero('');
+    persistirListas(novaLista, config.prefixos);
   };
 
   const removeNumero = (n) => {
+    const novaLista = config.numeros_permitidos.filter((x) => x !== n);
     setConfig((c) => ({
       ...c,
-      numeros_permitidos: c.numeros_permitidos.filter((x) => x !== n),
+      numeros_permitidos: novaLista,
     }));
+    persistirListas(novaLista, config.prefixos);
   };
 
   const addPrefixo = () => {
@@ -202,18 +225,22 @@ export default function Whatsapp() {
       addToast('Prefixo já está na lista', 'error');
       return;
     }
+    const novaLista = [...(config.prefixos || []), p];
     setConfig((c) => ({
       ...c,
-      prefixos: [...(c.prefixos || []), p],
+      prefixos: novaLista,
     }));
     setNovoPrefixo('');
+    persistirListas(config.numeros_permitidos, novaLista);
   };
 
   const removePrefixo = (p) => {
+    const novaLista = (config.prefixos || []).filter((x) => x !== p);
     setConfig((c) => ({
       ...c,
-      prefixos: (c.prefixos || []).filter((x) => x !== p),
+      prefixos: novaLista,
     }));
+    persistirListas(config.numeros_permitidos, novaLista);
   };
 
   const handleTeste = async () => {
@@ -355,8 +382,11 @@ export default function Whatsapp() {
             <ShieldCheck size={16} /> Números autorizados
           </h3>
           <p className="wa-hint">
-            O bot só responde aos números abaixo. Qualquer número fora desta
-            lista será ignorado.
+            O bot só responde aos números abaixo ou aos prefixos. Qualquer
+            número fora destas listas será ignorado.
+          </p>
+          <p className="wa-hint" style={{ marginTop: 6 }}>
+            As listas são salvas automaticamente ao adicionar ou remover.
           </p>
           <div className="wa-number-add">
             <input
@@ -465,6 +495,12 @@ export default function Whatsapp() {
                 <div key={s.numero} className="wa-atendimento-item">
                   <Phone size={14} />
                   <span className="wa-number">{s.numero}</span>
+                  <Link
+                    className="btn btn-outline wa-chat-btn"
+                    to={`/whatsapp/chat/${s.numero}`}
+                  >
+                    <MessageCircle size={14} /> Abrir chat
+                  </Link>
                   <button
                     className="btn btn-outline"
                     onClick={() => finalizarAtendimento(s.numero)}

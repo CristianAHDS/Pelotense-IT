@@ -303,6 +303,16 @@ async function initDatabase() {
     )
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS whatsapp_mensagens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      numero TEXT NOT NULL,
+      origem TEXT NOT NULL DEFAULT 'cliente',
+      conteudo TEXT NOT NULL,
+      criado_em TEXT DEFAULT (datetime('now','localtime'))
+    )
+  `);
+
   const existingConfig = query("SELECT COUNT(*) as c FROM config_email");
   if (existingConfig[0]?.c === 0) {
     run(`INSERT INTO config_email (id) VALUES (1)`);

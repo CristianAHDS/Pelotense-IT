@@ -14,6 +14,7 @@ import Configuracoes from './pages/Configuracoes';
 import CadastroTecnicos from './pages/CadastroTecnicos';
 import EnviarEmail from './pages/EnviarEmail';
 import Whatsapp from './pages/Whatsapp';
+import WhatsappChat from './pages/WhatsappChat';
 import PortalHome from './pages/PortalHome';
 import PortalNovo from './pages/PortalNovo';
 import Login from './pages/Login';
@@ -43,6 +44,7 @@ export default function App() {
         <Route path="/cadastro-tecnicos" element={<CadastroTecnicos />} />
         <Route path="/enviar-email" element={<EnviarEmail />} />
         <Route path="/whatsapp" element={<Whatsapp />} />
+        <Route path="/whatsapp/chat/:numero" element={<WhatsappChat />} />
       </Route>
 
       <Route element={<PortalLayout />}>
