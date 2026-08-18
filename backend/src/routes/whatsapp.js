@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const router = express.Router();
 const { query, queryOne, run } = require('../database');
+const { notificarNovoChamado } = require('../services/email');
 
 const LOG_FILE = path.join(__dirname, '..', '..', 'whatsapp.log');
 function log(...args) {
@@ -45,6 +46,7 @@ function getConfig() {
       api_key: '',
       instance: '',
       numeros_permitidos: [],
+      prefixos: [],
     };
   let numeros = [];
   try {
@@ -52,12 +54,19 @@ function getConfig() {
   } catch (_) {
     numeros = [];
   }
+  let prefixos = [];
+  try {
+    prefixos = JSON.parse(config.prefixos || '[]');
+  } catch (_) {
+    prefixos = [];
+  }
   return {
     ativo: !!config.ativo,
     api_url: config.api_url || '',
     api_key: config.api_key || '',
     instance: config.instance || '',
     numeros_permitidos: numeros,
+    prefixos: prefixos,
   };
 }
 
@@ -130,6 +139,10 @@ function processarMensagem(numero, texto) {
       [id, titulo, desc, `WhatsApp ${numero}`],
     );
     setSessao(numero, 'menu', {});
+    const chamado = queryOne('SELECT * FROM chamados WHERE id = ?', [id]);
+    notificarNovoChamado(chamado).catch((e) =>
+      log('Erro ao notificar novo chamado:', e.message),
+    );
     return `✅ Chamado #${id} aberto com sucesso!\n\n📋 *${titulo}*\n📝 ${desc}\n\nA equipe de TI irá atendê-lo em breve. Digite "menu" para mais opções.`;
   }
 
@@ -140,7 +153,7 @@ function processarMensagem(numero, texto) {
   }
   if (msg === '2' || msg === 'abrir' || msg === 'novo') {
     setSessao(numero, 'abrir_titulo', {});
-    return 'Vamos abrir um chamado! Qual o assunto do problema? (escreva um titulo breve)';
+    return 'Vamos abrir um chamado! Qual o assunto do problema? (Escreva um título breve)';
   }
   if (msg === '3' || msg === 'atendente' || msg === 'humano') {
     setSessao(numero, 'humano', {});
@@ -171,8 +184,21 @@ function getJidPara(numero) {
 }
 
 function isComandoFinalizar(texto) {
-  const t = String(texto || '').trim().toLowerCase();
-  return ['#finalizar', '!finalizar', '/finalizar', 'finalizar', '#encerrar', '!encerrar', '/encerrar', 'encerrar', 'finalizar atendimento', 'encerrar atendimento'].includes(t);
+  const t = String(texto || '')
+    .trim()
+    .toLowerCase();
+  return [
+    '#finalizar',
+    '!finalizar',
+    '/finalizar',
+    'finalizar',
+    '#encerrar',
+    '!encerrar',
+    '/encerrar',
+    'encerrar',
+    'finalizar atendimento',
+    'encerrar atendimento',
+  ].includes(t);
 }
 
 function registrarEnvio(numero, texto, mensagemId, status) {
@@ -180,12 +206,17 @@ function registrarEnvio(numero, texto, mensagemId, status) {
     run(
       `INSERT OR REPLACE INTO whatsapp_entregas (mensagem_id, numero, texto, status, atualizado_em)
        VALUES (?, ?, ?, ?, datetime('now','localtime'))`,
-      [mensagemId, normalizarNumero(numero), (texto || '').slice(0, 120), status || 'PENDING']
+      [
+        mensagemId,
+        normalizarNumero(numero),
+        (texto || '').slice(0, 120),
+        status || 'PENDING',
+      ],
     );
     run(
       `DELETE FROM whatsapp_entregas WHERE mensagem_id NOT IN (
          SELECT mensagem_id FROM whatsapp_entregas ORDER BY atualizado_em DESC LIMIT 200
-       )`
+       )`,
     );
   } catch (err) {
     log('Erro ao registrar envio:', err.message);
@@ -196,7 +227,7 @@ function atualizarEntrega(mensagemId, status) {
   try {
     run(
       "UPDATE whatsapp_entregas SET status = ?, atualizado_em = datetime('now','localtime') WHERE mensagem_id = ?",
-      [status, mensagemId]
+      [status, mensagemId],
     );
   } catch (err) {
     log('Erro ao atualizar entrega:', err.message);
@@ -273,7 +304,7 @@ router.get('/config', (req, res) => {
 
 router.put('/config', (req, res) => {
   try {
-    const { ativo, api_url, api_key, instance, numeros_permitidos } =
+    const { ativo, api_url, api_key, instance, numeros_permitidos, prefixos } =
       req.body || {};
     const current = getConfig();
     const numeros = Array.isArray(numeros_permitidos)
@@ -281,15 +312,19 @@ router.put('/config', (req, res) => {
           .map((n) => String(n).replace(/\D/g, ''))
           .filter(Boolean)
       : current.numeros_permitidos;
+    const prefixosList = Array.isArray(prefixos)
+      ? prefixos.map((p) => String(p).replace(/\D/g, '')).filter(Boolean)
+      : current.prefixos;
 
     run(
-      `UPDATE config_whatsapp SET ativo = ?, api_url = ?, api_key = ?, instance = ?, numeros_permitidos = ? WHERE id = 1`,
+      `UPDATE config_whatsapp SET ativo = ?, api_url = ?, api_key = ?, instance = ?, numeros_permitidos = ?, prefixos = ? WHERE id = 1`,
       [
         ativo !== undefined ? (ativo ? 1 : 0) : current.ativo ? 1 : 0,
         api_url ?? current.api_url,
         api_key ?? current.api_key,
         instance ?? current.instance,
         JSON.stringify(numeros),
+        JSON.stringify(prefixosList),
       ],
     );
     res.json(getConfig());
@@ -383,21 +418,28 @@ router.post('/webhook', (req, res) => {
     if (key.fromMe) {
       const message = data.message || {};
       const textoAtendente =
-        (message.conversation ||
-          (message.extendedTextMessage && message.extendedTextMessage.text) ||
-          '');
+        message.conversation ||
+        (message.extendedTextMessage && message.extendedTextMessage.text) ||
+        '';
       if (textoAtendente && isComandoFinalizar(textoAtendente)) {
         const sessao = getSessaoPorLid(lid);
         if (sessao && sessao.estado === 'humano') {
           setSessao(sessao.numero, 'menu', {});
-          log('Atendimento humano finalizado pelo atendente para', sessao.numero);
+          log(
+            'Atendimento humano finalizado pelo atendente para',
+            sessao.numero,
+          );
           enviarMensagem(
             getConfig(),
             normalizarNumero(sessao.numero),
-            '✅ Atendimento encerrado. Digite "menu" para voltar ao assistente virtual.'
-          ).catch((e) => log('Erro ao notificar fim do atendimento:', e.message));
+            '✅ Atendimento encerrado. Digite "menu" para voltar ao assistente virtual.',
+          ).catch((e) =>
+            log('Erro ao notificar fim do atendimento:', e.message),
+          );
         } else {
-          log('Comando de finalização recebido, mas nenhum atendimento humano ativo para este destinatário');
+          log(
+            'Comando de finalização recebido, mas nenhum atendimento humano ativo para este destinatário',
+          );
         }
       } else {
         log('Mensagem própria (fromMe=true) — ignorada');
@@ -433,7 +475,10 @@ router.post('/webhook', (req, res) => {
       log('Bot desativado — ignorada');
       return;
     }
-    if (!config.numeros_permitidos.includes(numero)) {
+    const autorizado =
+      config.numeros_permitidos.includes(numero) ||
+      (config.prefixos || []).some((p) => numero.startsWith(p));
+    if (!autorizado) {
       log('Número', numero, 'NÃO autorizado — ignorada');
       return;
     }
@@ -457,7 +502,7 @@ router.post('/webhook', (req, res) => {
 router.get('/sessoes', (req, res) => {
   try {
     const sessoes = query(
-      "SELECT * FROM whatsapp_sessoes WHERE estado = 'humano' ORDER BY atualizado_em DESC"
+      "SELECT * FROM whatsapp_sessoes WHERE estado = 'humano' ORDER BY atualizado_em DESC",
     );
     res.json(sessoes);
   } catch (err) {
@@ -471,7 +516,7 @@ router.get('/entregas', (req, res) => {
     const limit = Math.min(parseInt(req.query.limit, 10) || 50, 200);
     const entregas = query(
       'SELECT * FROM whatsapp_entregas ORDER BY atualizado_em DESC, mensagem_id DESC LIMIT ?',
-      [limit]
+      [limit],
     );
     res.json(entregas);
   } catch (err) {
@@ -487,7 +532,9 @@ router.post('/finalizar-atendimento', async (req, res) => {
 
     const sessao = getSessao(numero);
     if (!sessao || sessao.estado !== 'humano') {
-      return res.status(400).json({ error: 'Nenhum atendimento humano ativo para este número' });
+      return res
+        .status(400)
+        .json({ error: 'Nenhum atendimento humano ativo para este número' });
     }
 
     setSessao(numero, 'menu', {});
@@ -498,7 +545,7 @@ router.post('/finalizar-atendimento', async (req, res) => {
         await enviarMensagem(
           getConfig(),
           normalizarNumero(numero),
-          '✅ Atendimento encerrado. Digite "menu" para voltar ao assistente virtual.'
+          '✅ Atendimento encerrado. Digite "menu" para voltar ao assistente virtual.',
         );
       } catch (e) {
         log('Erro ao notificar fim do atendimento:', e.message);
@@ -516,20 +563,22 @@ const INATIVIDADE_MIN = 10;
 
 function finalizarAtendimentosInativos() {
   try {
-    const limite = queryOne(
-      "SELECT datetime('now','localtime', ?) as d",
-      [`-${INATIVIDADE_MIN} minutes`]
-    )?.d;
+    const limite = queryOne("SELECT datetime('now','localtime', ?) as d", [
+      `-${INATIVIDADE_MIN} minutes`,
+    ])?.d;
     if (!limite) return;
 
     const sessoes = query(
       "SELECT * FROM whatsapp_sessoes WHERE estado = 'humano' AND atualizado_em <= ?",
-      [limite]
+      [limite],
     );
 
     for (const s of sessoes) {
       setSessao(s.numero, 'menu', {});
-      log(`Atendimento humano encerrado por inatividade (${INATIVIDADE_MIN}min) para`, s.numero);
+      log(
+        `Atendimento humano encerrado por inatividade (${INATIVIDADE_MIN}min) para`,
+        s.numero,
+      );
 
       try {
         const config = getConfig();
@@ -537,7 +586,7 @@ function finalizarAtendimentosInativos() {
           enviarMensagem(
             config,
             normalizarNumero(s.numero),
-            '⏰ Atendimento encerrado por inatividade. Digite "menu" para voltar ao assistente virtual.'
+            '⏰ Atendimento encerrado por inatividade. Digite "menu" para voltar ao assistente virtual.',
           ).catch((e) => log('Erro ao notificar inatividade:', e.message));
         }
       } catch (e) {

@@ -518,4 +518,52 @@ async function enviarAlerta(alerta) {
   return { enviado: true };
 }
 
-module.exports = { gerarRelatorioDiario, enviarTeste, resetTransporter, enviarBoasVindas, enviarSenhaTecnico, enviarAlerta, enviarPersonalizado };
+async function notificarNovoChamado(chamado) {
+  if (!chamado) return { enviado: false, erro: 'Chamado inválido' };
+  const config = queryOne('SELECT * FROM config_email WHERE id = 1');
+  if (!config || !config.smtp_user) return { enviado: false, erro: 'Configuração SMTP incompleta' };
+
+  const transport = getTransporter(config);
+  if (!transport) return { enviado: false, erro: 'Configuração SMTP inválida' };
+
+  const esc = (s) =>
+    String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+  const html = `
+<table width="100%" cellpadding="0" cellspacing="0" style="font-family:'Inter','Segoe UI',system-ui,sans-serif;background:#0a0e1a;background-image:radial-gradient(ellipse at 20% 0%,rgba(99,102,241,0.12) 0%,transparent 50%);-webkit-font-smoothing:antialiased;"><tr><td style="padding:40px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:0 auto;background:rgba(22,29,47,0.5);border:1px solid rgba(99,102,241,0.15);border-radius:16px;">
+    <tr><td style="padding:32px;">
+      <div style="font-size:44px;margin-bottom:16px;text-align:center;">📥</div>
+      <h2 style="color:#e8edf5;font-size:20px;font-weight:800;margin:0 0 8px;text-align:center;">Novo Chamado Aberto</h2>
+      <p style="color:#94a3b8;font-size:14px;margin:0 0 24px;text-align:center;line-height:1.6;">Um chamado foi aberto via WhatsApp.</p>
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.08);border-radius:8px;margin-bottom:16px;">
+        <tr><td style="padding:10px 16px;color:#94a3b8;font-size:12px;">Chamado</td><td style="padding:10px 16px;color:#e8edf5;font-size:13px;font-weight:700;">#${chamado.id}</td></tr>
+        <tr><td style="padding:10px 16px;color:#94a3b8;font-size:12px;">Título</td><td style="padding:10px 16px;color:#e8edf5;font-size:13px;font-weight:600;">${esc(chamado.titulo)}</td></tr>
+        <tr><td style="padding:10px 16px;color:#94a3b8;font-size:12px;">Solicitante</td><td style="padding:10px 16px;color:#e8edf5;font-size:13px;font-weight:600;">${esc(chamado.solicitante)}</td></tr>
+        <tr><td style="padding:10px 16px;color:#94a3b8;font-size:12px;">Aberto em</td><td style="padding:10px 16px;color:#e8edf5;font-size:13px;font-weight:600;">${formatarDataHora(chamado.criado_em)}</td></tr>
+      </table>
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.08);border-radius:8px;">
+        <tr><td style="padding:14px 16px;color:#cbd5e1;font-size:13px;line-height:1.6;">${esc(chamado.descricao)}</td></tr>
+      </table>
+      <p style="color:#64748b;font-size:12px;margin:24px 0 0;text-align:center;line-height:1.5;">Acesse o Pelotense IT para gerenciar o chamado.</p>
+    </td></tr>
+  </table>
+</td></tr></table>`;
+
+  try {
+    await transport.sendMail({
+      from: config.remetente,
+      to: 'admin@ahoradosul.com.br',
+      subject: `📥 Novo chamado #${chamado.id} — ${chamado.titulo}`,
+      html,
+    });
+    return { enviado: true };
+  } catch (err) {
+    return { enviado: false, erro: err.message };
+  }
+}
+
+module.exports = { gerarRelatorioDiario, enviarTeste, resetTransporter, enviarBoasVindas, enviarSenhaTecnico, enviarAlerta, enviarPersonalizado, notificarNovoChamado };

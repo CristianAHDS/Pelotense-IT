@@ -291,6 +291,7 @@ async function initDatabase() {
   `);
 
   try { db.run('ALTER TABLE whatsapp_sessoes ADD COLUMN lid TEXT'); } catch (_) {}
+  try { db.run("ALTER TABLE config_whatsapp ADD COLUMN prefixos TEXT DEFAULT '[]'"); } catch (_) {}
 
   db.run(`
     CREATE TABLE IF NOT EXISTS whatsapp_entregas (

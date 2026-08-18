@@ -36,6 +36,15 @@ const STATUS_ENTREGA = {
   READ: { label: 'Lido', cls: 'read' },
 };
 
+const fmtHora = (dt) => {
+  if (!dt) return '';
+  const [d, t] = String(dt).split(' ');
+  const hoje = new Date().toLocaleDateString('sv');
+  const dia = (d || '').slice(5).split('-').reverse().join('/');
+  const hora = (t || '').slice(0, 5);
+  return d === hoje ? hora : `${dia} ${hora}`;
+};
+
 export default function Whatsapp() {
   const { add: addToast } = useToast();
   const [config, setConfig] = useState({
@@ -44,8 +53,10 @@ export default function Whatsapp() {
     api_key: 'vz5fUF8aVxo2IAY0jkCLJ1Ks7SWHZMi6',
     instance: 'pelotense',
     numeros_permitidos: [],
+    prefixos: [],
   });
   const [novoNumero, setNovoNumero] = useState('');
+  const [novoPrefixo, setNovoPrefixo] = useState('');
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testNumero, setTestNumero] = useState('');
@@ -78,6 +89,7 @@ export default function Whatsapp() {
           api_key: data.api_key || 'vz5fUF8aVxo2IAY0jkCLJ1Ks7SWHZMi6',
           instance: data.instance || 'pelotense',
           numeros_permitidos: data.numeros_permitidos || [],
+          prefixos: data.prefixos || [],
         }),
       )
       .catch(() => {});
@@ -177,6 +189,30 @@ export default function Whatsapp() {
     setConfig((c) => ({
       ...c,
       numeros_permitidos: c.numeros_permitidos.filter((x) => x !== n),
+    }));
+  };
+
+  const addPrefixo = () => {
+    const p = novoPrefixo.replace(/\D/g, '');
+    if (!p) {
+      addToast('Informe um prefixo válido', 'error');
+      return;
+    }
+    if ((config.prefixos || []).includes(p)) {
+      addToast('Prefixo já está na lista', 'error');
+      return;
+    }
+    setConfig((c) => ({
+      ...c,
+      prefixos: [...(c.prefixos || []), p],
+    }));
+    setNovoPrefixo('');
+  };
+
+  const removePrefixo = (p) => {
+    setConfig((c) => ({
+      ...c,
+      prefixos: (c.prefixos || []).filter((x) => x !== p),
     }));
   };
 
@@ -362,6 +398,52 @@ export default function Whatsapp() {
               </div>
             ))}
           </div>
+
+          <div style={{ marginTop: 18 }}>
+            <h4 className="wa-subtitle">Faixas de números (prefixos)</h4>
+            <p className="wa-hint" style={{ marginTop: 6 }}>
+              Um prefixo autoriza todos os números que começam com ele (ex:{' '}
+              <strong>55533029</strong> libera 55533029-0000 até 55533029-9999).
+            </p>
+            <div className="wa-number-add">
+              <input
+                type="text"
+                placeholder="Prefixo (ex: 55533029)"
+                value={novoPrefixo}
+                onChange={(e) => setNovoPrefixo(e.target.value.replace(/\D/g, ''))}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') addPrefixo();
+                }}
+              />
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={addPrefixo}
+              >
+                <Plus size={16} /> Adicionar
+              </button>
+            </div>
+            <div className="wa-numbers">
+              {(config.prefixos || []).length === 0 ? (
+                <div className="wa-empty">Nenhum prefixo autorizado.</div>
+              ) : (
+                (config.prefixos || []).map((p) => (
+                  <div key={p} className="wa-number-item">
+                    <Phone size={14} />
+                    <span className="wa-number">{p}*</span>
+                    <button
+                      type="button"
+                      className="wa-number-remove"
+                      onClick={() => removePrefixo(p)}
+                      title="Remover"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="wa-card wa-card-full">
@@ -428,6 +510,7 @@ export default function Whatsapp() {
                       {e.texto || '(mensagem)'}
                     </span>
                     <span className="wa-entrega-numero">{e.numero}</span>
+                    <span className="wa-entrega-hora">{fmtHora(e.atualizado_em)}</span>
                     <span className={`wa-entrega-status ${st.cls}`}>
                       {st.label}
                     </span>
@@ -525,6 +608,7 @@ export default function Whatsapp() {
                         {e.texto || '(mensagem)'}
                       </span>
                       <span className="wa-entrega-numero">{e.numero}</span>
+                      <span className="wa-entrega-hora">{fmtHora(e.atualizado_em)}</span>
                       <span className={`wa-entrega-status ${st.cls}`}>
                         {st.label}
                       </span>
