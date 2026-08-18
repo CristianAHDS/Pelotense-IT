@@ -290,6 +290,18 @@ async function initDatabase() {
     )
   `);
 
+  try { db.run('ALTER TABLE whatsapp_sessoes ADD COLUMN lid TEXT'); } catch (_) {}
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS whatsapp_entregas (
+      mensagem_id TEXT PRIMARY KEY,
+      numero TEXT,
+      texto TEXT,
+      status TEXT DEFAULT 'PENDING',
+      atualizado_em TEXT DEFAULT (datetime('now','localtime'))
+    )
+  `);
+
   const existingConfig = query("SELECT COUNT(*) as c FROM config_email");
   if (existingConfig[0]?.c === 0) {
     run(`INSERT INTO config_email (id) VALUES (1)`);

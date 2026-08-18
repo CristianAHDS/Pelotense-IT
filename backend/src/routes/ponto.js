@@ -201,4 +201,41 @@ router.get('/mes', (req, res) => {
   }
 });
 
+router.get('/relatorio', (req, res) => {
+  try {
+    const { inicio, fim } = req.query;
+    const params = [];
+    let where = '1=1';
+    if (inicio) { where += ' AND data >= ?'; params.push(inicio); }
+    if (fim) { where += ' AND data <= ?'; params.push(fim); }
+
+    const regs = query(`SELECT * FROM ponto WHERE ${where} ORDER BY usuario ASC, data ASC`, params);
+
+    const map = {};
+    for (const reg of regs) {
+      const full = buildRegistro(reg);
+      if (!map[reg.usuario]) {
+        map[reg.usuario] = { usuario: reg.usuario, dias: 0, total_minutos: 0, dias_incompletos: 0 };
+      }
+      map[reg.usuario].dias += 1;
+      if (full.total_minutos != null) {
+        map[reg.usuario].total_minutos += full.total_minutos;
+      } else {
+        map[reg.usuario].dias_incompletos += 1;
+      }
+    }
+
+    const tecnicos = Object.values(map)
+      .map((t) => ({
+        ...t,
+        total_horas: Math.round((t.total_minutos / 60) * 10) / 10,
+      }))
+      .sort((a, b) => b.total_minutos - a.total_minutos);
+
+    res.json({ tecnicos });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

@@ -15,6 +15,13 @@ import { API_URL } from '../config';
 
 const API = API_URL;
 
+const fmtHoras = (min) => {
+  if (min == null || min <= 0) return '0h';
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m === 0 ? h + 'h' : h + 'h' + String(m).padStart(2, '0');
+};
+
 const statusLabels = {
   aberto: 'Aberto',
   em_andamento: 'Em Andamento',
@@ -163,6 +170,7 @@ export default function Relatorios() {
   const [stats, setStats] = useState(null);
   const [chamados, setChamados] = useState([]);
   const [prevStats, setPrevStats] = useState(null);
+  const [horasTecnicos, setHorasTecnicos] = useState([]);
   const [inicio, setInicio] = useState('');
   const [fim, setFim] = useState('');
 
@@ -196,6 +204,14 @@ export default function Relatorios() {
     )
       .then((r) => r.json())
       .then((d) => setChamados(d.chamados || []))
+      .catch(() => {});
+
+    const hp = new URLSearchParams();
+    if (i) hp.set('inicio', i);
+    if (f) hp.set('fim', f);
+    fetch(API + '/ponto/relatorio?' + hp)
+      .then((r) => r.json())
+      .then((d) => setHorasTecnicos(d.tecnicos || []))
       .catch(() => {});
   };
 
@@ -359,6 +375,8 @@ export default function Relatorios() {
         : '-';
     return { ...t, sla: avg };
   });
+
+  const maxHoras = Math.max(...horasTecnicos.map((x) => x.total_minutos), 1);
 
   const exportCSV = async () => {
     if (!stats) return;
@@ -969,6 +987,45 @@ export default function Relatorios() {
                     </td>
                   </tr>
                 ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {horasTecnicos.length > 0 && (
+          <div className="report-card report-card-wide">
+            <h3>Horas por Técnico (Ponto)</h3>
+            <table className="report-table">
+              <thead>
+                <tr>
+                  <th>Técnico</th>
+                  <th className="text-right">Dias</th>
+                  <th className="text-right">Média/dia</th>
+                  <th className="text-right">Total</th>
+                  <th style={{ width: '30%' }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {horasTecnicos.map((t) => {
+                  const pct = ((t.total_minutos / maxHoras) * 100).toFixed(0);
+                  const media = Math.round(t.total_minutos / (t.dias || 1));
+                  return (
+                    <tr key={t.usuario}>
+                      <td>{t.usuario}</td>
+                      <td className="text-right">{t.dias}</td>
+                      <td className="text-right">{fmtHoras(media)}</td>
+                      <td className="text-right"><b>{fmtHoras(t.total_minutos)}</b></td>
+                      <td>
+                        <div className="h-bar-track" style={{ height: 10 }}>
+                          <div
+                            className="h-bar-fill"
+                            style={{ width: pct + '%', background: '#6366f1' }}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

@@ -8,7 +8,9 @@ const LOG_FILE = path.join(__dirname, '..', '..', 'whatsapp.log');
 function log(...args) {
   const line = `[${new Date().toLocaleTimeString('pt-BR')}] ${args.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')}`;
   console.log('[WHATSAPP]', ...args);
-  try { fs.appendFileSync(LOG_FILE, line + '\n'); } catch (_) {}
+  try {
+    fs.appendFileSync(LOG_FILE, line + '\n');
+  } catch (_) {}
 }
 
 const MENU = `🤖 *Pelotense IT — Assistente Virtual*
@@ -36,9 +38,20 @@ function normalizarNumero(jid) {
 
 function getConfig() {
   const config = queryOne('SELECT * FROM config_whatsapp WHERE id = 1');
-  if (!config) return { ativo: 0, api_url: '', api_key: '', instance: '', numeros_permitidos: [] };
+  if (!config)
+    return {
+      ativo: 0,
+      api_url: '',
+      api_key: '',
+      instance: '',
+      numeros_permitidos: [],
+    };
   let numeros = [];
-  try { numeros = JSON.parse(config.numeros_permitidos || '[]'); } catch (_) { numeros = []; }
+  try {
+    numeros = JSON.parse(config.numeros_permitidos || '[]');
+  } catch (_) {
+    numeros = [];
+  }
   return {
     ativo: !!config.ativo,
     api_url: config.api_url || '',
@@ -49,14 +62,20 @@ function getConfig() {
 }
 
 function setSessao(numero, estado, dados = {}) {
-  const exists = queryOne('SELECT numero FROM whatsapp_sessoes WHERE numero = ?', [numero]);
+  const exists = queryOne(
+    'SELECT numero FROM whatsapp_sessoes WHERE numero = ?',
+    [numero],
+  );
   if (exists) {
     run(
       "UPDATE whatsapp_sessoes SET estado = ?, dados = ?, atualizado_em = datetime('now','localtime') WHERE numero = ?",
-      [estado, JSON.stringify(dados), numero]
+      [estado, JSON.stringify(dados), numero],
     );
   } else {
-    run('INSERT INTO whatsapp_sessoes (numero, estado, dados) VALUES (?, ?, ?)', [numero, estado, JSON.stringify(dados)]);
+    run(
+      'INSERT INTO whatsapp_sessoes (numero, estado, dados) VALUES (?, ?, ?)',
+      [numero, estado, JSON.stringify(dados)],
+    );
   }
 }
 
@@ -68,11 +87,18 @@ function processarMensagem(numero, texto) {
   const msg = texto.trim().toLowerCase();
   const sessao = getSessao(numero) || { estado: 'menu', dados: '{}' };
   let dados = {};
-  try { dados = JSON.parse(sessao.dados || '{}'); } catch (_) {}
+  try {
+    dados = JSON.parse(sessao.dados || '{}');
+  } catch (_) {}
 
   if (msg === 'menu' || msg === 'cancelar') {
     setSessao(numero, 'menu', {});
     return MENU;
+  }
+
+  if (sessao.estado === 'humano') {
+    setSessao(numero, 'humano', {});
+    return null;
   }
 
   if (sessao.estado === 'consultar') {
@@ -82,7 +108,8 @@ function processarMensagem(numero, texto) {
     }
     const chamado = queryOne('SELECT * FROM chamados WHERE id = ?', [id]);
     setSessao(numero, 'menu', {});
-    if (!chamado) return `❌ Não encontrei o chamado #${id}. Digite "menu" para ver as opções.`;
+    if (!chamado)
+      return `❌ Não encontrei o chamado #${id}. Digite "menu" para ver as opções.`;
     return formatarChamado(chamado);
   }
 
@@ -100,7 +127,7 @@ function processarMensagem(numero, texto) {
     run(
       `INSERT INTO chamados (id, titulo, descricao, status, prioridade, categoria, solicitante, criado_em, atualizado_em)
        VALUES (?, ?, ?, 'aberto', 'media', 'geral', ?, datetime('now','localtime'), datetime('now','localtime'))`,
-      [id, titulo, desc, `WhatsApp ${numero}`]
+      [id, titulo, desc, `WhatsApp ${numero}`],
     );
     setSessao(numero, 'menu', {});
     return `✅ Chamado #${id} aberto com sucesso!\n\n📋 *${titulo}*\n📝 ${desc}\n\nA equipe de TI irá atendê-lo em breve. Digite "menu" para mais opções.`;
@@ -113,11 +140,11 @@ function processarMensagem(numero, texto) {
   }
   if (msg === '2' || msg === 'abrir' || msg === 'novo') {
     setSessao(numero, 'abrir_titulo', {});
-    return 'Vamos abrir um chamado! Qual o título/assunto do problema?';
+    return 'Vamos abrir um chamado! Qual o assunto do problema? (escreva um titulo breve)';
   }
   if (msg === '3' || msg === 'atendente' || msg === 'humano') {
-    setSessao(numero, 'menu', {});
-    return '👤 Um atendente humano irá falar com você em breve. Enquanto isso, use o menu digitando "menu".';
+    setSessao(numero, 'humano', {});
+    return '👤 Você será atendido por um humano. O assistente ficará em silêncio durante o atendimento.\n\nDigite *menu* a qualquer momento para voltar ao assistente virtual.';
   }
 
   return MENU;
@@ -125,6 +152,55 @@ function processarMensagem(numero, texto) {
 
 function getSessao(numero) {
   return queryOne('SELECT * FROM whatsapp_sessoes WHERE numero = ?', [numero]);
+}
+
+function getSessaoPorLid(lid) {
+  if (!lid) return null;
+  return queryOne('SELECT * FROM whatsapp_sessoes WHERE lid = ?', [lid]);
+}
+
+function updateLid(numero, lid) {
+  if (!numero || !lid) return;
+  run('UPDATE whatsapp_sessoes SET lid = ? WHERE numero = ?', [lid, numero]);
+}
+
+function getJidPara(numero) {
+  const n = normalizarNumero(numero);
+  const sessao = getSessao(n);
+  return sessao && sessao.lid ? sessao.lid : n;
+}
+
+function isComandoFinalizar(texto) {
+  const t = String(texto || '').trim().toLowerCase();
+  return ['#finalizar', '!finalizar', '/finalizar', 'finalizar', '#encerrar', '!encerrar', '/encerrar', 'encerrar', 'finalizar atendimento', 'encerrar atendimento'].includes(t);
+}
+
+function registrarEnvio(numero, texto, mensagemId, status) {
+  try {
+    run(
+      `INSERT OR REPLACE INTO whatsapp_entregas (mensagem_id, numero, texto, status, atualizado_em)
+       VALUES (?, ?, ?, ?, datetime('now','localtime'))`,
+      [mensagemId, normalizarNumero(numero), (texto || '').slice(0, 120), status || 'PENDING']
+    );
+    run(
+      `DELETE FROM whatsapp_entregas WHERE mensagem_id NOT IN (
+         SELECT mensagem_id FROM whatsapp_entregas ORDER BY atualizado_em DESC LIMIT 200
+       )`
+    );
+  } catch (err) {
+    log('Erro ao registrar envio:', err.message);
+  }
+}
+
+function atualizarEntrega(mensagemId, status) {
+  try {
+    run(
+      "UPDATE whatsapp_entregas SET status = ?, atualizado_em = datetime('now','localtime') WHERE mensagem_id = ?",
+      [status, mensagemId]
+    );
+  } catch (err) {
+    log('Erro ao atualizar entrega:', err.message);
+  }
 }
 
 async function fetchInstances(config) {
@@ -142,7 +218,10 @@ async function fetchInstances(config) {
 async function resolveInstanceName(config) {
   const instances = await fetchInstances(config);
   if (instances.length === 0) return config.instance || null;
-  if (config.instance && instances.some((i) => i.instanceName === config.instance)) {
+  if (
+    config.instance &&
+    instances.some((i) => i.instanceName === config.instance)
+  ) {
     return config.instance;
   }
   const open = instances.find((i) => i.status === 'open');
@@ -155,17 +234,32 @@ async function enviarMensagem(config, numero, texto) {
     throw new Error('Configuração da Evolution API incompleta');
   }
   const instanceName = await resolveInstanceName(config);
-  if (!instanceName) throw new Error('Nenhuma instância encontrada na Evolution API');
+  if (!instanceName)
+    throw new Error('Nenhuma instância encontrada na Evolution API');
   const base = String(config.api_url).replace(/\/+$/, '');
   const url = `${base}/message/sendText/${instanceName}`;
+  const destino = getJidPara(numero);
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', apikey: config.api_key },
-    body: JSON.stringify({ number: numero, textMessage: { text: texto } }),
+    body: JSON.stringify({ number: destino, textMessage: { text: texto } }),
   });
   if (!res.ok) {
     throw new Error(`Evolution API respondeu ${res.status}`);
   }
+
+  let mensagemId = null;
+  let status = 'PENDING';
+  try {
+    const data = await res.json();
+    mensagemId = data?.key?.id || null;
+    status = data?.status || 'PENDING';
+  } catch (_) {}
+
+  if (mensagemId) {
+    registrarEnvio(numero, texto, mensagemId, status);
+  }
+  return { mensagemId, status };
 }
 
 // Configuração
@@ -179,21 +273,24 @@ router.get('/config', (req, res) => {
 
 router.put('/config', (req, res) => {
   try {
-    const { ativo, api_url, api_key, instance, numeros_permitidos } = req.body || {};
+    const { ativo, api_url, api_key, instance, numeros_permitidos } =
+      req.body || {};
     const current = getConfig();
     const numeros = Array.isArray(numeros_permitidos)
-      ? numeros_permitidos.map((n) => String(n).replace(/\D/g, '')).filter(Boolean)
+      ? numeros_permitidos
+          .map((n) => String(n).replace(/\D/g, ''))
+          .filter(Boolean)
       : current.numeros_permitidos;
 
     run(
       `UPDATE config_whatsapp SET ativo = ?, api_url = ?, api_key = ?, instance = ?, numeros_permitidos = ? WHERE id = 1`,
       [
-        ativo !== undefined ? (ativo ? 1 : 0) : (current.ativo ? 1 : 0),
+        ativo !== undefined ? (ativo ? 1 : 0) : current.ativo ? 1 : 0,
         api_url ?? current.api_url,
         api_key ?? current.api_key,
         instance ?? current.instance,
         JSON.stringify(numeros),
-      ]
+      ],
     );
     res.json(getConfig());
   } catch (err) {
@@ -205,10 +302,15 @@ router.put('/config', (req, res) => {
 router.post('/teste', async (req, res) => {
   try {
     const { numero, mensagem } = req.body || {};
-    if (!numero) return res.status(400).json({ error: 'Informe o número de destino' });
+    if (!numero)
+      return res.status(400).json({ error: 'Informe o número de destino' });
     const config = getConfig();
     if (!config.ativo) return res.status(400).json({ error: 'Bot desativado' });
-    await enviarMensagem(config, normalizarNumero(numero), mensagem || '✅ Teste do bot Pelotense IT!');
+    await enviarMensagem(
+      config,
+      normalizarNumero(numero),
+      mensagem || '✅ Teste do bot Pelotense IT!',
+    );
     res.json({ message: 'Mensagem de teste enviada!' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -220,7 +322,13 @@ router.get('/status', async (req, res) => {
   try {
     const config = getConfig();
     if (!config.api_url || !config.api_key) {
-      return res.json({ conectado: false, numero: null, nome: null, instancia: null, estado: null });
+      return res.json({
+        conectado: false,
+        numero: null,
+        nome: null,
+        instancia: null,
+        estado: null,
+      });
     }
     const instances = await fetchInstances(config);
     const inst =
@@ -230,7 +338,10 @@ router.get('/status', async (req, res) => {
       {};
     const owner = inst.owner || inst.ownerJid || inst.integration?.number || '';
     const numero = String(owner).split('@')[0].replace(/\D/g, '');
-    const nome = inst.profileName && inst.profileName !== 'not loaded' ? inst.profileName : null;
+    const nome =
+      inst.profileName && inst.profileName !== 'not loaded'
+        ? inst.profileName
+        : null;
     res.json({
       conectado: inst.status === 'open',
       numero: numero || null,
@@ -239,7 +350,14 @@ router.get('/status', async (req, res) => {
       estado: inst.status || null,
     });
   } catch (err) {
-    res.json({ conectado: false, numero: null, nome: null, instancia: null, estado: null, erro: err.message });
+    res.json({
+      conectado: false,
+      numero: null,
+      nome: null,
+      instancia: null,
+      estado: null,
+      erro: err.message,
+    });
   }
 });
 
@@ -252,14 +370,47 @@ router.post('/webhook', (req, res) => {
 
     const data = body.data || body;
     const key = data.key || {};
+    const lid = key.remoteJid || '';
+
+    // Atualização de status de entrega (messages.update)
+    const update = data.update || {};
+    if (update.status && key.id) {
+      atualizarEntrega(key.id, update.status);
+      log(`Status de entrega: ${key.id} -> ${update.status}`);
+      return;
+    }
+
     if (key.fromMe) {
-      log('Mensagem própria (fromMe=true) — ignorada');
+      const message = data.message || {};
+      const textoAtendente =
+        (message.conversation ||
+          (message.extendedTextMessage && message.extendedTextMessage.text) ||
+          '');
+      if (textoAtendente && isComandoFinalizar(textoAtendente)) {
+        const sessao = getSessaoPorLid(lid);
+        if (sessao && sessao.estado === 'humano') {
+          setSessao(sessao.numero, 'menu', {});
+          log('Atendimento humano finalizado pelo atendente para', sessao.numero);
+          enviarMensagem(
+            getConfig(),
+            normalizarNumero(sessao.numero),
+            '✅ Atendimento encerrado. Digite "menu" para voltar ao assistente virtual.'
+          ).catch((e) => log('Erro ao notificar fim do atendimento:', e.message));
+        } else {
+          log('Comando de finalização recebido, mas nenhum atendimento humano ativo para este destinatário');
+        }
+      } else {
+        log('Mensagem própria (fromMe=true) — ignorada');
+      }
       return;
     }
 
     const jid = key.senderPn || key.remoteJid;
     const message = data.message || {};
-    const texto = message.conversation || (message.extendedTextMessage && message.extendedTextMessage.text) || '';
+    const texto =
+      message.conversation ||
+      (message.extendedTextMessage && message.extendedTextMessage.text) ||
+      '';
     if (!jid || !texto) {
       log('Sem jid ou texto — ignorada. jid=', jid, 'texto=', texto);
       return;
@@ -267,7 +418,16 @@ router.post('/webhook', (req, res) => {
 
     const numero = normalizarNumero(jid);
     const config = getConfig();
-    log('Mensagem de', numero, ':', texto, '| ativo=', config.ativo, '| permitidos=', config.numeros_permitidos);
+    log(
+      'Mensagem de',
+      numero,
+      ':',
+      texto,
+      '| ativo=',
+      config.ativo,
+      '| permitidos=',
+      config.numeros_permitidos,
+    );
 
     if (!config.ativo) {
       log('Bot desativado — ignorada');
@@ -279,6 +439,11 @@ router.post('/webhook', (req, res) => {
     }
 
     const resposta = processarMensagem(numero, texto);
+    updateLid(numero, lid);
+    if (!resposta) {
+      log('Atendimento humano em andamento — bot em silêncio para', numero);
+      return;
+    }
     log('Enviando resposta para', numero, ':', resposta.slice(0, 80));
     enviarMensagem(config, numero, resposta)
       .then(() => log('Resposta enviada com sucesso para', numero))
@@ -287,5 +452,103 @@ router.post('/webhook', (req, res) => {
     log('Erro no webhook:', err.message);
   }
 });
+
+// Lista de sessões em atendimento humano
+router.get('/sessoes', (req, res) => {
+  try {
+    const sessoes = query(
+      "SELECT * FROM whatsapp_sessoes WHERE estado = 'humano' ORDER BY atualizado_em DESC"
+    );
+    res.json(sessoes);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Status de entrega das últimas mensagens enviadas
+router.get('/entregas', (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit, 10) || 50, 200);
+    const entregas = query(
+      'SELECT * FROM whatsapp_entregas ORDER BY atualizado_em DESC, mensagem_id DESC LIMIT ?',
+      [limit]
+    );
+    res.json(entregas);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Finalizar atendimento humano (retorna o bot ao menu)
+router.post('/finalizar-atendimento', async (req, res) => {
+  try {
+    const { numero, notificar } = req.body || {};
+    if (!numero) return res.status(400).json({ error: 'Informe o número' });
+
+    const sessao = getSessao(numero);
+    if (!sessao || sessao.estado !== 'humano') {
+      return res.status(400).json({ error: 'Nenhum atendimento humano ativo para este número' });
+    }
+
+    setSessao(numero, 'menu', {});
+    log('Atendimento humano finalizado para', numero);
+
+    if (notificar !== false) {
+      try {
+        await enviarMensagem(
+          getConfig(),
+          normalizarNumero(numero),
+          '✅ Atendimento encerrado. Digite "menu" para voltar ao assistente virtual.'
+        );
+      } catch (e) {
+        log('Erro ao notificar fim do atendimento:', e.message);
+      }
+    }
+
+    res.json({ message: 'Atendimento finalizado' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Encerra atendimentos humanos por inatividade (verificado a cada 1 minuto)
+const INATIVIDADE_MIN = 10;
+
+function finalizarAtendimentosInativos() {
+  try {
+    const limite = queryOne(
+      "SELECT datetime('now','localtime', ?) as d",
+      [`-${INATIVIDADE_MIN} minutes`]
+    )?.d;
+    if (!limite) return;
+
+    const sessoes = query(
+      "SELECT * FROM whatsapp_sessoes WHERE estado = 'humano' AND atualizado_em <= ?",
+      [limite]
+    );
+
+    for (const s of sessoes) {
+      setSessao(s.numero, 'menu', {});
+      log(`Atendimento humano encerrado por inatividade (${INATIVIDADE_MIN}min) para`, s.numero);
+
+      try {
+        const config = getConfig();
+        if (config.ativo) {
+          enviarMensagem(
+            config,
+            normalizarNumero(s.numero),
+            '⏰ Atendimento encerrado por inatividade. Digite "menu" para voltar ao assistente virtual.'
+          ).catch((e) => log('Erro ao notificar inatividade:', e.message));
+        }
+      } catch (e) {
+        log('Erro ao notificar inatividade:', e.message);
+      }
+    }
+  } catch (err) {
+    log('Erro ao verificar inatividade:', err.message);
+  }
+}
+
+setInterval(finalizarAtendimentosInativos, 60 * 1000);
 
 module.exports = router;

@@ -10,6 +10,9 @@ import {
   Power,
   ShieldCheck,
   RefreshCw,
+  UserCheck,
+  Maximize2,
+  X,
 } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import './Whatsapp.css';
@@ -26,6 +29,13 @@ function maskPhone(v) {
   return `+${d.slice(0, 2)} (${d.slice(2, 4)}) ${d.slice(4, d.length - 4)}-${d.slice(d.length - 4)}`;
 }
 
+const STATUS_ENTREGA = {
+  PENDING: { label: 'Enviando', cls: 'pending' },
+  SERVER_ACK: { label: 'Enviado', cls: 'server' },
+  DELIVERY_ACK: { label: 'Entregue', cls: 'delivered' },
+  READ: { label: 'Lido', cls: 'read' },
+};
+
 export default function Whatsapp() {
   const { add: addToast } = useToast();
   const [config, setConfig] = useState({
@@ -41,6 +51,10 @@ export default function Whatsapp() {
   const [testNumero, setTestNumero] = useState('');
   const [status, setStatus] = useState(null);
   const [checking, setChecking] = useState(false);
+  const [atendimentos, setAtendimentos] = useState([]);
+  const [finalizando, setFinalizando] = useState(null);
+  const [entregas, setEntregas] = useState([]);
+  const [showEntregasModal, setShowEntregasModal] = useState(false);
 
   const loadStatus = async () => {
     setChecking(true);
@@ -72,6 +86,54 @@ export default function Whatsapp() {
   useEffect(() => {
     loadStatus();
   }, []);
+
+  const loadAtendimentos = async () => {
+    try {
+      const r = await fetch(`${API}/whatsapp/sessoes`);
+      setAtendimentos(await r.json());
+    } catch {}
+  };
+
+  useEffect(() => {
+    loadAtendimentos();
+    const t = setInterval(loadAtendimentos, 15000);
+    return () => clearInterval(t);
+  }, []);
+
+  const loadEntregas = async () => {
+    try {
+      const r = await fetch(`${API}/whatsapp/entregas?limit=50`);
+      setEntregas(await r.json());
+    } catch {}
+  };
+
+  useEffect(() => {
+    loadEntregas();
+    const t = setInterval(loadEntregas, 5000);
+    return () => clearInterval(t);
+  }, []);
+
+  const finalizarAtendimento = async (numero) => {
+    setFinalizando(numero);
+    try {
+      const r = await fetch(`${API}/whatsapp/finalizar-atendimento`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ numero }),
+      });
+      const data = await r.json();
+      if (r.ok) {
+        addToast('Atendimento finalizado!', 'success');
+        loadAtendimentos();
+      } else {
+        addToast(data.error || 'Erro ao finalizar atendimento', 'error');
+      }
+    } catch {
+      addToast('Erro ao finalizar atendimento', 'error');
+    } finally {
+      setFinalizando(null);
+    }
+  };
 
   const webhookUrl = /^https?:\/\//.test(API)
     ? `${API.replace(/\/api\/?$/, '')}/api/whatsapp/webhook`
@@ -304,6 +366,80 @@ export default function Whatsapp() {
 
         <div className="wa-card wa-card-full">
           <h3>
+            <UserCheck size={16} /> Atendimentos humanos em andamento
+          </h3>
+          <p className="wa-hint">
+            Quando alguém escolhe a opção "Falar com atendente", o bot entra em
+            silêncio e o número aparece aqui. Finalize aqui ou enviando{' '}
+            <strong>#finalizar</strong> pelo WhatsApp do atendente.
+          </p>
+          <div className="wa-atendimentos">
+            {atendimentos.length === 0 ? (
+              <div className="wa-empty">
+                Nenhum atendimento humano em andamento.
+              </div>
+            ) : (
+              atendimentos.map((s) => (
+                <div key={s.numero} className="wa-atendimento-item">
+                  <Phone size={14} />
+                  <span className="wa-number">{s.numero}</span>
+                  <button
+                    className="btn btn-outline"
+                    onClick={() => finalizarAtendimento(s.numero)}
+                    disabled={finalizando === s.numero}
+                  >
+                    <UserCheck size={14} />{' '}
+                    {finalizando === s.numero ? 'Finalizando...' : 'Finalizar'}
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="wa-card wa-card-full">
+          <h3>
+            <Send size={16} /> Entrega de mensagens
+            <button
+              className="wa-expand-btn"
+              onClick={() => setShowEntregasModal(true)}
+              title="Ver lista completa"
+              style={{ marginLeft: 'auto' }}
+            >
+              <Maximize2 size={15} />
+            </button>
+          </h3>
+          <p className="wa-hint">
+            Últimas 4 mensagens. Status em tempo real (Enviando → Enviado →
+            Entregue → Lido).
+          </p>
+          <div className="wa-entregas">
+            {entregas.length === 0 ? (
+              <div className="wa-empty">
+                Nenhuma mensagem enviada recentemente.
+              </div>
+            ) : (
+              entregas.slice(0, 4).map((e) => {
+                const st =
+                  STATUS_ENTREGA[e.status] || { label: e.status, cls: 'server' };
+                return (
+                  <div key={e.mensagem_id} className="wa-entrega-item">
+                    <span className="wa-entrega-texto">
+                      {e.texto || '(mensagem)'}
+                    </span>
+                    <span className="wa-entrega-numero">{e.numero}</span>
+                    <span className={`wa-entrega-status ${st.cls}`}>
+                      {st.label}
+                    </span>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        <div className="wa-card wa-card-full">
+          <h3>
             <Link2 size={16} /> Webhook e teste
           </h3>
           <div className="form-group">
@@ -354,6 +490,52 @@ export default function Whatsapp() {
           <Power size={14} /> Bot {config.ativo ? 'ativo' : 'inativo'}
         </span>
       </div>
+
+      {showEntregasModal && (
+        <div
+          className="wa-modal-overlay"
+          onClick={() => setShowEntregasModal(false)}
+        >
+          <div className="wa-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="wa-modal-head">
+              <h3>
+                <Send size={16} /> Entrega de mensagens
+              </h3>
+              <button
+                className="wa-modal-close"
+                onClick={() => setShowEntregasModal(false)}
+                title="Fechar"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="wa-modal-body">
+              {entregas.length === 0 ? (
+                <div className="wa-empty">
+                  Nenhuma mensagem enviada recentemente.
+                </div>
+              ) : (
+                entregas.map((e) => {
+                  const st =
+                    STATUS_ENTREGA[e.status] ||
+                    { label: e.status, cls: 'server' };
+                  return (
+                    <div key={e.mensagem_id} className="wa-entrega-item">
+                      <span className="wa-entrega-texto">
+                        {e.texto || '(mensagem)'}
+                      </span>
+                      <span className="wa-entrega-numero">{e.numero}</span>
+                      <span className={`wa-entrega-status ${st.cls}`}>
+                        {st.label}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
