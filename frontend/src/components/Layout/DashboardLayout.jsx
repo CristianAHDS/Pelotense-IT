@@ -57,6 +57,7 @@ export default function DashboardLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [abertosCount, setAbertosCount] = useState(0);
+  const [atendimentosAbertos, setAtendimentosAbertos] = useState(0);
 
   const isAdminRoute = adminMenuItems.some((i) => location.pathname === i.to);
   useEffect(() => {
@@ -73,6 +74,18 @@ export default function DashboardLayout() {
         setAbertosCount(count);
       })
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const load = () => {
+      fetch('/api/whatsapp/sessoes')
+        .then((r) => (r.ok ? r.json() : []))
+        .then((d) => setAtendimentosAbertos(Array.isArray(d) ? d.length : 0))
+        .catch(() => {});
+    };
+    load();
+    const t = setInterval(load, 15000);
+    return () => clearInterval(t);
   }, []);
 
   const closeSidebar = () => setSidebarOpen(false);
@@ -168,6 +181,12 @@ export default function DashboardLayout() {
         <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}><Menu size={22} /></button>
         <div className="mobile-brand"><img src="/pelotense_it_icone_app_sem_fundo_monochromatico.png" alt="Pelotense IT" className="mobile-brand-logo" /><span>Pelotense IT</span></div>
         <div className="mobile-header-actions">
+          {atendimentosAbertos > 0 && (
+            <NavLink to="/whatsapp" className="notif-btn whatsapp-alert-btn" title="Atendimento humano em andamento">
+              <MessageCircle size={18} />
+              <span className="whatsapp-alert-badge">{atendimentosAbertos}</span>
+            </NavLink>
+          )}
           <NetworkSpeed />
           <PontoTimer />
           <button className="notif-btn" onClick={toggleTheme} title={theme === 'dark' ? 'Modo claro' : theme === 'light' ? 'Alto contraste' : 'Modo escuro'}>
@@ -200,6 +219,12 @@ export default function DashboardLayout() {
             )}
           </div>
           <div className="top-bar-right">
+            {atendimentosAbertos > 0 && (
+              <NavLink to="/whatsapp" className="notif-btn whatsapp-alert-btn" title="Atendimento humano em andamento">
+                <MessageCircle size={16} />
+                <span className="whatsapp-alert-badge">{atendimentosAbertos}</span>
+              </NavLink>
+            )}
             <NetworkSpeed />
             <PontoTimer />
             <button className="notif-btn" onClick={toggleTheme} title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}>

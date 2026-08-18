@@ -374,6 +374,35 @@
 }
 .notif-btn:hover { color: var(--color-text); border-color: var(--color-primary); }
 
+.whatsapp-alert-btn {
+  color: #25d366;
+  border-color: rgba(37, 211, 102, 0.4);
+  background: rgba(37, 211, 102, 0.08);
+}
+.whatsapp-alert-btn:hover {
+  color: #25d366;
+  border-color: #25d366;
+  background: rgba(37, 211, 102, 0.14);
+}
+
+.whatsapp-alert-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #25d366;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px var(--color-surface-solid);
+}
+
 .notif-badge {
   position: absolute; top: -4px; right: -4px;
   width: 18px; height: 18px;
