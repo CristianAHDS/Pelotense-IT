@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Clock, Pause, Coffee, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { API_URL } from '../../config';
+import { apiFetch } from '../../api';
 import './PontoTimer.css';
 
 const API = API_URL;
@@ -53,7 +54,7 @@ export default function PontoTimer() {
 
   useEffect(() => {
     const load = () => {
-      fetch(`${API}/ponto/status?usuario=${encodeURIComponent(usuario)}`)
+      apiFetch(`${API}/ponto/status?usuario=${encodeURIComponent(usuario)}`)
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => {
           if (!data) return;

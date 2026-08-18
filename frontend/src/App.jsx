@@ -26,6 +26,14 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
+function AdminRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.tipo !== 'TI') return <Navigate to="/" replace />;
+  return children;
+}
+
 export default function App() {
   return (
     <Routes>
@@ -40,11 +48,11 @@ export default function App() {
         <Route path="/relatorios" element={<Relatorios />} />
         <Route path="/gamificacao" element={<Gamificacao />} />
         <Route path="/ponto" element={<Ponto />} />
-        <Route path="/configuracoes" element={<Configuracoes />} />
-        <Route path="/cadastro-tecnicos" element={<CadastroTecnicos />} />
-        <Route path="/enviar-email" element={<EnviarEmail />} />
-        <Route path="/whatsapp" element={<Whatsapp />} />
-        <Route path="/whatsapp/chat/:numero" element={<WhatsappChat />} />
+        <Route element={<AdminRoute><Configuracoes /></AdminRoute>} path="/configuracoes" />
+        <Route element={<AdminRoute><CadastroTecnicos /></AdminRoute>} path="/cadastro-tecnicos" />
+        <Route element={<AdminRoute><EnviarEmail /></AdminRoute>} path="/enviar-email" />
+        <Route element={<AdminRoute><Whatsapp /></AdminRoute>} path="/whatsapp" />
+        <Route element={<AdminRoute><WhatsappChat /></AdminRoute>} path="/whatsapp/chat/:numero" />
       </Route>
 
       <Route element={<PortalLayout />}>

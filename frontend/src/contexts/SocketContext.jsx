@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import confetti from 'canvas-confetti';
 import { useToast } from './ToastContext';
 import { SOCKET_URL } from '../config';
+import { getTermos } from '../termos';
 
 const SocketContext = createContext(null);
 
@@ -40,17 +41,18 @@ export function SocketProvider({ children }) {
     socketRef.current = socket;
 
     socket.on('chamado:created', (chamado) => {
-      addNotification(`Novo chamado #${chamado.id}: ${chamado.titulo}`, 'created');
+      addNotification(`Novo ${getTermos().chamado} #${chamado.id}: ${chamado.titulo}`, 'created');
     });
 
     socket.on('chamado:updated', (chamado) => {
-      addNotification(`Chamado #${chamado.id} atualizado`, 'updated');
+      addNotification(`${getTermos().Chamado} #${chamado.id} atualizado`, 'updated');
     });
 
     socket.on('alerta:disparado', (data) => {
+      const t = getTermos();
       const msg = data.mensagem
-        ? `⏰ Alerta chamado #${data.chamado_id}: ${data.mensagem}`
-        : `⏰ Alerta agendado disparado para o chamado #${data.chamado_id}: ${data.titulo}`;
+        ? `⏰ Alerta ${t.chamado} #${data.chamado_id}: ${data.mensagem}`
+        : `⏰ Alerta agendado disparado para o ${t.chamado} #${data.chamado_id}: ${data.titulo}`;
       addNotification(msg, 'alert');
       addToast(msg, 'warning', 8000);
     });

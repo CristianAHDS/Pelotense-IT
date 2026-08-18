@@ -15,6 +15,7 @@ const projetosRouter = require('./routes/projetos');
 const whatsappRouter = require('./routes/whatsapp');
 const pontoRouter = require('./routes/ponto');
 const { gerarRelatorioDiario, enviarAlerta } = require('./services/email');
+const { optionalAuth } = require('./middleware/auth');
 
 const app = express();
 const server = http.createServer(app);
@@ -25,6 +26,8 @@ const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
+
+app.use('/api', optionalAuth);
 
 const LOGOS_DIR = path.join(__dirname, '..', '..', 'logos');
 app.use('/assets', express.static(LOGOS_DIR));

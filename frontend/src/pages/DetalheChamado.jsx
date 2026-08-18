@@ -9,6 +9,8 @@ import { applyWatermark } from '../utils/watermark';
 import './DetalheChamado.css';
 
 import { API_URL } from '../config';
+import { apiFetch } from '../api';
+import { useTermos } from '../termos';
 
 const API = API_URL;
 
@@ -63,6 +65,7 @@ export default function DetalheChamado() {
   const { add: addToast } = useToast();
   const { user } = useAuth();
   const { isOnline, enqueue } = useOffline();
+  const termos = useTermos();
   const tecnicoNome = user?.nome || 'Cristian Raffi Cunha';
   const [chamado, setChamado] = useState(null);
   const [comentario, setComentario] = useState('');
@@ -81,14 +84,14 @@ export default function DetalheChamado() {
   const resolveFileRef = useRef(null);
 
   const loadChamado = () => {
-    fetch(`${API}/chamados/${id}`)
+    apiFetch(`${API}/chamados/${id}`)
       .then((r) => r.json())
       .then((c) => {
         setChamado(c);
         setChecklist(c.checklist || []);
         setEditForm({ titulo: c.titulo, descricao: c.descricao, categoria: c.categoria, prioridade: c.prioridade });
         if (!c.tecnico) {
-          fetch(`${API}/chamados/${id}`, {
+          apiFetch(`${API}/chamados/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ tecnico: tecnicoNome }),
@@ -101,7 +104,7 @@ export default function DetalheChamado() {
   useEffect(loadChamado, [id]);
 
   useEffect(() => {
-    fetch(`${API}/gamificacao/usuario/${encodeURIComponent(tecnicoNome)}`)
+    apiFetch(`${API}/gamificacao/usuario/${encodeURIComponent(tecnicoNome)}`)
       .then((r) => r.json())
       .then(setGamiData)
       .catch(() => {});
@@ -162,7 +165,7 @@ export default function DetalheChamado() {
       setShowResolve(true);
       return;
     }
-    await fetch(`${API}/chamados/${id}`, {
+    await apiFetch(`${API}/chamados/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: novoStatus, tecnico: tecnicoNome }),
@@ -195,7 +198,7 @@ export default function DetalheChamado() {
         const wm = await applyWatermark(resolucaoImg, tecnicoNome);
         const fd = new FormData();
         fd.append('arquivos', wm);
-        const r = await fetch(`${API}/chamados/${id}/anexos`, { method: 'POST', body: fd });
+        const r = await apiFetch(`${API}/chamados/${id}/anexos`, { method: 'POST', body: fd });
         const anexos = await r.json();
         if (anexos.length > 0) {
           const imgRef = `[imagem: ${API}/chamados/anexos/${anexos[0].nome_armazenado}]`;
@@ -206,7 +209,7 @@ export default function DetalheChamado() {
 
     if (!textoResolucao && !resolucaoImg) return;
 
-    await fetch(`${API}/chamados/${id}`, {
+    await apiFetch(`${API}/chamados/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: 'resolvido', tecnico: tecnicoNome, resolucao: textoResolucao || ' ' }),
@@ -214,7 +217,7 @@ export default function DetalheChamado() {
     setShowResolve(false);
     setResolucao('');
     setResolucaoImg(null);
-    addToast('Chamado resolvido com sucesso!', 'success');
+    addToast(`${termos.Chamado} resolvido com sucesso!`, 'success');
     loadChamado();
   };
 
@@ -244,7 +247,7 @@ export default function DetalheChamado() {
       const wm = await applyWatermark(comentImagem, tecnicoNome);
       fd.append('arquivos', wm);
       try {
-        const r = await fetch(`${API}/chamados/${id}/anexos`, { method: 'POST', body: fd });
+        const r = await apiFetch(`${API}/chamados/${id}/anexos`, { method: 'POST', body: fd });
         const anexos = await r.json();
         if (anexos.length > 0) {
           texto = texto ? `${texto}\n[imagem: ${API}/chamados/anexos/${anexos[0].nome_armazenado}]` : `[imagem: ${API}/chamados/anexos/${anexos[0].nome_armazenado}]`;
@@ -254,7 +257,7 @@ export default function DetalheChamado() {
 
     if (!texto) return;
 
-    await fetch(`${API}/chamados/${id}/comentarios`, {
+    await apiFetch(`${API}/chamados/${id}/comentarios`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ autor: tecnicoNome, texto }),
@@ -267,13 +270,13 @@ export default function DetalheChamado() {
 
   const removerAnexo = async (anexoId) => {
     if (!confirm('Remover este anexo?')) return;
-    await fetch(`${API}/chamados/anexos/${anexoId}`, { method: 'DELETE' });
+    await apiFetch(`${API}/chamados/anexos/${anexoId}`, { method: 'DELETE' });
     addToast('Anexo removido', 'success');
     loadChamado();
   };
 
   const toggleCheck = async (item) => {
-    await fetch(`${API}/chamados/${id}/checklist/${item.id}`, {
+    await apiFetch(`${API}/chamados/${id}/checklist/${item.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ concluido: !item.concluido }),
@@ -283,7 +286,7 @@ export default function DetalheChamado() {
 
   const addCheckItem = async () => {
     if (!novoCheck.trim()) return;
-    const r = await fetch(`${API}/chamados/${id}/checklist`, {
+    const r = await apiFetch(`${API}/chamados/${id}/checklist`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ texto: novoCheck }),
@@ -294,17 +297,17 @@ export default function DetalheChamado() {
   };
 
   const removeCheckItem = async (itemId) => {
-    await fetch(`${API}/chamados/${id}/checklist/${itemId}`, { method: 'DELETE' });
+    await apiFetch(`${API}/chamados/${id}/checklist/${itemId}`, { method: 'DELETE' });
     setChecklist((prev) => prev.filter((i) => i.id !== itemId));
   };
 
   const saveEdit = async () => {
-    await fetch(`${API}/chamados/${id}`, {
+    await apiFetch(`${API}/chamados/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(editForm),
     });
-    addToast('Chamado atualizado', 'success');
+    addToast(`${termos.Chamado} atualizado`, 'success');
     setEditing(false);
     loadChamado();
   };
@@ -316,7 +319,7 @@ export default function DetalheChamado() {
   return (
     <div className="detalhe-page">
       <Link to="/chamados" className="back-link">
-        <ArrowLeft size={18} /> Voltar para Chamados
+        <ArrowLeft size={18} /> Voltar para {termos.Chamados}
       </Link>
 
       <div className="detalhe-header">
@@ -611,7 +614,7 @@ export default function DetalheChamado() {
                         </div>
                       )}
                       {chamado.status !== 'resolvido' && (
-                        <div className="g-hint">Resolva este chamado para ganhar badges!</div>
+                        <div className="g-hint">{`Resolva este ${termos.chamado} para ganhar badges!`}</div>
                       )}
                     </div>
                   </div>
@@ -680,7 +683,7 @@ export default function DetalheChamado() {
             </div>
             <div className="modal-actions">
               <button className="btn btn-ghost" onClick={() => setShowResolve(false)}>Cancelar</button>
-              <button className="btn btn-primary" onClick={confirmarResolucao}>Resolver Chamado</button>
+              <button className="btn btn-primary" onClick={confirmarResolucao}>{`Resolver ${termos.Chamado}`}</button>
             </div>
           </div>
         </div>

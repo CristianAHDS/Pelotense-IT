@@ -8,12 +8,15 @@ import { applyWatermark } from '../utils/watermark';
 import './NovoChamado.css';
 
 import { API_URL } from '../config';
+import { apiFetch } from '../api';
+import { useTermos } from '../termos';
 
 const API = API_URL;
 
 export default function NovoChamado() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const termos = useTermos();
   const tecnicoNome = user?.nome || 'Cristian Raffi Cunha';
   const tipo = user?.tipo || 'TI';
   const fileInputRef = useRef(null);
@@ -41,7 +44,7 @@ export default function NovoChamado() {
           const file = item.getAsFile();
           if (file) {
             if (arquivos.length >= 5) {
-              setError('Máximo de 5 anexos por chamado.');
+              setError('Máximo de 5 anexos por ' + termos.chamado + '.');
               return;
             }
             setArquivos((prev) => [...prev, file]);
@@ -56,7 +59,7 @@ export default function NovoChamado() {
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length + arquivos.length > 5) {
-      setError('Máximo de 5 anexos por chamado.');
+      setError(`Máximo de 5 anexos por ${termos.chamado}.`);
       return;
     }
     setArquivos((prev) => [...prev, ...files]);
@@ -105,20 +108,20 @@ export default function NovoChamado() {
       }
 
       if (!isOnline) {
-        enqueue({ url: `${API}/chamados`, method: 'POST', body });
+        enqueue({ url: `${API}/chamados`, method: 'POST', body: { ...body, tecnico: user?.nome || null } });
         if (arquivos.length > 0) {
-          addToast('Chamado salvo offline. Anexos serão enviados somente com conexão.', 'warning', 6000);
+          addToast(`${termos.Chamado} salvo offline. Anexos serão enviados somente com conexão.`, 'warning', 6000);
         } else {
-          addToast('Chamado salvo offline e será sincronizado automaticamente.', 'warning', 6000);
+          addToast(`${termos.Chamado} salvo offline e será sincronizado automaticamente.`, 'warning', 6000);
         }
         navigate('/chamados');
         return;
       }
 
-      const res = await fetch(`${API}/chamados`, {
+      const res = await apiFetch(`${API}/chamados`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, tecnico: user?.nome || null }),
       });
       if (!res.ok) throw new Error((await res.json()).error);
       const chamado = await res.json();
@@ -129,17 +132,17 @@ export default function NovoChamado() {
           const wm = await applyWatermark(f, tecnicoNome);
           fd.append('arquivos', wm);
         }
-        await fetch(`${API}/chamados/${chamado.id}/anexos`, {
+        await apiFetch(`${API}/chamados/${chamado.id}/anexos`, {
           method: 'POST',
           body: fd,
         });
       }
 
-      addToast('Chamado criado com sucesso!', 'success');
+      addToast(`${termos.Chamado} criado com sucesso!`, 'success');
       navigate('/chamados');
     } catch (err) {
       setError(err.message);
-      addToast('Erro ao criar chamado', 'error');
+      addToast('Erro ao criar ' + termos.chamado, 'error');
     } finally {
       setLoading(false);
     }
@@ -162,7 +165,7 @@ export default function NovoChamado() {
           ))}
         </div>
         <div>
-          <h2>Novo Chamado</h2>
+          <h2>{termos.novoChamado}</h2>
           <span className="page-subtitle">Registre uma nova solicitação</span>
         </div>
       </div>
@@ -253,7 +256,7 @@ export default function NovoChamado() {
               checked={agendarAlerta}
               onChange={(e) => setAgendarAlerta(e.target.checked)}
             />
-            <Bell size={15} /> Agendar alerta para este chamado
+            <Bell size={15} /> Agendar alerta para este {termos.chamado}
           </label>
           {agendarAlerta && (
             <div className="alerta-fields">
@@ -305,7 +308,7 @@ export default function NovoChamado() {
               e.preventDefault();
               const files = Array.from(e.dataTransfer.files || []);
               if (files.length + arquivos.length > 5) {
-                setError('Máximo de 5 anexos por chamado.');
+setError(`Máximo de 5 anexos por ${termos.chamado}.`);
                 return;
               }
               setArquivos((prev) => [...prev, ...files]);
@@ -347,7 +350,7 @@ export default function NovoChamado() {
             Cancelar
           </button>
           <button type="submit" className="btn btn-primary" disabled={loading}>
-            <Save size={18} /> {loading ? 'Criando...' : 'Criar Chamado'}
+            <Save size={18} /> {loading ? 'Criando...' : 'Criar ' + termos.Chamado}
           </button>
         </div>
       </form>

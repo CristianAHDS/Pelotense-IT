@@ -12,6 +12,8 @@ import { jsPDF } from 'jspdf';
 import './Relatorios.css';
 
 import { API_URL } from '../config';
+import { apiFetch } from '../api';
+import { useTermos } from '../termos';
 
 const API = API_URL;
 
@@ -167,7 +169,8 @@ function SimpleDonut({ data = [], size = 140, strokeWidth = 16 }) {
 }
 
 export default function Relatorios() {
-  const [stats, setStats] = useState(null);
+const termos = useTermos();
+const [stats, setStats] = useState(null);
   const [chamados, setChamados] = useState([]);
   const [prevStats, setPrevStats] = useState(null);
   const [horasTecnicos, setHorasTecnicos] = useState([]);
@@ -193,11 +196,11 @@ export default function Relatorios() {
     const f = fimParam !== undefined ? fimParam : fim;
     if (i) params.set('inicio', i);
     if (f) params.set('fim', f);
-    fetch(API + '/chamados/stats?' + params)
+    apiFetch(API + '/chamados/stats?' + params)
       .then((r) => r.json())
       .then(setStats)
       .catch(() => {});
-    fetch(
+    apiFetch(
       API +
         '/chamados?limit=999' +
         (params.toString() ? '&' + params.toString() : ''),
@@ -209,7 +212,7 @@ export default function Relatorios() {
     const hp = new URLSearchParams();
     if (i) hp.set('inicio', i);
     if (f) hp.set('fim', f);
-    fetch(API + '/ponto/relatorio?' + hp)
+    apiFetch(API + '/ponto/relatorio?' + hp)
       .then((r) => r.json())
       .then((d) => setHorasTecnicos(d.tecnicos || []))
       .catch(() => {});
@@ -219,7 +222,7 @@ export default function Relatorios() {
     const p = new URLSearchParams();
     if (prevInicio) p.set('inicio', prevInicio);
     if (prevFim) p.set('fim', prevFim);
-    fetch(API + '/chamados/stats?' + p)
+    apiFetch(API + '/chamados/stats?' + p)
       .then((r) => r.json())
       .then(setPrevStats)
       .catch(() => {});
@@ -382,7 +385,7 @@ export default function Relatorios() {
     if (!stats) return;
     const now = new Date().toLocaleDateString('pt-BR');
     let csv = '\uFEFF';
-    csv += 'RELATORIO DE CHAMADOS - PELOTENSE IT\n';
+    csv += 'RELATORIO DE ' + termos.Chamados.toUpperCase() + ' - PELOTENSE IT\n';
     csv += 'Gerado em: ' + now + '\n';
     if (inicio || fim)
       csv += 'Periodo: ' + (inicio || '...') + ' ate ' + (fim || '...') + '\n';
@@ -416,7 +419,7 @@ export default function Relatorios() {
     });
     csv +=
       '\n========================================\nRESUMO GERAL\n========================================\n';
-    csv += 'Total de chamados,' + totalChamados + '\n';
+    csv += 'Total de ' + termos.chamados + ',' + totalChamados + '\n';
     csv += 'Taxa de resolucao,' + taxaResolucao + '%\n';
     csv += 'Tempo medio de resolucao,' + (stats.slaMedio || 0) + 'h\n';
     csv +=
@@ -462,7 +465,7 @@ export default function Relatorios() {
     topSolicitantes.forEach(
       (s, i) =>
         (csv +=
-          '  ' + (i + 1) + 'o - ' + s.name + ',' + s.count + ' chamados\n'),
+          '  ' + (i + 1) + 'o - ' + s.name + ',' + s.count + ' ' + termos.chamados + '\n'),
     );
     csv += '\nDistribuicao por dia da semana:\n';
     diaSemanaData.forEach((d) => (csv += '  ' + d.full + ',' + d.count + '\n'));
@@ -482,7 +485,7 @@ export default function Relatorios() {
     let y = 20;
     const now = new Date().toLocaleDateString('pt-BR');
     doc.setFontSize(18);
-    doc.text('RELATORIO DE CHAMADOS', 20, y);
+    doc.text('RELATORIO DE ' + termos.Chamados.toUpperCase(), 20, y);
     y += 8;
     doc.setFontSize(11);
     doc.text('Pelotense IT - Gerado em ' + now, 20, y);
@@ -497,7 +500,7 @@ export default function Relatorios() {
     }
     y += 6;
     doc.setFontSize(13);
-    doc.text('Lista de Chamados', 20, y);
+    doc.text('Lista de ' + termos.Chamados, 20, y);
     y += 8;
     const drawHeader = () => {
       doc.setFontSize(8);
@@ -863,7 +866,7 @@ export default function Relatorios() {
         </div>
 
         <div className="report-card">
-          <h3>Chamados por Status</h3>
+          <h3>{termos.Chamados} por Status</h3>
           <table className="report-table">
             <thead>
               <tr>
@@ -1039,7 +1042,7 @@ export default function Relatorios() {
                 <tr>
                   <th>#</th>
                   <th>Solicitante</th>
-                  <th className="text-right">Chamados</th>
+                  <th className="text-right">{termos.Chamados}</th>
                 </tr>
               </thead>
               <tbody>

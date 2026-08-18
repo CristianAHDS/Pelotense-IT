@@ -8,6 +8,8 @@ import EmptyState from '../components/ui/EmptyState';
 import './Chamados.css';
 
 import { API_URL } from '../config';
+import { apiFetch } from '../api';
+import { useTermos } from '../termos';
 
 const API = API_URL;
 
@@ -29,6 +31,7 @@ const PRIORIDADE_MAP = {
 export default function Chamados() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const termos = useTermos();
   const [chamados, setChamados] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -52,7 +55,7 @@ export default function Chamados() {
     setLoading(true);
     const params = new URLSearchParams({ page, limit, ...filters });
     if (debouncedSearch) params.set('busca', debouncedSearch);
-    fetch(`${API}/chamados?${params}`)
+    apiFetch(`${API}/chamados?${params}`)
       .then((r) => r.json())
       .then((data) => {
         setChamados(data.chamados);
@@ -69,13 +72,13 @@ export default function Chamados() {
     setDeleteTarget(null);
     if (!id) return;
     try {
-      const r = await fetch(`${API}/chamados/${id}`, { method: 'DELETE' });
+      const r = await apiFetch(`${API}/chamados/${id}`, { method: 'DELETE' });
       if (!r.ok) throw new Error();
-      addToast(`Chamado #${id} excluído`, 'success');
+      addToast(`${termos.Chamado} #${id} excluído`, 'success');
       setLoading(true);
       const params = new URLSearchParams({ page, limit, ...filters });
       if (debouncedSearch) params.set('busca', debouncedSearch);
-      fetch(`${API}/chamados?${params}`)
+      apiFetch(`${API}/chamados?${params}`)
         .then((r) => r.json())
         .then((data) => {
           setChamados(data.chamados);
@@ -84,7 +87,7 @@ export default function Chamados() {
         })
         .catch(() => setLoading(false));
     } catch {
-      addToast('Erro ao excluir chamado', 'error');
+      addToast(`Erro ao excluir ${termos.chamado}`, 'error');
     }
   };
 
@@ -101,11 +104,11 @@ export default function Chamados() {
           ))}
         </div>
         <div>
-          <h2>Chamados</h2>
-          <span className="page-subtitle">{total} chamados encontrados</span>
+          <h2>{termos.Chamados}</h2>
+          <span className="page-subtitle">{total} {termos.chamados} encontrados</span>
         </div>
         <Link to="/chamados/novo" className="btn btn-primary">
-          <Plus size={18} /> Novo Chamado
+          <Plus size={18} /> {termos.novoChamado}
         </Link>
       </div>
 
@@ -145,9 +148,9 @@ export default function Chamados() {
         ) : chamados.length === 0 ? (
           <EmptyState
             icon={search.trim() ? '🔍' : '📋'}
-            title="Nenhum chamado encontrado"
-            description={search.trim() ? `Nada corresponde a "${search}".` : 'Ajuste os filtros ou crie um novo chamado.'}
-            action={<Link to="/chamados/novo" className="btn btn-primary"><Plus size={16} /> Novo Chamado</Link>}
+            title={`Nenhum ${termos.chamado} encontrado`}
+            description={search.trim() ? `Nada corresponde a "${search}".` : `Ajuste os filtros ou crie um novo ${termos.chamado}.`}
+            action={<Link to="/chamados/novo" className="btn btn-primary"><Plus size={16} /> {termos.novoChamado}</Link>}
           />
         ) : (
           <table className="table">
@@ -186,7 +189,7 @@ export default function Chamados() {
                   <td>
                     <div className="row-actions">
                       <Link to={`/chamados/${c.id}`} className="btn-icon btn-icon-edit" title="Ver detalhes" onClick={(e) => e.stopPropagation()}><Eye size={16} /></Link>
-                      <button className="btn-icon btn-icon-danger" title="Excluir chamado" onClick={(e) => { e.stopPropagation(); setDeleteTarget(c.id); }}><Trash2 size={16} /></button>
+                      <button className="btn-icon btn-icon-danger" title={`Excluir ${termos.chamado}`} onClick={(e) => { e.stopPropagation(); setDeleteTarget(c.id); }}><Trash2 size={16} /></button>
                     </div>
                   </td>
                 </tr>
@@ -210,8 +213,8 @@ export default function Chamados() {
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Excluir chamado"
-        message={`Tem certeza que deseja excluir o chamado #${deleteTarget}? Esta ação não pode ser desfeita.`}
+        title={`Excluir ${termos.chamado}`}
+        message={`Tem certeza que deseja excluir o ${termos.chamado} #${deleteTarget}? Esta ação não pode ser desfeita.`}
         onConfirm={confirmDelete}
         onCancel={() => setDeleteTarget(null)}
       />

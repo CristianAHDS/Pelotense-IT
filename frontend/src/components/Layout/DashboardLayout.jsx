@@ -13,13 +13,15 @@ import PageTransition from '../ui/PageTransition';
 import OfflineBanner from '../ui/OfflineBanner';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { apiFetch } from '../../api';
+import { useTermos } from '../../termos';
 import './DashboardLayout.css';
 
-const mainMenuItems = [
+const buildMainMenu = (t) => [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/kanban', icon: Columns, label: 'Kanban' },
-  { to: '/chamados', icon: Ticket, label: 'Chamados', badge: true },
-  { to: '/chamados/novo', icon: PlusCircle, label: 'Novo Chamado', cta: true },
+  { to: '/chamados', icon: Ticket, label: t.Chamados, badge: true },
+  { to: '/chamados/novo', icon: PlusCircle, label: t.novoChamado, cta: true },
   { to: '/relatorios', icon: BarChart3, label: 'Relatórios' },
   { to: '/gamificacao', icon: Trophy, label: 'Gamificação' },
   { to: '/ponto', icon: Clock, label: 'Ponto' },
@@ -35,8 +37,6 @@ const adminMenuItems = [
 const breadcrumbMap = {
   '/': 'Dashboard',
   '/kanban': 'Kanban',
-  '/chamados': 'Chamados',
-  '/chamados/novo': 'Novo Chamado',
   '/relatorios': 'Relatórios',
   '/gamificacao': 'Gamificação',
   '/ponto': 'Ponto',
@@ -56,17 +56,20 @@ export default function DashboardLayout() {
   const location = useLocation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const termos = useTermos();
+  const mainMenuItems = buildMainMenu(termos);
   const [abertosCount, setAbertosCount] = useState(0);
   const [atendimentos, setAtendimentos] = useState([]);
   const atendimentosAbertos = atendimentos.length;
 
-  const isAdminRoute = adminMenuItems.some((i) => location.pathname === i.to);
+  const isAdmin = user?.tipo === 'TI';
+  const isAdminRoute = isAdmin && adminMenuItems.some((i) => location.pathname === i.to);
   useEffect(() => {
     if (isAdminRoute) setAdminOpen(true);
   }, [isAdminRoute]);
 
   useEffect(() => {
-    fetch('/api/chamados/stats')
+    apiFetch('/api/chamados/stats')
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (!data) return;
@@ -93,7 +96,12 @@ export default function DashboardLayout() {
   const unread = notifications.length;
 
   const isDetailPage = location.pathname.startsWith('/chamados/') && location.pathname !== '/chamados' && location.pathname !== '/chamados/novo';
-  const currentLabel = breadcrumbMap[location.pathname] || (isDetailPage ? `Chamado #${location.pathname.split('/').pop()}` : '');
+  const currentLabel = (() => {
+    if (location.pathname === '/chamados') return termos.Chamados;
+    if (location.pathname === '/chamados/novo') return termos.novoChamado;
+    if (isDetailPage) return `${termos.Chamado} #${location.pathname.split('/').pop()}`;
+    return breadcrumbMap[location.pathname] || '';
+  })();
 
   return (
     <div className={`dashboard-layout ${collapsed ? 'sidebar-collapsed' : ''}`}>
@@ -106,7 +114,7 @@ export default function DashboardLayout() {
           <div className="brand-icon">
             <img src="/pelotense_it_icone_app_sem_fundo_monochromatico.png" alt="Pelotense IT" className="brand-logo" />
           </div>
-          <div className="brand-text"><h1>Pelotense IT</h1><span>Gestão de Chamados</span></div>
+          <div className="brand-text"><h1>Pelotense IT</h1><span>{termos.gestaoDe}</span></div>
         </div>
 
         <div className="sidebar-section-label">Menu Principal</div>
@@ -128,32 +136,36 @@ export default function DashboardLayout() {
         </nav>
 
         <div className="sidebar-divider" />
-        <button
-          className={`sidebar-admin-toggle ${adminOpen ? 'open' : ''}`}
-          onClick={() => setAdminOpen(!adminOpen)}
-          title={collapsed ? 'Administração' : undefined}
-        >
-          <Settings size={16} className="admin-toggle-icon" />
-          <span className="admin-toggle-label">Administração</span>
-          <ChevronDown size={14} className="admin-toggle-chevron" />
-        </button>
-        <div className={`sidebar-admin-menu ${adminOpen ? 'open' : ''}`}>
-          <nav className="sidebar-nav sidebar-admin-nav">
-            {adminMenuItems.map(({ to, icon: Icon, label }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end
-                onClick={closeSidebar}
-                className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-                title={collapsed ? label : undefined}
-              >
-                <Icon size={18} />
-                <span className="link-label">{label}</span>
-              </NavLink>
-            ))}
-          </nav>
-        </div>
+        {isAdmin && (
+          <>
+            <button
+              className={`sidebar-admin-toggle ${adminOpen ? 'open' : ''}`}
+              onClick={() => setAdminOpen(!adminOpen)}
+              title={collapsed ? 'Administração' : undefined}
+            >
+              <Settings size={16} className="admin-toggle-icon" />
+              <span className="admin-toggle-label">Administração</span>
+              <ChevronDown size={14} className="admin-toggle-chevron" />
+            </button>
+            <div className={`sidebar-admin-menu ${adminOpen ? 'open' : ''}`}>
+              <nav className="sidebar-nav sidebar-admin-nav">
+                {adminMenuItems.map(({ to, icon: Icon, label }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    end
+                    onClick={closeSidebar}
+                    className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                    title={collapsed ? label : undefined}
+                  >
+                    <Icon size={18} />
+                    <span className="link-label">{label}</span>
+                  </NavLink>
+                ))}
+              </nav>
+            </div>
+          </>
+        )}
 
         <div className="sidebar-actions">
           <button className="sidebar-collapse-btn" onClick={() => setCollapsed(!collapsed)} title={collapsed ? 'Expandir' : 'Recolher'}>
@@ -182,7 +194,7 @@ export default function DashboardLayout() {
         <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}><Menu size={22} /></button>
         <div className="mobile-brand"><img src="/pelotense_it_icone_app_sem_fundo_monochromatico.png" alt="Pelotense IT" className="mobile-brand-logo" /><span>Pelotense IT</span></div>
         <div className="mobile-header-actions">
-          {atendimentosAbertos > 0 && (
+          {isAdmin && atendimentosAbertos > 0 && (
             <NavLink to={atendimentos.length === 1 ? `/whatsapp/chat/${atendimentos[0].numero}` : '/whatsapp'} className="notif-btn whatsapp-alert-btn" title="Atendimento humano em andamento">
               <MessageCircle size={18} />
               <span className="whatsapp-alert-badge">{atendimentosAbertos}</span>
@@ -220,7 +232,7 @@ export default function DashboardLayout() {
             )}
           </div>
           <div className="top-bar-right">
-            {atendimentosAbertos > 0 && (
+            {isAdmin && atendimentosAbertos > 0 && (
               <NavLink to={atendimentos.length === 1 ? `/whatsapp/chat/${atendimentos[0].numero}` : '/whatsapp'} className="notif-btn whatsapp-alert-btn" title="Atendimento humano em andamento">
                 <MessageCircle size={16} />
                 <span className="whatsapp-alert-badge">{atendimentosAbertos}</span>

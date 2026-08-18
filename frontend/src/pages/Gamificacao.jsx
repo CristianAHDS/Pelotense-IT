@@ -7,6 +7,8 @@ import { useAuth } from '../contexts/AuthContext';
 import './Gamificacao.css';
 
 import { API_URL } from '../config';
+import { apiFetch } from '../api';
+import { useTermos } from '../termos';
 
 const API = API_URL;
 
@@ -26,6 +28,11 @@ const CAT_COLORS = {
   hardware: '#6366f1', software: '#22d3ee', rede: '#10b981', impressora: '#f59e0b',
   email: '#8b5cf6', acesso: '#f43f5e', geral: '#94a3b8', evento: '#ec4899', censura: '#fb7185',
   gravacao: '#e879f9', edicao: '#a78bfa', postagem: '#38bdf8',
+};
+
+const CATEGORIAS_POR_TIPO = {
+  TI: ['hardware', 'software', 'rede', 'impressora', 'email', 'acesso', 'geral', 'evento', 'censura'],
+  audiovisual: ['gravacao', 'edicao', 'postagem'],
 };
 
 const BADGE_CATEGORIES = [
@@ -68,6 +75,7 @@ function ProgressRing({ value = 0, size = 104, stroke = 9, children }) {
 
 export default function Gamificacao() {
   const { user } = useAuth();
+  const termos = useTermos();
   const USUARIO = user?.nome || 'Cristian Raffi Cunha';
   const [dados, setDados] = useState(null);
   const [ranking, setRanking] = useState([]);
@@ -78,8 +86,8 @@ export default function Gamificacao() {
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      fetch(`${API}/gamificacao/usuario/${encodeURIComponent(USUARIO)}`).then(r => r.json()),
-      fetch(`${API}/gamificacao/ranking`).then(r => r.json()),
+      apiFetch(`${API}/gamificacao/usuario/${encodeURIComponent(USUARIO)}`).then(r => r.json()),
+      apiFetch(`${API}/gamificacao/ranking`).then(r => r.json()),
     ])
       .then(([userData, rankData]) => {
         setDados(userData);
@@ -87,7 +95,7 @@ export default function Gamificacao() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [USUARIO]);
 
   if (loading) return <div className="loading">Carregando...</div>;
   if (!dados) return <div className="loading">Erro ao carregar dados.</div>;
@@ -109,6 +117,8 @@ export default function Gamificacao() {
     : 'Resolvidos no total';
 
   const meRankIndex = ranking.findIndex(t => t.tecnico === USUARIO);
+
+  const catsVisiveis = CATEGORIAS_POR_TIPO[user?.tipo] || CATEGORIAS_POR_TIPO.TI;
 
   const stats = [
     { icon: CheckCircle2, value: resolvidosDisplay, label: resolvidosLabel, color: '#6366f1', bg: 'rgba(99,102,241,0.12)' },
@@ -184,7 +194,7 @@ export default function Gamificacao() {
               <div className="progress-bar-fill" style={{ width: `${dados.progressoNivel}%` }} />
             </div>
             {dados.pontosProximoNivel > 0 ? (
-              <p className="progress-hint">Faltam <strong>{dados.pontosProximoNivel}</strong> chamados resolvidos para alcançar <strong>{dados.proximoNivel}</strong>.</p>
+              <p className="progress-hint">Faltam <strong>{dados.pontosProximoNivel}</strong> {termos.chamados} resolvidos para alcançar <strong>{dados.proximoNivel}</strong>.</p>
             ) : (
               <p className="progress-hint">Você atingiu o nível máximo. <strong>Excelente trabalho!</strong></p>
             )}
@@ -196,7 +206,7 @@ export default function Gamificacao() {
               <h2><Layers size={18} /> Desempenho por categoria</h2>
             </div>
             <div className="cat-progress-list">
-              {Object.entries(CAT_LABELS).map(([cat, label]) => {
+              {Object.entries(CAT_LABELS).filter(([cat]) => catsVisiveis.includes(cat)).map(([cat, label]) => {
                 const totalCat = (dados.porCategoria && dados.porCategoria[cat]) || 0;
                 const badgesCat = allBadges.filter(b => b.categoria === 'categoria' && b.criterio && JSON.parse(b.criterio).categoria === cat);
                 const earned = badgesCat.filter(b => b.conquistado).length;
@@ -257,7 +267,7 @@ export default function Gamificacao() {
                   </div>
                   <div className="badge-card-info">
                     <span className="badge-card-name">{badge.nome}</span>
-                    <span className="badge-card-desc">{badge.descricao}</span>
+                    <span className="badge-card-desc">{termos.aplicar(badge.descricao)}</span>
                   </div>
                 </div>
               ))}
@@ -275,8 +285,8 @@ export default function Gamificacao() {
                 <div className="next-badge-icon">{dados.proximoBadge.icone}</div>
                 <div className="next-badge-info">
                   <span className="next-badge-name">{dados.proximoBadge.nome}</span>
-                  <span className="next-badge-desc">{dados.proximoBadge.descricao}</span>
-                  <span className="next-badge-faltam">Faltam {dados.proximoBadge.faltam} chamado{dados.proximoBadge.faltam > 1 ? 's' : ''}</span>
+                  <span className="next-badge-desc">{termos.aplicar(dados.proximoBadge.descricao)}</span>
+                  <span className="next-badge-faltam">Faltam {dados.proximoBadge.faltam} {termos.chamado}{dados.proximoBadge.faltam > 1 ? 's' : ''}</span>
                 </div>
               </div>
             </div>

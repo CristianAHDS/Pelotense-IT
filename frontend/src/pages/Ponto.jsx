@@ -8,6 +8,7 @@ import { useToast } from '../contexts/ToastContext';
 import './Ponto.css';
 
 import { API_URL } from '../config';
+import { apiFetch } from '../api';
 
 const API = API_URL;
 
@@ -80,8 +81,8 @@ export default function Ponto() {
   const load = async () => {
     try {
       const [statusRes, mesRes] = await Promise.all([
-        fetch(`${API}/ponto/status?usuario=${encodeURIComponent(usuario)}`),
-        fetch(`${API}/ponto/mes?usuario=${encodeURIComponent(usuario)}&data=${mes}`),
+        apiFetch(`${API}/ponto/status?usuario=${encodeURIComponent(usuario)}`),
+        apiFetch(`${API}/ponto/mes?usuario=${encodeURIComponent(usuario)}&data=${mes}`),
       ]);
       const statusData = await statusRes.json();
       const mesData = await mesRes.json();
@@ -103,7 +104,7 @@ export default function Ponto() {
   const acao = async (endpoint, mensagem) => {
     setSaving(endpoint);
     try {
-      const r = await fetch(`${API}/ponto/${endpoint}`, {
+      const r = await apiFetch(`${API}/ponto/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ usuario }),

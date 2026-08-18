@@ -8,6 +8,8 @@ import { SkeletonCard, SkeletonPanel } from '../components/ui/Skeleton';
 import './Dashboard.css';
 
 import { API_URL } from '../config';
+import { apiFetch } from '../api';
+import { useTermos, getTermos } from '../termos';
 
 const API = API_URL;
 
@@ -178,7 +180,7 @@ function HeatmapCalendar({ data = [] }) {
         <div className='heatmap-cells' style={{ gridTemplateColumns: 'repeat(' + weeks + ', 1fr)' }}>
           {cells.map((cell, i) => (
             <div key={cell.key} className={'heatmap-cell level-' + cell.level}
-              title={cell.key + ': ' + cell.count + ' chamados'} />
+              title={cell.key + ': ' + cell.count + ' ' + getTermos().chamados} />
           ))}
         </div>
       </div>
@@ -193,6 +195,7 @@ function HeatmapCalendar({ data = [] }) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const termos = useTermos();
   const [stats, setStats] = useState(null);
   const [recentes, setRecentes] = useState([]);
   const [feed, setFeed] = useState([]);
@@ -203,7 +206,7 @@ export default function Dashboard() {
   const [turnosData, setTurnosData] = useState([]);
   const greeting = getGreeting();
   const { socket } = useSocket();
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const { hide: hideSplash } = useSplash();
 
   const todayStr = new Date().toLocaleDateString('sv');
@@ -219,8 +222,8 @@ export default function Dashboard() {
       emoji: weather ? weatherInfo.emoji : '🌤️',
       title: greeting + ', ' + (user?.nome || 'Cristian'),
       text: weather
-        ? (weatherInfo.label + ', ' + weather.temp + '°C — Confira o resumo dos chamados')
-        : 'Carregando previsão... — Confira o resumo dos chamados',
+        ? (weatherInfo.label + ', ' + weather.temp + '°C — Confira o resumo dos ' + termos.chamados)
+        : 'Carregando previsão... — Confira o resumo dos ' + termos.chamados,
       loading: !weather,
     },
     {
@@ -230,8 +233,8 @@ export default function Dashboard() {
     {
       title: 'Lembrete',
       text: stats?.porStatus?.find((s) => s.status === 'pendente')?.count
-        ? stats.porStatus.find((s) => s.status === 'pendente').count + ' chamados pendentes aguardando ação'
-        : 'Nenhum chamado pendente no momento',
+        ? stats.porStatus.find((s) => s.status === 'pendente').count + ' ' + termos.chamados + ' pendentes aguardando ação'
+        : 'Nenhum ' + termos.chamado + ' pendente no momento',
     },
     {
       title: 'Dica',
@@ -246,9 +249,8 @@ export default function Dashboard() {
 
   const loadData = () => {
     const hoje = new Date().toISOString().slice(0, 10);
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    const safeFetch = (url) => fetch(url, { headers }).then(r => r.ok ? r.json() : Promise.reject(r.status)).catch(() => null);
+    const safeFetch = (url) => apiFetch(url).then(r => r.ok ? r.json() : Promise.reject(r.status)).catch(() => null);
 
     Promise.all([
       safeFetch(API + '/chamados/stats'),
@@ -328,16 +330,16 @@ export default function Dashboard() {
   const resolvedCount = stats?.porStatus?.find((s) => s.status === 'resolvido')?.count || 0;
 
   const cards = [
-    { label: 'Total de Chamados', value: totalChamados, icon: Ticket, color: '#6366f1', filter: '', trend: stats?.trend },
+    { label: 'Total de ' + termos.Chamados, value: totalChamados, icon: Ticket, color: '#6366f1', filter: '', trend: stats?.trend },
     { label: 'Em Aberto', value: openCount, icon: AlertTriangle, color: '#f59e0b', filter: 'aberto', pulse: openCount > 0 },
     { label: 'Em Andamento', value: progressCount, icon: Clock, color: '#38bdf8', filter: 'em_andamento' },
     { label: 'Resolvidos', value: resolvedCount, icon: CheckCircle, color: '#10b981', filter: 'resolvido', trend: stats?.resolvedTrend },
   ];
 
   const quickActions = [
-    { label: 'Novo Chamado', icon: Plus, to: '/chamados/novo', color: '#6366f1', description: 'Registrar solicitação', badge: hojeCriados > 0 ? hojeCriados : null },
+    { label: termos.novoChamado, icon: Plus, to: '/chamados/novo', color: '#6366f1', description: 'Registrar solicitação', badge: hojeCriados > 0 ? hojeCriados : null },
     { label: 'Quadro Kanban', icon: Columns, to: '/kanban', color: '#f59e0b', description: 'Gerenciar fluxo' },
-    { label: 'Ver Chamados', icon: List, to: '/chamados', color: '#10b981', description: 'Lista completa' },
+    { label: 'Ver ' + termos.Chamados, icon: List, to: '/chamados', color: '#10b981', description: 'Lista completa' },
   ];
 
   const donutSegments = (stats?.porStatus || [])
@@ -471,16 +473,16 @@ export default function Dashboard() {
 
       <div className='home-grid'>
         {loading ? (
-          <div className='home-panel home-panel-recentes'><div className='panel-header'><h3>Chamados Recentes</h3></div><SkeletonPanel /></div>
+          <div className='home-panel home-panel-recentes'><div className='panel-header'><h3>{termos.Chamados} Recentes</h3></div><SkeletonPanel /></div>
         ) : (
           <div className='home-panel home-panel-recentes anim-fadeInUp'>
             <div className='panel-header'>
-              <h3>Chamados Recentes</h3>
+              <h3>{termos.Chamados} Recentes</h3>
               <Link to='/chamados' className='panel-link'>Ver todos <ArrowRight size={14} /></Link>
             </div>
             <div className='recentes-list'>
               {recentes.length === 0 ? (
-                <div className='recentes-empty'>📋 Nenhum chamado registrado ainda.</div>
+                <div className='recentes-empty'>📋 {`Nenhum ${termos.chamado} registrado ainda.`}</div>
               ) : (
                 recentes.map((c) => (
                   <Link key={c.id} to={'/chamados/' + c.id} className='recent-item'>
@@ -510,7 +512,7 @@ export default function Dashboard() {
           <div className='home-panel home-panel-donut'><SkeletonPanel /></div>
         ) : (
           <div className='home-panel home-panel-donut anim-fadeInUp'>
-            <div className='panel-header'><h3>Chamados por Categoria</h3></div>
+            <div className='panel-header'><h3>{termos.Chamados} por Categoria</h3></div>
             <div className='donut-content'>
               {stats?.porCategoria && (() => {
                 const catColors = {
@@ -553,7 +555,7 @@ export default function Dashboard() {
                       </svg>
                       <div className='donut-center'>
                         <span className='donut-total'>{total}</span>
-                        <span className='donut-label'>chamados</span>
+                        <span className='donut-label'>{termos.chamados}</span>
                       </div>
                     </div>
                     <div className='donut-legend'>
@@ -578,7 +580,7 @@ export default function Dashboard() {
         ) : (
           <div className='home-panel home-panel-donut anim-fadeInUp'>
             <div className='panel-header'>
-              <h3>Chamados por Status</h3>
+              <h3>{termos.Chamados} por Status</h3>
               <span className='panel-badge'>{totalChamados} total</span>
             </div>
             <div className='donut-content'>
@@ -680,7 +682,7 @@ export default function Dashboard() {
           <div className='home-panel'><SkeletonPanel /></div>
         ) : (
           <div className='home-panel anim-fadeInUp'>
-            <div className='panel-header'><h3>Chamados por Turno (Hoje)</h3></div>
+            <div className='panel-header'><h3>{termos.Chamados} por Turno (Hoje)</h3></div>
             <div className='bar-list'>
               {turnosData.map((t) => {
                 const maxTurno = Math.max(...turnosData.map((d) => d.count), 1);
@@ -711,7 +713,7 @@ export default function Dashboard() {
           <div className='home-panel'><SkeletonPanel /></div>
         ) : (
           <div className='home-panel anim-fadeInUp'>
-            <div className='panel-header'><h3>Chamados por Prioridade</h3></div>
+            <div className='panel-header'><h3>{termos.Chamados} por Prioridade</h3></div>
             {stats?.porPrioridade && (
               <div className='bar-list'>
                 {stats.porPrioridade.map((p) => {

@@ -1,14 +1,22 @@
 const express = require('express');
 const router = express.Router();
 const { query, queryOne, run, getLastID } = require('../database');
+const { getUsuarioLogado } = require('../middleware/auth');
+
+function filtraTarefas(req, tarefas) {
+  const nome = getUsuarioLogado(req).nome || '';
+  if (!nome) return tarefas;
+  return tarefas.filter((t) => t.responsavel === nome);
+}
 
 router.get('/', (req, res) => {
   try {
     const projetos = query('SELECT * FROM projetos ORDER BY criado_em ASC');
-    const result = projetos.map((p) => ({
-      ...p,
-      tarefas: query('SELECT * FROM projeto_tarefas WHERE projeto_id = ? ORDER BY inicio ASC', [p.id]),
-    }));
+    const result = [];
+    for (const p of projetos) {
+      const tarefas = filtraTarefas(req, query('SELECT * FROM projeto_tarefas WHERE projeto_id = ? ORDER BY inicio ASC', [p.id]));
+      if (tarefas.length > 0) result.push({ ...p, tarefas });
+    }
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -19,7 +27,7 @@ router.get('/:id', (req, res) => {
   try {
     const projeto = queryOne('SELECT * FROM projetos WHERE id = ?', [parseInt(req.params.id)]);
     if (!projeto) return res.status(404).json({ error: 'Projeto não encontrado' });
-    projeto.tarefas = query('SELECT * FROM projeto_tarefas WHERE projeto_id = ? ORDER BY inicio ASC', [projeto.id]);
+    projeto.tarefas = filtraTarefas(req, query('SELECT * FROM projeto_tarefas WHERE projeto_id = ? ORDER BY inicio ASC', [projeto.id]));
     res.json(projeto);
   } catch (err) {
     res.status(500).json({ error: err.message });

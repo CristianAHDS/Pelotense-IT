@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { query, queryOne, run } = require('../database');
+const { getUsuarioLogado } = require('../middleware/auth');
 
 const NIVELES = [
   { min: 0, nome: 'Iniciante', medal: '🌱' },
@@ -46,6 +47,24 @@ function orderBadges(badges) {
   });
 }
 
+function getTipoUsuario(nome) {
+  if (!nome) return '';
+  const u = queryOne('SELECT tipo FROM usuarios WHERE nome = ?', [nome]);
+  if (u?.tipo) return u.tipo;
+  const t = queryOne('SELECT tipo FROM tecnicos WHERE nome = ?', [nome]);
+  return t?.tipo || '';
+}
+
+function condicaoTipoBadges(tipo) {
+  if (tipo === 'audiovisual') return "(tipo IS NULL OR tipo = 'audiovisual')";
+  return "(tipo IS NULL OR tipo = 'TI')";
+}
+
+function categoriasDoTipo(tipo) {
+  if (tipo === 'audiovisual') return ['gravacao', 'edicao', 'postagem'];
+  return ['hardware', 'software', 'rede', 'impressora', 'email', 'acesso', 'geral', 'evento', 'censura'];
+}
+
 function calcularStreak(diasAtivos, today) {
   if (!diasAtivos.length) return 0;
   const isWeekend = (d) => { const day = d.getDay(); return day === 0 || day === 6; };
@@ -73,8 +92,11 @@ function calcularStreak(diasAtivos, today) {
   return streak;
 }
 
-function verificarBadges(usuario) {
-  const badges = query('SELECT * FROM badges ORDER BY categoria, id');
+function verificarBadges(usuario, tipo) {
+  const tipoUsuario = tipo || getTipoUsuario(usuario);
+  const badges = query(
+    'SELECT * FROM badges WHERE ' + condicaoTipoBadges(tipoUsuario) + ' ORDER BY categoria, id'
+  );
   const conquistados = new Set(
     query('SELECT badge_id FROM usuario_badges WHERE usuario = ?', [usuario]).map(r => r.badge_id)
   );
@@ -120,7 +142,7 @@ function verificarBadges(usuario) {
 
   const streak = calcularStreak(diasAtivos, today);
 
-  const CATEGORIAS_TODAS = ['hardware', 'software', 'rede', 'impressora', 'email', 'acesso', 'geral', 'evento', 'censura'];
+  const CATEGORIAS_TODAS = categoriasDoTipo(tipoUsuario);
 
   for (const badge of badges) {
     if (conquistados.has(badge.id)) continue;
@@ -175,7 +197,10 @@ function verificarBadges(usuario) {
 
 router.get('/badges', (req, res) => {
   try {
-    const badges = orderBadges(query('SELECT * FROM badges'));
+    const tipo = req.query.tipo || '';
+    const badges = orderBadges(query(
+      'SELECT * FROM badges' + (tipo ? ' WHERE ' + condicaoTipoBadges(tipo) : '')
+    ));
     res.json(badges);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -185,10 +210,15 @@ router.get('/badges', (req, res) => {
 router.get('/usuario/:usuario', (req, res) => {
   try {
     const { usuario } = req.params;
+    const logado = getUsuarioLogado(req);
+    if (logado.nome && logado.nome !== usuario) {
+      return res.status(403).json({ error: 'Você não tem acesso aos dados deste usuário' });
+    }
+    const tipo = getTipoUsuario(usuario);
     const badges = query(
       `SELECT b.*, ub.conquistado_em FROM badges b
        INNER JOIN usuario_badges ub ON b.id = ub.badge_id
-       WHERE ub.usuario = ?
+       WHERE ub.usuario = ? AND ${condicaoTipoBadges(tipo)}
        ORDER BY ub.conquistado_em DESC`,
       [usuario]
     );
@@ -254,7 +284,7 @@ router.get('/usuario/:usuario', (req, res) => {
 
     const streak = calcularStreak(diasAtivos, today);
 
-    const allBadges = orderBadges(query('SELECT * FROM badges'));
+    const allBadges = orderBadges(query('SELECT * FROM badges WHERE ' + condicaoTipoBadges(tipo)));
     const conquistadosMap = {};
     badges.forEach(b => { conquistadosMap[b.id] = b; });
 
@@ -317,20 +347,28 @@ router.get('/usuario/:usuario', (req, res) => {
 
 router.get('/ranking', (req, res) => {
   try {
+    const logado = getUsuarioLogado(req);
+    const nome = logado.nome || '';
     const tecnicos = query(
       `SELECT tecnico,
         COUNT(*) as totalAtendidos,
         SUM(CASE WHEN status = 'resolvido' THEN 1 ELSE 0 END) as totalResolvidos,
         ROUND(AVG(CASE WHEN status = 'resolvido' AND resolvido_em IS NOT NULL
           THEN (julianday(resolvido_em) - julianday(criado_em)) * 24 ELSE NULL END), 1) as slaMedio
-       FROM chamados WHERE tecnico IS NOT NULL
+       FROM chamados ${nome ? 'WHERE tecnico = ?' : 'WHERE tecnico IS NOT NULL'}
        GROUP BY tecnico
-       ORDER BY totalResolvidos DESC`
+       ORDER BY totalResolvidos DESC`,
+      nome ? [nome] : []
     );
 
     const allBadgeCounts = {};
+    const tipo = getTipoUsuario(nome);
     query(
-      `SELECT usuario, COUNT(*) as c FROM usuario_badges GROUP BY usuario`
+      `SELECT ub.usuario, COUNT(*) as c FROM usuario_badges ub
+       INNER JOIN badges b ON b.id = ub.badge_id
+       ${nome ? 'WHERE ub.usuario = ? AND ' + condicaoTipoBadges(tipo) : ''}
+       GROUP BY ub.usuario`,
+      nome ? [nome] : []
     ).forEach(r => { allBadgeCounts[r.usuario] = r.c; });
 
     const ranking = tecnicos.map(t => {
@@ -356,7 +394,7 @@ router.get('/ranking', (req, res) => {
 router.post('/verificar/:usuario', (req, res) => {
   try {
     const { usuario } = req.params;
-    const resultado = verificarBadges(usuario);
+    const resultado = verificarBadges(usuario, getTipoUsuario(usuario));
     res.json(resultado);
   } catch (err) {
     res.status(500).json({ error: err.message });

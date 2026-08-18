@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { getQueue, enqueueLocal, removeLocal } from '../utils/offlineQueue';
+import { apiFetch } from '../api';
 
 const OfflineContext = createContext(null);
 
@@ -14,7 +15,7 @@ export function OfflineProvider({ children }) {
     const queue = getQueue();
     for (const item of queue) {
       try {
-        const res = await fetch(item.url, {
+        const res = await apiFetch(item.url, {
           method: item.method,
           headers: item.body ? { 'Content-Type': 'application/json' } : undefined,
           body: item.body ? JSON.stringify(item.body) : undefined,

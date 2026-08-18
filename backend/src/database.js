@@ -158,9 +158,12 @@ async function initDatabase() {
       icone TEXT NOT NULL,
       categoria TEXT NOT NULL,
       criterio TEXT NOT NULL,
+      tipo TEXT,
       criado_em TEXT DEFAULT (datetime('now','localtime'))
     )
   `);
+
+  try { db.run('ALTER TABLE badges ADD COLUMN tipo TEXT'); } catch (_) {}
 
   db.run(`
     CREATE TABLE IF NOT EXISTS usuario_badges (
@@ -228,6 +231,27 @@ async function initDatabase() {
   run("UPDATE badges SET nome = 'Diamante', icone = '💎', descricao = '250 chamados resolvidos', criterio = '{\"tipo\":\"total\",\"min\":250}' WHERE id = 'total_200'");
   run("INSERT OR IGNORE INTO badges (id, nome, descricao, icone, categoria, criterio) VALUES ('total_150', 'Rubi', '150 chamados resolvidos', '🔴', 'volume', '{\"tipo\":\"total\",\"min\":150}')");
   run("INSERT OR IGNORE INTO badges (id, nome, descricao, icone, categoria, criterio) VALUES ('total_400', 'Lenda', '400 chamados resolvidos', '👑', 'volume', '{\"tipo\":\"total\",\"min\":400}')");
+
+  // Badges específicos de audiovisual (categorias gravacao, edicao, postagem)
+  const badgesAudiovisual = [
+    ["gravacao_5", "Gravação Novice", "5 chamados de gravação resolvidos", "🎙️", "categoria", '{"tipo":"categoria","categoria":"gravacao","min":5}'],
+    ["gravacao_10", "Gravação Expert", "10 chamados de gravação resolvidos", "🎬", "categoria", '{"tipo":"categoria","categoria":"gravacao","min":10}'],
+    ["edicao_5", "Edição Novice", "5 chamados de edição resolvidos", "✂️", "categoria", '{"tipo":"categoria","categoria":"edicao","min":5}'],
+    ["edicao_10", "Edição Expert", "10 chamados de edição resolvidos", "🎞️", "categoria", '{"tipo":"categoria","categoria":"edicao","min":10}'],
+    ["postagem_5", "Postagem Novice", "5 chamados de postagem resolvidos", "📡", "categoria", '{"tipo":"categoria","categoria":"postagem","min":5}'],
+    ["postagem_10", "Postagem Expert", "10 chamados de postagem resolvidos", "📲", "categoria", '{"tipo":"categoria","categoria":"postagem","min":10}'],
+  ];
+  badgesAudiovisual.forEach(([id, nome, descricao, icone, categoria, criterio]) => {
+    run("INSERT OR IGNORE INTO badges (id, nome, descricao, icone, categoria, criterio, tipo) VALUES (?, ?, ?, ?, ?, ?, 'audiovisual')",
+      [id, nome, descricao, icone, categoria, criterio]);
+  });
+
+  // Badges de categoria são do tipo TI; genéricos (volume/velocidade/prioridade/especial) ficam com tipo NULL (todos)
+  run(`UPDATE badges SET tipo = 'TI' WHERE id IN (
+    'hardware_5','hardware_10','software_5','software_10','rede_5','rede_10',
+    'impressora_3','impressora_7','email_3','email_7','acesso_3','acesso_7',
+    'evento_3','censura_3'
+  )`);
 
   db.run(`
     CREATE TABLE IF NOT EXISTS config_email (

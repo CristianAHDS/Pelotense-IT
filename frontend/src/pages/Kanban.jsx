@@ -4,10 +4,13 @@ import {
   GripVertical, Plus, AlertTriangle, Clock, Pause, CheckCircle, X, ChevronDown, ChevronUp, Archive,
 } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
 import { SkeletonKanban } from '../components/ui/Skeleton';
 import './Kanban.css';
 
 import { API_URL } from '../config';
+import { apiFetch } from '../api';
+import { useTermos } from '../termos';
 
 const API = API_URL;
 
@@ -22,6 +25,8 @@ const hoje = () => new Date().toLocaleDateString('sv');
 
 export default function Kanban() {
   const navigate = useNavigate();
+  const termos = useTermos();
+  const { user } = useAuth();
   const [chamados, setChamados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [draggedId, setDraggedId] = useState(null);
@@ -36,7 +41,7 @@ export default function Kanban() {
   const { add: addToast } = useToast();
 
   const fetchChamados = () => {
-    fetch(`${API}/chamados?limit=500`)
+    apiFetch(`${API}/chamados?limit=500`)
       .then((r) => r.json())
       .then((data) => setChamados(data.chamados || []))
       .catch(() => {})
@@ -102,20 +107,20 @@ export default function Kanban() {
 
     if (colunaId === 'finalizado') {
       const novoTitulo = chamado.titulo.includes('(pendencia)') ? chamado.titulo : `${chamado.titulo} (pendencia)`;
-      await fetch(`${API}/chamados/${id}`, {
+      await apiFetch(`${API}/chamados/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'resolvido', titulo: novoTitulo }),
       });
-      addToast(`Chamado #${id} finalizado`, 'success');
+      addToast(`${termos.Chamado} #${id} finalizado`, 'success');
     } else {
       const tituloLimpo = chamado.titulo.replace(/\s*\(pendencia\)\s*$/, '');
-      await fetch(`${API}/chamados/${id}`, {
+      await apiFetch(`${API}/chamados/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: colunaId, titulo: tituloLimpo }),
       });
-      addToast(`Chamado #${id} movido`, 'info');
+      addToast(`${termos.Chamado} #${id} movido`, 'info');
     }
 
     setDraggedId(null);
@@ -124,7 +129,7 @@ export default function Kanban() {
 
   const handleCreateCard = async (colunaId) => {
     if (!novoCard.titulo.trim() || !novoCard.solicitante.trim()) return;
-    await fetch(`${API}/chamados`, {
+    await apiFetch(`${API}/chamados`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -133,6 +138,7 @@ export default function Kanban() {
         prioridade: novoCard.prioridade,
         solicitante: novoCard.solicitante,
         categoria: 'geral',
+        tecnico: user?.nome || null,
       }),
     });
     addToast('Card criado com sucesso!', 'success');
@@ -237,7 +243,7 @@ export default function Kanban() {
           <span className="page-subtitle">Arraste cards ou crie novos diretamente nas colunas</span>
         </div>
         <div className="kanban-header-right">
-          <div className="kanban-total-badge">{chamados.length} chamados</div>
+          <div className="kanban-total-badge">{chamados.length} {termos.chamados}</div>
         </div>
       </div>
 
@@ -272,7 +278,7 @@ export default function Kanban() {
                   <>
                     {creating === coluna.id ? (
                       <div className="card-create-form">
-                        <input autoFocus placeholder="Título do chamado..." value={novoCard.titulo}
+                        <input autoFocus placeholder={`Título do ${termos.chamado}...`} value={novoCard.titulo}
                           onChange={(e) => setNovoCard({ ...novoCard, titulo: e.target.value })}
                           onKeyDown={(e) => { if (e.key === 'Enter') handleCreateCard(coluna.id); if (e.key === 'Escape') { setCreating(null); setNovoCard({ titulo: '', solicitante: '', prioridade: 'media' }); } }} />
                         <input placeholder="Solicitante..." value={novoCard.solicitante}
@@ -325,7 +331,7 @@ export default function Kanban() {
                 ))}
 
                 {!isFinalizado && cards.length === 0 && creating !== coluna.id && (
-                  <div className="coluna-empty"><p>Nenhum chamado</p></div>
+                  <div className="coluna-empty"><p>{`Nenhum ${termos.chamado}`}</p></div>
                 )}
               </div>
             </div>
@@ -360,14 +366,14 @@ export default function Kanban() {
           {logOpen && (
             <div className="kanban-log-sections">
               {getNestedArquivados().length === 0 && (
-                <p className="text-muted">Nenhum chamado finalizado neste período.</p>
+                <p className="text-muted">{`Nenhum ${termos.chamado} finalizado neste período.`}</p>
               )}
               {getNestedArquivados().map(({ mesKey, semanas }) => (
                 <div key={mesKey} className="kanban-log-month">
                   <div className="kanban-log-month-header">
                     <span className="log-month-label">{formatMesLabel(mesKey)}</span>
                     <span className="log-day-count">
-                      {semanas.reduce((acc, s) => acc + s.dias.reduce((a, d) => a + d.items.length, 0), 0)} chamados
+                      {semanas.reduce((acc, s) => acc + s.dias.reduce((a, d) => a + d.items.length, 0), 0)} {termos.chamados}
                     </span>
                   </div>
                   {semanas.map(({ sem, dias }) => (
@@ -375,7 +381,7 @@ export default function Kanban() {
                       <div className="kanban-log-week-header">
                         <span className="log-week-label">{semanaLabel(sem, mesKey)}</span>
                         <span className="log-day-count">
-                          {dias.reduce((a, d) => a + d.items.length, 0)} chamado{dias.reduce((a, d) => a + d.items.length, 0) > 1 ? 's' : ''}
+                          {dias.reduce((a, d) => a + d.items.length, 0)} {termos.chamado}{dias.reduce((a, d) => a + d.items.length, 0) > 1 ? 's' : ''}
                         </span>
                       </div>
                       {dias.map(({ diaKey, items }) => {
@@ -385,7 +391,7 @@ export default function Kanban() {
                           <div key={diaKey} className="kanban-log-day">
                             <div className="kanban-log-day-header">
                               <span className="log-day-label">{label}</span>
-                              <span className="log-day-count">{items.length} chamado{items.length > 1 ? 's' : ''}</span>
+                              <span className="log-day-count">{items.length} {termos.chamado}{items.length > 1 ? 's' : ''}</span>
                             </div>
                             <div className="kanban-log-grid">
                               {items.map((c) => (

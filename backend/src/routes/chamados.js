@@ -5,6 +5,7 @@ const fs = require('fs');
 const multer = require('multer');
 const { query, queryOne, run, getLastID } = require('../database');
 const { verificarBadges } = require('./gamificacao');
+const { condicaoChamados, getUsuarioLogado } = require('../middleware/auth');
 
 const UPLOADS_DIR = path.join(__dirname, '..', '..', 'uploads');
 
@@ -30,11 +31,21 @@ const upload = multer({
   },
 });
 
+function podeVerChamado(req, id) {
+  const vis = condicaoChamados(req);
+  if (!vis.sql) return true;
+  const row = queryOne(`SELECT COUNT(*) as c FROM chamados WHERE id = ? AND ${vis.sql}`, [id, ...vis.params]);
+  return !!row?.c;
+}
+
 router.get('/', (req, res) => {
   try {
     const { status, prioridade, categoria, page = 1, limit = 20, busca } = req.query;
     const conditions = [];
     const params = [];
+
+    const vis = condicaoChamados(req);
+    if (vis.sql) { conditions.push(vis.sql); params.push(...vis.params); }
 
     if (status) { conditions.push('status = ?'); params.push(status); }
     if (prioridade) { conditions.push('prioridade = ?'); params.push(prioridade); }
@@ -65,6 +76,9 @@ router.get('/stats', (req, res) => {
     const { inicio, fim } = req.query;
     const conditions = [];
     const params = [];
+
+    const vis = condicaoChamados(req);
+    if (vis.sql) { conditions.push(vis.sql); params.push(...vis.params); }
 
     if (inicio) {
       conditions.push("criado_em >= ? || ' 00:00:00'");
@@ -111,13 +125,14 @@ router.get('/stats', (req, res) => {
 
     let trend = 0;
     try {
+      const visTrend = vis.sql ? ` AND ${vis.sql}` : '';
       const anterior = queryOne(
-        `SELECT COUNT(*) as count FROM chamados WHERE criado_em >= ? AND criado_em < ?`,
-        [quatorzeDiasAtras, seteDiasAtras]
+        `SELECT COUNT(*) as count FROM chamados WHERE criado_em >= ? AND criado_em < ?${visTrend}`,
+        [quatorzeDiasAtras, seteDiasAtras, ...vis.params]
       );
       const atual = queryOne(
-        `SELECT COUNT(*) as count FROM chamados WHERE criado_em >= ? AND criado_em <= ?`,
-        [seteDiasAtras, hoje]
+        `SELECT COUNT(*) as count FROM chamados WHERE criado_em >= ? AND criado_em <= ?${visTrend}`,
+        [seteDiasAtras, hoje, ...vis.params]
       );
       if (anterior?.count > 0) {
         trend = Math.round(((atual?.count || 0) - anterior.count) / anterior.count * 100);
@@ -126,13 +141,14 @@ router.get('/stats', (req, res) => {
 
     let resolvedTrend = 0;
     try {
+      const visRes = vis.sql ? ` AND ${vis.sql}` : '';
       const antRes = queryOne(
-        `SELECT COUNT(*) as count FROM chamados WHERE resolvido_em >= ? AND resolvido_em < ?`,
-        [quatorzeDiasAtras, seteDiasAtras]
+        `SELECT COUNT(*) as count FROM chamados WHERE resolvido_em >= ? AND resolvido_em < ?${visRes}`,
+        [quatorzeDiasAtras, seteDiasAtras, ...vis.params]
       );
       const atRes = queryOne(
-        `SELECT COUNT(*) as count FROM chamados WHERE resolvido_em >= ? AND resolvido_em <= ?`,
-        [seteDiasAtras, hoje]
+        `SELECT COUNT(*) as count FROM chamados WHERE resolvido_em >= ? AND resolvido_em <= ?${visRes}`,
+        [seteDiasAtras, hoje, ...vis.params]
       );
       if (antRes?.count > 0) {
         resolvedTrend = Math.round(((atRes?.count || 0) - antRes.count) / antRes.count * 100);
@@ -156,12 +172,14 @@ router.get('/stats', (req, res) => {
 router.get('/feed', (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 20;
+    const vis = condicaoChamados(req);
     const feed = query(
       `SELECT h.*, c.titulo as chamado_titulo, c.status as chamado_status, c.prioridade as chamado_prioridade
        FROM historico h
        JOIN chamados c ON h.chamado_id = c.id
+       ${vis.sql ? `WHERE ${vis.sql}` : ''}
        ORDER BY h.criado_em DESC LIMIT ?`,
-      [limit]
+      [...vis.params, limit]
     );
     res.json(feed);
   } catch (err) {
@@ -171,18 +189,23 @@ router.get('/feed', (req, res) => {
 
 router.get('/emergencia', (req, res) => {
   try {
+    const vis = condicaoChamados(req);
+    const visSql = vis.sql ? ` AND ${vis.sql}` : '';
     const criticos = query(
-      `SELECT * FROM chamados WHERE status = 'aberto' AND prioridade = 'critica'
-       ORDER BY criado_em ASC LIMIT 10`
+      `SELECT * FROM chamados WHERE status = 'aberto' AND prioridade = 'critica'${visSql}
+       ORDER BY criado_em ASC LIMIT 10`,
+      vis.params
     );
     const parados = query(
-      `SELECT * FROM chamados WHERE status = 'pendente'
-       ORDER BY atualizado_em ASC LIMIT 10`
+      `SELECT * FROM chamados WHERE status = 'pendente'${visSql}
+       ORDER BY atualizado_em ASC LIMIT 10`,
+      vis.params
     );
     const antigos = query(
       `SELECT * FROM chamados WHERE status IN ('aberto', 'em_andamento')
-       AND julianday('now') - julianday(criado_em) > 2
-       ORDER BY criado_em ASC LIMIT 10`
+       AND julianday('now') - julianday(criado_em) > 2${visSql}
+       ORDER BY criado_em ASC LIMIT 10`,
+      vis.params
     );
     res.json({ criticos, parados, antigos });
   } catch (err) {
@@ -192,37 +215,39 @@ router.get('/emergencia', (req, res) => {
 
 router.get('/:id', (req, res) => {
   try {
-    const chamado = queryOne('SELECT * FROM chamados WHERE id = ?', [parseInt(req.params.id)]);
+    const id = parseInt(req.params.id);
+    const chamado = queryOne('SELECT * FROM chamados WHERE id = ?', [id]);
     if (!chamado) return res.status(404).json({ error: 'Chamado não encontrado' });
+    if (!podeVerChamado(req, id)) return res.status(403).json({ error: 'Você não tem acesso a este chamado' });
 
     const comentarios = query(
       'SELECT * FROM comentarios WHERE chamado_id = ? ORDER BY criado_em ASC',
-      [parseInt(req.params.id)]
+      [id]
     );
 
     const anexos = query(
       'SELECT * FROM anexos WHERE chamado_id = ? ORDER BY criado_em ASC',
-      [parseInt(req.params.id)]
+      [id]
     );
 
     const tags = query(
       `SELECT t.* FROM tags t INNER JOIN chamado_tags ct ON t.id = ct.tag_id WHERE ct.chamado_id = ?`,
-      [parseInt(req.params.id)]
+      [id]
     );
 
     let historico = [];
     try {
-      historico = query('SELECT * FROM historico WHERE chamado_id = ? ORDER BY criado_em DESC', [parseInt(req.params.id)]);
+      historico = query('SELECT * FROM historico WHERE chamado_id = ? ORDER BY criado_em DESC', [id]);
     } catch (_) {}
 
     let checklist = [];
     try {
-      checklist = query('SELECT * FROM checklist WHERE chamado_id = ? ORDER BY criado_em ASC', [parseInt(req.params.id)]);
+      checklist = query('SELECT * FROM checklist WHERE chamado_id = ? ORDER BY criado_em ASC', [id]);
     } catch (_) {}
 
     let alertas = [];
     try {
-      alertas = query('SELECT * FROM alertas WHERE chamado_id = ? ORDER BY data_hora ASC', [parseInt(req.params.id)]);
+      alertas = query('SELECT * FROM alertas WHERE chamado_id = ? ORDER BY data_hora ASC', [id]);
     } catch (_) {}
 
     res.json({ ...chamado, comentarios, anexos, tags, historico, checklist, alertas });
@@ -233,16 +258,19 @@ router.get('/:id', (req, res) => {
 
 router.post('/', (req, res) => {
   try {
-    const { titulo, descricao, prioridade, categoria, solicitante, tags, alerta } = req.body;
+    const { titulo, descricao, prioridade, categoria, solicitante, tecnico, tags, alerta } = req.body;
     if (!titulo || !descricao || !solicitante) {
       return res.status(400).json({ error: 'Título, descrição e solicitante são obrigatórios' });
     }
 
+    const logado = getUsuarioLogado(req);
+    const tecnicoFinal = tecnico || (logado && logado.nome) || null;
+
     const novoId = (queryOne('SELECT MAX(id) as m FROM chamados')?.m || 0) + 1;
 
     run(
-      'INSERT INTO chamados (id, titulo, descricao, prioridade, categoria, solicitante) VALUES (?, ?, ?, ?, ?, ?)',
-      [novoId, titulo, descricao, prioridade || 'media', categoria || 'geral', solicitante]
+      'INSERT INTO chamados (id, titulo, descricao, prioridade, categoria, solicitante, tecnico) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [novoId, titulo, descricao, prioridade || 'media', categoria || 'geral', solicitante, tecnicoFinal]
     );
 
     if (alerta && alerta.data_hora) {
@@ -282,6 +310,7 @@ router.put('/:id', (req, res) => {
     const id = parseInt(req.params.id);
     const chamado = queryOne('SELECT * FROM chamados WHERE id = ?', [id]);
     if (!chamado) return res.status(404).json({ error: 'Chamado não encontrado' });
+    if (!podeVerChamado(req, id)) return res.status(403).json({ error: 'Você não tem acesso a este chamado' });
 
     const { titulo, descricao, status, prioridade, categoria, tecnico, resolucao } = req.body;
     const novoStatus = status || chamado.status;
@@ -365,6 +394,7 @@ router.delete('/:id', (req, res) => {
     const id = parseInt(req.params.id);
     const chamado = queryOne('SELECT * FROM chamados WHERE id = ?', [id]);
     if (!chamado) return res.status(404).json({ error: 'Chamado não encontrado' });
+    if (!podeVerChamado(req, id)) return res.status(403).json({ error: 'Você não tem acesso a este chamado' });
     run('DELETE FROM chamados WHERE id = ?', [id]);
     res.json({ message: 'Chamado removido com sucesso' });
   } catch (err) {
@@ -380,6 +410,7 @@ router.post('/:id/comentarios', (req, res) => {
 
     const chamado = queryOne('SELECT * FROM chamados WHERE id = ?', [id]);
     if (!chamado) return res.status(404).json({ error: 'Chamado não encontrado' });
+    if (!podeVerChamado(req, id)) return res.status(403).json({ error: 'Você não tem acesso a este chamado' });
 
     run('INSERT INTO comentarios (chamado_id, autor, texto) VALUES (?, ?, ?)', [id, autor, texto]);
     const comentario = queryOne('SELECT * FROM comentarios WHERE id = ?', [getLastID('comentarios')]);

@@ -1,5 +1,6 @@
 const express = require('express');
 const { query, queryOne, run } = require('../database');
+const { getUsuarioLogado } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -51,6 +52,8 @@ function statusDe(reg, aberta) {
 }
 
 function getUsuario(req) {
+  const logado = getUsuarioLogado(req);
+  if (logado.nome) return logado.nome;
   return (req.body && req.body.usuario) || req.query.usuario || '';
 }
 
@@ -203,11 +206,12 @@ router.get('/mes', (req, res) => {
 
 router.get('/relatorio', (req, res) => {
   try {
-    const { inicio, fim } = req.query;
+    const { inicio, fim, usuario } = req.query;
     const params = [];
     let where = '1=1';
     if (inicio) { where += ' AND data >= ?'; params.push(inicio); }
     if (fim) { where += ' AND data <= ?'; params.push(fim); }
+    if (usuario) { where += ' AND usuario = ?'; params.push(usuario); }
 
     const regs = query(`SELECT * FROM ponto WHERE ${where} ORDER BY usuario ASC, data ASC`, params);
 
