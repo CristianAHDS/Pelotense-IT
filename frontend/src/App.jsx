@@ -9,6 +9,7 @@ import NovoChamado from './pages/NovoChamado';
 import DetalheChamado from './pages/DetalheChamado';
 import Relatorios from './pages/Relatorios';
 import Gamificacao from './pages/Gamificacao';
+import Ponto from './pages/Ponto';
 import Configuracoes from './pages/Configuracoes';
 import CadastroTecnicos from './pages/CadastroTecnicos';
 import EnviarEmail from './pages/EnviarEmail';
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="/chamados/:id" element={<DetalheChamado />} />
         <Route path="/relatorios" element={<Relatorios />} />
         <Route path="/gamificacao" element={<Gamificacao />} />
+        <Route path="/ponto" element={<Ponto />} />
         <Route path="/configuracoes" element={<Configuracoes />} />
         <Route path="/cadastro-tecnicos" element={<CadastroTecnicos />} />
         <Route path="/enviar-email" element={<EnviarEmail />} />

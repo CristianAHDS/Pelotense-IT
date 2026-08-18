@@ -3,11 +3,12 @@ import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Ticket, PlusCircle, BarChart3, Settings,
   Wrench, Columns, Menu, X, Bell, Sun, Moon, ChevronLeft, ChevronRight, Plus,
-  Trophy, Contrast, UserCog, LogOut, Mail, MessageCircle,
+  Trophy, Contrast, UserCog, LogOut, Mail, MessageCircle, Clock, ChevronDown,
 } from 'lucide-react';
 import { useSocket } from '../../contexts/SocketContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import NetworkSpeed from '../ui/NetworkSpeed';
+import PontoTimer from '../ui/PontoTimer';
 import PageTransition from '../ui/PageTransition';
 import OfflineBanner from '../ui/OfflineBanner';
 import { useAuth } from '../../contexts/AuthContext';
@@ -21,11 +22,12 @@ const mainMenuItems = [
   { to: '/chamados/novo', icon: PlusCircle, label: 'Novo Chamado', cta: true },
   { to: '/relatorios', icon: BarChart3, label: 'Relatórios' },
   { to: '/gamificacao', icon: Trophy, label: 'Gamificação' },
-  { to: '/configuracoes', icon: Settings, label: 'Configurações' },
+  { to: '/ponto', icon: Clock, label: 'Ponto' },
 ];
 
 const adminMenuItems = [
   { to: '/cadastro-tecnicos', icon: UserCog, label: 'Cadastro de Técnicos' },
+  { to: '/configuracoes', icon: Settings, label: 'Configurações' },
   { to: '/enviar-email', icon: Mail, label: 'Envio de E-mails' },
   { to: '/whatsapp', icon: MessageCircle, label: 'WhatsApp' },
 ];
@@ -37,6 +39,7 @@ const breadcrumbMap = {
   '/chamados/novo': 'Novo Chamado',
   '/relatorios': 'Relatórios',
   '/gamificacao': 'Gamificação',
+  '/ponto': 'Ponto',
   '/configuracoes': 'Configurações',
   '/cadastro-tecnicos': 'Cadastro de Técnicos',
   '/enviar-email': 'Envio de E-mails',
@@ -47,12 +50,18 @@ export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [nOpen, setNOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
   const { notifications, clearNotifications } = useSocket();
   const { theme, toggle: toggleTheme } = useTheme();
   const location = useLocation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [abertosCount, setAbertosCount] = useState(0);
+
+  const isAdminRoute = adminMenuItems.some((i) => location.pathname === i.to);
+  useEffect(() => {
+    if (isAdminRoute) setAdminOpen(true);
+  }, [isAdminRoute]);
 
   useEffect(() => {
     fetch('/api/chamados/stats')
@@ -105,22 +114,32 @@ export default function DashboardLayout() {
         </nav>
 
         <div className="sidebar-divider" />
-        <div className="sidebar-section-label">Administração</div>
-        <nav className="sidebar-nav">
-          {adminMenuItems.map(({ to, icon: Icon, label }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end
-              onClick={closeSidebar}
-              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-              title={collapsed ? label : undefined}
-            >
-              <Icon size={18} />
-              <span className="link-label">{label}</span>
-            </NavLink>
-          ))}
-        </nav>
+        <button
+          className={`sidebar-admin-toggle ${adminOpen ? 'open' : ''}`}
+          onClick={() => setAdminOpen(!adminOpen)}
+          title={collapsed ? 'Administração' : undefined}
+        >
+          <Settings size={16} className="admin-toggle-icon" />
+          <span className="admin-toggle-label">Administração</span>
+          <ChevronDown size={14} className="admin-toggle-chevron" />
+        </button>
+        <div className={`sidebar-admin-menu ${adminOpen ? 'open' : ''}`}>
+          <nav className="sidebar-nav sidebar-admin-nav">
+            {adminMenuItems.map(({ to, icon: Icon, label }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end
+                onClick={closeSidebar}
+                className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                title={collapsed ? label : undefined}
+              >
+                <Icon size={18} />
+                <span className="link-label">{label}</span>
+              </NavLink>
+            ))}
+          </nav>
+        </div>
 
         <div className="sidebar-actions">
           <button className="sidebar-collapse-btn" onClick={() => setCollapsed(!collapsed)} title={collapsed ? 'Expandir' : 'Recolher'}>
@@ -150,6 +169,7 @@ export default function DashboardLayout() {
         <div className="mobile-brand"><img src="/pelotense_it_icone_app_sem_fundo_monochromatico.png" alt="Pelotense IT" className="mobile-brand-logo" /><span>Pelotense IT</span></div>
         <div className="mobile-header-actions">
           <NetworkSpeed />
+          <PontoTimer />
           <button className="notif-btn" onClick={toggleTheme} title={theme === 'dark' ? 'Modo claro' : theme === 'light' ? 'Alto contraste' : 'Modo escuro'}>
             {theme === 'dark' ? <Sun size={18} /> : theme === 'light' ? <Contrast size={18} /> : <Moon size={18} />}
           </button>
@@ -181,6 +201,7 @@ export default function DashboardLayout() {
           </div>
           <div className="top-bar-right">
             <NetworkSpeed />
+            <PontoTimer />
             <button className="notif-btn" onClick={toggleTheme} title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}>
               {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
             </button>

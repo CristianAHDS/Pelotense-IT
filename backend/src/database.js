@@ -304,6 +304,30 @@ async function initDatabase() {
   run("UPDATE config_whatsapp SET api_key = 'vz5fUF8aVxo2IAY0jkCLJ1Ks7SWHZMi6' WHERE api_key IS NULL OR api_key = ''");
   run("UPDATE config_whatsapp SET instance = 'pelotense' WHERE instance IS NULL OR instance = '' OR instance = 'IT'");
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS ponto (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      usuario TEXT NOT NULL,
+      data TEXT NOT NULL,
+      inicio TEXT,
+      inicio_almoco TEXT,
+      fim_almoco TEXT,
+      fim TEXT,
+      observacao TEXT,
+      UNIQUE(usuario, data)
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS ponto_pausas (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      usuario TEXT NOT NULL,
+      data TEXT NOT NULL,
+      inicio TEXT NOT NULL,
+      fim TEXT
+    )
+  `);
+
   save();
 }
 

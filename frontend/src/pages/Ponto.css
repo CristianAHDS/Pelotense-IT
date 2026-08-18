@@ -1,0 +1,371 @@
+.ponto-page { overflow-x: hidden; }
+
+.ponto-page .page-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 28px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: 24px 28px;
+  position: relative;
+  overflow: hidden;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.ponto-page .page-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(circle at 20% 50%, rgba(99,102,241,0.12) 0%, transparent 50%),
+              radial-gradient(circle at 80% 50%, rgba(16,185,129,0.08) 0%, transparent 50%);
+}
+
+.ponto-page .page-header > :not(.header-particles) { position: relative; z-index: 1; }
+.ponto-page .page-header h2 {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--color-text) 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.ponto-page .page-subtitle { color: var(--color-text-muted); font-size: 13px; display: block; margin-top: 4px; }
+
+.header-particles { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.header-particle {
+  position: absolute; bottom: -6px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  opacity: 0;
+  animation: headerParticleFloat 4s ease-in-out infinite;
+}
+.header-particle:nth-child(odd) { background: var(--color-primary-light); width: 7px; height: 7px; }
+.header-particle:nth-child(even) { background: rgba(16,185,129,0.7); width: 5px; height: 5px; }
+@keyframes headerParticleFloat {
+  0% { opacity: 0; transform: translateY(0) scale(0); }
+  20% { opacity: 0.7; transform: translateY(-30px) scale(1.2); }
+  60% { opacity: 0.4; transform: translateY(-60px) scale(0.8); }
+  100% { opacity: 0; transform: translateY(-90px) scale(0.3); }
+}
+
+.loading { color: var(--color-text-muted); padding: 40px 0; text-align: center; }
+
+/* ===== Status card ===== */
+.ponto-status-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 28px;
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  margin-bottom: 20px;
+}
+
+.ponto-clock-col { display: flex; flex-direction: column; gap: 4px; min-width: 190px; }
+
+.ponto-clock {
+  font-size: 46px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.ponto-clock-sec {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-primary-light);
+  margin-left: 2px;
+}
+
+.ponto-date {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  text-transform: capitalize;
+}
+
+.ponto-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  margin-top: 10px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+}
+
+.ponto-status-badge.success { background: rgba(16,185,129,0.12); color: var(--color-success); }
+.ponto-status-badge.warning { background: rgba(245,158,11,0.12); color: var(--color-warning); }
+.ponto-status-badge.info { background: rgba(56,189,248,0.12); color: var(--color-info); }
+.ponto-status-badge.muted { background: var(--color-bg-tertiary); color: var(--color-text-muted); }
+
+.ponto-timeline {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.ponto-timeline-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+}
+
+.ponto-timeline-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.ponto-timeline-value {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-text);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.ponto-timeline-total {
+  background: rgba(99,102,241,0.06);
+  border-color: rgba(99,102,241,0.25);
+  grid-column: 1 / -1;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ponto-timeline-total .ponto-timeline-value { color: var(--color-primary-light); }
+
+.ponto-pausa-chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(245,158,11,0.12);
+  color: var(--color-warning);
+}
+
+/* ===== Actions ===== */
+.ponto-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-border);
+  margin-top: 4px;
+}
+
+.ponto-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: var(--radius);
+  font-size: 13.5px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+}
+
+.ponto-btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.08); }
+.ponto-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.ponto-btn-success { background: linear-gradient(135deg, #10b981, #059669); }
+.ponto-btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.ponto-btn-info { background: linear-gradient(135deg, #38bdf8, #0284c7); }
+.ponto-btn-danger { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+
+.ponto-finished {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: var(--radius);
+  background: rgba(16,185,129,0.1);
+  border: 1px solid rgba(16,185,129,0.3);
+  color: var(--color-success);
+  font-size: 14px;
+}
+
+.ponto-finished strong { color: var(--color-text); }
+
+/* ===== Tabela ===== */
+.ponto-table-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+}
+
+.ponto-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.ponto-table-header h3 {
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ponto-table-header h3 svg { color: var(--color-primary-light); }
+
+.ponto-month-nav { display: flex; align-items: center; gap: 8px; }
+
+.ponto-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ponto-nav-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary-light);
+}
+
+.ponto-month-label {
+  min-width: 150px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: capitalize;
+  color: var(--color-text);
+}
+
+.ponto-month-stats {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.ponto-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+}
+
+.ponto-stat-value { font-size: 18px; font-weight: 800; color: var(--color-primary-light); }
+.ponto-stat-label { font-size: 12px; color: var(--color-text-muted); }
+
+.ponto-table-wrap { overflow-x: auto; }
+
+.ponto-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  min-width: 720px;
+}
+
+.ponto-table th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.ponto-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.ponto-table tbody tr:last-child td { border-bottom: none; }
+.ponto-table tbody tr { transition: background 0.12s; }
+.ponto-table tbody tr:hover { background: rgba(99,102,241,0.04); }
+.ponto-table tbody tr.is-today { background: rgba(99,102,241,0.06); }
+
+.ponto-td-data { display: flex; flex-direction: column; gap: 1px; }
+.ponto-td-data strong { color: var(--color-text); font-weight: 700; }
+.ponto-td-data span { font-size: 11px; color: var(--color-text-muted); text-transform: capitalize; }
+
+.ponto-td-total { font-weight: 800; color: var(--color-text) !important; }
+
+.ponto-table-empty {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 32px 0 !important;
+}
+
+.ponto-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+}
+
+.ponto-tag.success { background: rgba(16,185,129,0.12); color: var(--color-success); }
+.ponto-tag.warning { background: rgba(245,158,11,0.12); color: var(--color-warning); }
+.ponto-tag.info { background: rgba(56,189,248,0.12); color: var(--color-info); }
+.ponto-tag.working { background: rgba(99,102,241,0.14); color: var(--color-primary-light); }
+.ponto-tag.muted { background: var(--color-bg-tertiary); color: var(--color-text-muted); }
+
+@media (max-width: 900px) {
+  .ponto-status-card { grid-template-columns: 1fr; gap: 20px; }
+  .ponto-timeline { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .ponto-page .page-header { padding: 18px 20px; }
+  .ponto-page .page-header h2 { font-size: 20px; }
+  .ponto-table-card { padding: 18px; }
+  .ponto-timeline { grid-template-columns: 1fr; }
+  .ponto-clock { font-size: 38px; }
+}
