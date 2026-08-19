@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   MessageCircle,
@@ -56,6 +56,11 @@ export default function Whatsapp() {
     numeros_permitidos: [],
     prefixos: [],
   });
+  const [configCarregada, setConfigCarregada] = useState(false);
+  const configRef = useRef(config);
+  useEffect(() => {
+    configRef.current = config;
+  }, [config]);
   const [novoNumero, setNovoNumero] = useState('');
   const [novoPrefixo, setNovoPrefixo] = useState('');
   const [saving, setSaving] = useState(false);
@@ -93,7 +98,8 @@ export default function Whatsapp() {
           prefixos: data.prefixos || [],
         }),
       )
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setConfigCarregada(true));
   }, []);
 
   useEffect(() => {
@@ -182,65 +188,70 @@ export default function Whatsapp() {
         body: JSON.stringify({ numeros_permitidos: numeros, prefixos }),
       });
       if (!r.ok) throw new Error();
+      addToast('Lista de números salva!', 'success');
     } catch {
       addToast('Erro ao salvar a lista de números', 'error');
     }
   };
 
+  const garantirConfigCarregada = () => {
+    if (!configCarregada) {
+      addToast('Aguarde o carregamento das configurações', 'error');
+      return false;
+    }
+    return true;
+  };
+
   const addNumero = () => {
+    if (!garantirConfigCarregada()) return;
+    const atual = configRef.current;
     const n = novoNumero.replace(/\D/g, '');
     if (!n) {
       addToast('Informe um número válido', 'error');
       return;
     }
-    if (config.numeros_permitidos.includes(n)) {
+    if (atual.numeros_permitidos.includes(n)) {
       addToast('Número já está na lista', 'error');
       return;
     }
-    const novaLista = [...config.numeros_permitidos, n];
-    setConfig((c) => ({
-      ...c,
-      numeros_permitidos: novaLista,
-    }));
+    const novaLista = [...atual.numeros_permitidos, n];
+    setConfig({ ...atual, numeros_permitidos: novaLista });
     setNovoNumero('');
-    persistirListas(novaLista, config.prefixos);
+    persistirListas(novaLista, atual.prefixos);
   };
 
   const removeNumero = (n) => {
-    const novaLista = config.numeros_permitidos.filter((x) => x !== n);
-    setConfig((c) => ({
-      ...c,
-      numeros_permitidos: novaLista,
-    }));
-    persistirListas(novaLista, config.prefixos);
+    if (!garantirConfigCarregada()) return;
+    const atual = configRef.current;
+    const novaLista = atual.numeros_permitidos.filter((x) => x !== n);
+    setConfig({ ...atual, numeros_permitidos: novaLista });
+    persistirListas(novaLista, atual.prefixos);
   };
 
   const addPrefixo = () => {
+    if (!garantirConfigCarregada()) return;
+    const atual = configRef.current;
     const p = novoPrefixo.replace(/\D/g, '');
     if (!p) {
       addToast('Informe um prefixo válido', 'error');
       return;
     }
-    if ((config.prefixos || []).includes(p)) {
+    if ((atual.prefixos || []).includes(p)) {
       addToast('Prefixo já está na lista', 'error');
       return;
     }
-    const novaLista = [...(config.prefixos || []), p];
-    setConfig((c) => ({
-      ...c,
-      prefixos: novaLista,
-    }));
+    const novaLista = [...(atual.prefixos || []), p];
+    setConfig({ ...atual, prefixos: novaLista });
     setNovoPrefixo('');
-    persistirListas(config.numeros_permitidos, novaLista);
+    persistirListas(atual.numeros_permitidos, novaLista);
   };
 
   const removePrefixo = (p) => {
-    const novaLista = (config.prefixos || []).filter((x) => x !== p);
-    setConfig((c) => ({
-      ...c,
-      prefixos: novaLista,
-    }));
-    persistirListas(config.numeros_permitidos, novaLista);
+    if (!garantirConfigCarregada()) return;
+    const atual = configRef.current;
+    const novaLista = (atual.prefixos || []).filter((x) => x !== p);
+    setConfig({ ...atual, prefixos: novaLista });
+    persistirListas(atual.numeros_permitidos, novaLista);
   };
 
   const handleTeste = async () => {

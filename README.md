@@ -6,6 +6,8 @@
 
 Sistema completo de gestão de chamados de suporte técnico com dashboard, kanban, relatórios e portal do cliente.
 
+🌐 **Acesse a landing page:** https://pelotense-it.netlify.app/landing
+
 ![JavaScript](https://img.shields.io/badge/JavaScript-323330?style=for-the-badge&logo=javascript&logoColor=F7DF1E)
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)

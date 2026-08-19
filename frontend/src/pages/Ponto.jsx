@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Clock, Play, Pause, RotateCcw, Coffee, Utensils, LogOut,
   CalendarDays, ChevronLeft, ChevronRight, CheckCircle2, Timer,
+  Pencil, X, Save,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -72,6 +73,13 @@ export default function Ponto() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(null);
   const [now, setNow] = useState(new Date());
+  const [editando, setEditando] = useState(null);
+  const [editForm, setEditForm] = useState(null);
+  const [salvandoEdicao, setSalvandoEdicao] = useState(false);
+  const [editandoCampo, setEditandoCampo] = useState(null);
+  const [campoValores, setCampoValores] = useState({});
+  const [confirmandoCampo, setConfirmandoCampo] = useState(false);
+  const campoRef = useRef(null);
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
@@ -101,6 +109,23 @@ export default function Ponto() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usuario, mes]);
 
+  useEffect(() => {
+    const atualizarMes = async () => {
+      try {
+        const r = await apiFetch(`${API}/ponto/mes?usuario=${encodeURIComponent(usuario)}&data=${mes}`);
+        const d = await r.json();
+        setRegistros(d.registros || []);
+      } catch {}
+    };
+    const t = setInterval(atualizarMes, 30000);
+    window.addEventListener('focus', atualizarMes);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener('focus', atualizarMes);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuario, mes]);
+
   const acao = async (endpoint, mensagem) => {
     setSaving(endpoint);
     try {
@@ -125,6 +150,145 @@ export default function Ponto() {
 
   const info = STATUS_INFO[status] || STATUS_INFO.nao_iniciado;
 
+  const abrirEdicao = (reg) => {
+    setEditando(reg);
+    setEditForm({
+      inicio: hhmm(reg.inicio) || '',
+      inicio_almoco: hhmm(reg.inicio_almoco) || '',
+      fim_almoco: hhmm(reg.fim_almoco) || '',
+      fim: hhmm(reg.fim) || '',
+      pausas: (reg.pausas || []).map((p) => ({
+        id: p.id,
+        inicio: hhmm(p.inicio) || '',
+        fim: hhmm(p.fim) || '',
+      })),
+    });
+  };
+
+  const fecharEdicao = () => {
+    setEditando(null);
+    setEditForm(null);
+  };
+
+  const setHoraEdicao = (campo, valor) => {
+    setEditForm((f) => ({ ...f, [campo]: valor }));
+  };
+
+  const setPausaEdicao = (id, campo, valor) => {
+    setEditForm((f) => ({
+      ...f,
+      pausas: (f.pausas || []).map((p) => (p.id === id ? { ...p, [campo]: valor } : p)),
+    }));
+  };
+
+  const horaComData = (campo) => {
+    const v = editForm[campo];
+    if (!v) return null;
+    return `${editando.data} ${v}`;
+  };
+
+  const salvarEdicao = async () => {
+    if (!editando || !editForm) return;
+    setSalvandoEdicao(true);
+    try {
+      const r = await apiFetch(`${API}/ponto/${editando.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          usuario,
+          inicio: horaComData('inicio'),
+          inicio_almoco: horaComData('inicio_almoco'),
+          fim_almoco: horaComData('fim_almoco'),
+          fim: horaComData('fim'),
+          pausas: (editForm.pausas || []).map((p) => ({
+            id: p.id,
+            inicio: p.inicio ? `${editando.data} ${p.inicio}` : null,
+            fim: p.fim ? `${editando.data} ${p.fim}` : null,
+          })),
+        }),
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        addToast(data.error || 'Erro ao salvar o registro', 'error');
+        return;
+      }
+      addToast('Registro atualizado!', 'success');
+      fecharEdicao();
+      await load();
+    } catch {
+      addToast('Erro de conexão', 'error');
+    } finally {
+      setSalvandoEdicao(false);
+    }
+  };
+
+  const iniciarEdicaoCampo = (campo) => {
+    if (!regHoje) return;
+    setConfirmandoCampo(false);
+    setEditandoCampo(campo);
+    setCampoValores(
+      campo === 'almoco'
+        ? {
+            inicio_almoco: hhmm(regHoje.inicio_almoco) || '',
+            fim_almoco: hhmm(regHoje.fim_almoco) || '',
+          }
+        : { [campo]: hhmm(regHoje[campo]) || '' },
+    );
+  };
+
+  const cancelarEdicaoCampo = () => {
+    setEditandoCampo(null);
+    setCampoValores({});
+    setConfirmandoCampo(false);
+  };
+
+  const aoSalvarCampo = () => {
+    if (!confirmandoCampo) {
+      setConfirmandoCampo(true);
+      return;
+    }
+    salvarCampo();
+  };
+
+  const salvarCampo = async () => {
+    if (!regHoje || !editandoCampo) return;
+    setEditandoCampo(null);
+    setConfirmandoCampo(false);
+    try {
+      const data = regHoje.data;
+      const payload = {};
+      for (const [k, v] of Object.entries(campoValores)) {
+        payload[k] = v ? `${data} ${v}` : null;
+      }
+      const r = await apiFetch(`${API}/ponto/${regHoje.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuario, ...payload }),
+      });
+      const resp = await r.json();
+      if (!r.ok) {
+        addToast(resp.error || 'Erro ao salvar o horário', 'error');
+        return;
+      }
+      addToast('Horário atualizado!', 'success');
+      await load();
+    } catch {
+      addToast('Erro de conexão', 'error');
+    } finally {
+      setCampoValores({});
+    }
+  };
+
+  const onCampoKey = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      aoSalvarCampo();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      cancelarEdicaoCampo();
+    }
+  };
+
   const nomeMes = new Date(parseInt(mes.slice(0, 4)), parseInt(mes.slice(5, 7)) - 1, 1)
     .toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
@@ -143,6 +307,25 @@ export default function Ponto() {
   const hoje = new Date();
   const hojeStr = `${hoje.getFullYear()}-${pad(hoje.getMonth() + 1)}-${pad(hoje.getDate())}`;
   const regHoje = registro;
+
+  const totalTrabalhado = useMemo(() => {
+    if (!regHoje?.inicio) return null;
+    const agora = now;
+    const fim = regHoje.fim ? new Date(regHoje.fim.replace(' ', 'T')) : agora;
+    let ms = fim - new Date(regHoje.inicio.replace(' ', 'T'));
+    if (regHoje.inicio_almoco) {
+      const ini = new Date(regHoje.inicio_almoco.replace(' ', 'T'));
+      const fimA = regHoje.fim_almoco ? new Date(regHoje.fim_almoco.replace(' ', 'T')) : agora;
+      ms -= fimA - ini;
+    }
+    for (const p of regHoje.pausas || []) {
+      if (!p.inicio) continue;
+      const ini = new Date(p.inicio.replace(' ', 'T'));
+      const fimP = p.fim ? new Date(p.fim.replace(' ', 'T')) : agora;
+      ms -= fimP - ini;
+    }
+    return Math.max(0, Math.round(ms / 60000));
+  }, [regHoje, now]);
 
   return (
     <div className="ponto-page">
@@ -185,7 +368,38 @@ export default function Ponto() {
             <div className="ponto-timeline">
               <div className="ponto-timeline-item">
                 <span className="ponto-timeline-label">Entrada</span>
-                <span className="ponto-timeline-value">{hhmm(regHoje?.inicio) || '—'}</span>
+                {editandoCampo === 'inicio' ? (
+                  <span className="ponto-timeline-edit">
+                    <input
+                      type="time"
+                      value={campoValores.inicio || ''}
+                      onChange={(e) => setCampoValores((v) => ({ ...v, inicio: e.target.value }))}
+                      onKeyDown={onCampoKey}
+                      autoFocus
+                    />
+                    <span className="ponto-timeline-edit-actions">
+                      <button className="ponto-timeline-confirm" onClick={aoSalvarCampo}>
+                        {confirmandoCampo ? 'Confirmar?' : 'Salvar'}
+                      </button>
+                      <button className="ponto-timeline-cancel" onClick={cancelarEdicaoCampo}>
+                        Cancelar
+                      </button>
+                    </span>
+                  </span>
+                ) : (
+                  <span className="ponto-timeline-value">
+                    {hhmm(regHoje?.inicio) || '—'}
+                    {regHoje && (
+                      <button
+                        className="ponto-timeline-pencil"
+                        onClick={() => iniciarEdicaoCampo('inicio')}
+                        title="Editar entrada"
+                      >
+                        <Pencil size={13} />
+                      </button>
+                    )}
+                  </span>
+                )}
               </div>
               {(regHoje?.pausas || []).length > 0 && (
                 <div className="ponto-timeline-item">
@@ -201,21 +415,90 @@ export default function Ponto() {
               )}
               <div className="ponto-timeline-item">
                 <span className="ponto-timeline-label">Almoço</span>
-                <span className="ponto-timeline-value">
-                  {regHoje?.inicio_almoco
-                    ? `${hhmm(regHoje.inicio_almoco)} – ${hhmm(regHoje.fim_almoco) || '—'}`
-                    : '—'}
-                </span>
+                {editandoCampo === 'almoco' ? (
+                  <span className="ponto-timeline-edit">
+                    <span className="ponto-timeline-edit-inputs">
+                      <input
+                        type="time"
+                        value={campoValores.inicio_almoco || ''}
+                        onChange={(e) => setCampoValores((v) => ({ ...v, inicio_almoco: e.target.value }))}
+                        onKeyDown={onCampoKey}
+                        autoFocus
+                      />
+                      <span className="ponto-timeline-edit-dash">–</span>
+                      <input
+                        type="time"
+                        value={campoValores.fim_almoco || ''}
+                        onChange={(e) => setCampoValores((v) => ({ ...v, fim_almoco: e.target.value }))}
+                        onKeyDown={onCampoKey}
+                      />
+                    </span>
+                    <span className="ponto-timeline-edit-actions">
+                      <button className="ponto-timeline-confirm" onClick={aoSalvarCampo}>
+                        {confirmandoCampo ? 'Confirmar?' : 'Salvar'}
+                      </button>
+                      <button className="ponto-timeline-cancel" onClick={cancelarEdicaoCampo}>
+                        Cancelar
+                      </button>
+                    </span>
+                  </span>
+                ) : (
+                  <span className="ponto-timeline-value">
+                    {regHoje?.inicio_almoco
+                      ? `${hhmm(regHoje.inicio_almoco)} – ${hhmm(regHoje.fim_almoco) || '—'}`
+                      : '—'}
+                    {regHoje && (
+                      <button
+                        className="ponto-timeline-pencil"
+                        onClick={() => iniciarEdicaoCampo('almoco')}
+                        title="Editar almoço"
+                      >
+                        <Pencil size={13} />
+                      </button>
+                    )}
+                  </span>
+                )}
               </div>
               <div className="ponto-timeline-item">
                 <span className="ponto-timeline-label">Saída</span>
-                <span className="ponto-timeline-value">{hhmm(regHoje?.fim) || '—'}</span>
+                {editandoCampo === 'fim' ? (
+                  <span className="ponto-timeline-edit">
+                    <input
+                      type="time"
+                      value={campoValores.fim || ''}
+                      onChange={(e) => setCampoValores((v) => ({ ...v, fim: e.target.value }))}
+                      onKeyDown={onCampoKey}
+                      autoFocus
+                    />
+                    <span className="ponto-timeline-edit-actions">
+                      <button className="ponto-timeline-confirm" onClick={aoSalvarCampo}>
+                        {confirmandoCampo ? 'Confirmar?' : 'Salvar'}
+                      </button>
+                      <button className="ponto-timeline-cancel" onClick={cancelarEdicaoCampo}>
+                        Cancelar
+                      </button>
+                    </span>
+                  </span>
+                ) : (
+                  <span className="ponto-timeline-value">
+                    {hhmm(regHoje?.fim) || '—'}
+                    {regHoje && (
+                      <button
+                        className="ponto-timeline-pencil"
+                        onClick={() => iniciarEdicaoCampo('fim')}
+                        title="Editar saída"
+                      >
+                        <Pencil size={13} />
+                      </button>
+                    )}
+                  </span>
+                )}
               </div>
               <div className="ponto-timeline-item ponto-timeline-total">
                 <span className="ponto-timeline-label">
                   <Timer size={13} /> Total trabalhado
                 </span>
-                <span className="ponto-timeline-value">{fmtTotal(regHoje?.total_minutos)}</span>
+                <span className="ponto-timeline-value">{fmtTotal(totalTrabalhado)}</span>
               </div>
             </div>
 
@@ -290,7 +573,7 @@ export default function Ponto() {
                   <CheckCircle2 size={18} />
                   <span>
                     Jornada encerrada às <strong>{hhmm(regHoje?.fim)}</strong> — total{' '}
-                    <strong>{fmtTotal(regHoje?.total_minutos)}</strong>
+                    <strong>{fmtTotal(totalTrabalhado)}</strong>
                   </span>
                 </div>
               )}
@@ -336,12 +619,13 @@ export default function Ponto() {
                     <th>Pausas</th>
                     <th>Total</th>
                     <th>Status</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   {registros.length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="ponto-table-empty">
+                      <td colSpan="9" className="ponto-table-empty">
                         Nenhum registro neste mês.
                       </td>
                     </tr>
@@ -365,6 +649,15 @@ export default function Ponto() {
                           <td>
                             <span className={`ponto-tag ${st.className}`}>{st.label}</span>
                           </td>
+                          <td className="ponto-td-acoes">
+                            <button
+                              className="ponto-edit-btn"
+                              onClick={() => abrirEdicao(reg)}
+                              title="Editar horários"
+                            >
+                              <Pencil size={14} />
+                            </button>
+                          </td>
                         </tr>
                       );
                     })
@@ -374,6 +667,113 @@ export default function Ponto() {
             </div>
           </div>
         </>
+      )}
+
+      {editando && editForm && (
+        <div className="ponto-modal-overlay" onClick={fecharEdicao}>
+          <div className="ponto-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="ponto-modal-head">
+              <h3>
+                <Pencil size={16} /> Editar horários
+              </h3>
+              <button
+                className="ponto-modal-close"
+                onClick={fecharEdicao}
+                title="Fechar"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="ponto-modal-body">
+              <div className="ponto-modal-data">
+                {new Date(
+                  parseInt(editando.data.slice(0, 4)),
+                  parseInt(editando.data.slice(5, 7)) - 1,
+                  parseInt(editando.data.slice(8, 10)),
+                ).toLocaleDateString('pt-BR', {
+                  weekday: 'long',
+                  day: 'numeric',
+                  month: 'long',
+                })}
+              </div>
+
+              <div className="ponto-edit-grid">
+                <label>
+                  <span>Entrada</span>
+                  <input
+                    type="time"
+                    value={editForm.inicio}
+                    onChange={(e) => setHoraEdicao('inicio', e.target.value)}
+                  />
+                </label>
+                <label>
+                  <span>Saída para almoço</span>
+                  <input
+                    type="time"
+                    value={editForm.inicio_almoco}
+                    onChange={(e) => setHoraEdicao('inicio_almoco', e.target.value)}
+                  />
+                </label>
+                <label>
+                  <span>Retorno do almoço</span>
+                  <input
+                    type="time"
+                    value={editForm.fim_almoco}
+                    onChange={(e) => setHoraEdicao('fim_almoco', e.target.value)}
+                  />
+                </label>
+                <label>
+                  <span>Saída</span>
+                  <input
+                    type="time"
+                    value={editForm.fim}
+                    onChange={(e) => setHoraEdicao('fim', e.target.value)}
+                  />
+                </label>
+              </div>
+
+              {(editForm.pausas || []).length > 0 && (
+                <div className="ponto-edit-pausas">
+                  <h4>Pausas</h4>
+                  {editForm.pausas.map((p, i) => (
+                    <div key={p.id} className="ponto-edit-pausa">
+                      <span className="ponto-edit-pausa-num">Pausa {i + 1}</span>
+                      <input
+                        type="time"
+                        value={p.inicio}
+                        onChange={(e) => setPausaEdicao(p.id, 'inicio', e.target.value)}
+                        title="Início da pausa"
+                      />
+                      <input
+                        type="time"
+                        value={p.fim}
+                        onChange={(e) => setPausaEdicao(p.id, 'fim', e.target.value)}
+                        title="Fim da pausa"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <p className="ponto-edit-hint">
+                Deixe um campo vazio para apagar o horário correspondente.
+              </p>
+            </div>
+            <div className="ponto-modal-actions">
+              <button className="btn btn-outline" onClick={fecharEdicao}>
+                Cancelar
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={salvarEdicao}
+                disabled={salvandoEdicao}
+              >
+                <Save size={16} />{' '}
+                {salvandoEdicao ? 'Salvando...' : 'Salvar horários'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

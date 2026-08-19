@@ -23,6 +23,34 @@ const COLUNAS = [
 
 const hoje = () => new Date().toLocaleDateString('sv');
 
+const AVATAR_COLORS = ['indigo', 'sky', 'amber', 'green', 'emerald', 'rose'];
+
+const getInitials = (nome = '') => nome.trim().slice(0, 2).toUpperCase() || '--';
+
+const getAvatarColor = (nome = '') => {
+  const n = nome.trim().toLowerCase();
+  let h = 0;
+  for (let i = 0; i < n.length; i++) h = (h * 31 + n.charCodeAt(i)) >>> 0;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+};
+
+const CAT_TAG_COLORS = {
+  geral: 'indigo',
+  hardware: 'indigo',
+  software: 'sky',
+  rede: 'emerald',
+  impressora: 'amber',
+  email: 'rose',
+  acesso: 'green',
+  evento: 'sky',
+  censura: 'rose',
+  gravacao: 'amber',
+  edicao: 'sky',
+  postagem: 'emerald',
+};
+
+const getTagColor = (categoria = '') => CAT_TAG_COLORS[categoria] || 'indigo';
+
 export default function Kanban() {
   const navigate = useNavigate();
   const termos = useTermos();
@@ -32,7 +60,7 @@ export default function Kanban() {
   const [draggedId, setDraggedId] = useState(null);
   const [dragOverCol, setDragOverCol] = useState(null);
   const [creating, setCreating] = useState(null);
-  const [novoCard, setNovoCard] = useState({ titulo: '', solicitante: '', prioridade: 'media' });
+  const [novoCard, setNovoCard] = useState({ titulo: '', descricao: '', solicitante: '', prioridade: 'media' });
   const [logOpen, setLogOpen] = useState(false);
   const [logMes, setLogMes] = useState('all');
   const [logSemana, setLogSemana] = useState('all');
@@ -134,7 +162,7 @@ export default function Kanban() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         titulo: novoCard.titulo,
-        descricao: `Criado via Kanban por ${novoCard.solicitante}`,
+        descricao: novoCard.descricao.trim() || `Criado via Kanban por ${novoCard.solicitante}`,
         prioridade: novoCard.prioridade,
         solicitante: novoCard.solicitante,
         categoria: 'geral',
@@ -142,7 +170,7 @@ export default function Kanban() {
       }),
     });
     addToast('Card criado com sucesso!', 'success');
-    setNovoCard({ titulo: '', solicitante: '', prioridade: 'media' });
+    setNovoCard({ titulo: '', descricao: '', solicitante: '', prioridade: 'media' });
     setCreating(null);
     fetchChamados();
   };
@@ -280,7 +308,10 @@ export default function Kanban() {
                       <div className="card-create-form">
                         <input autoFocus placeholder={`Título do ${termos.chamado}...`} value={novoCard.titulo}
                           onChange={(e) => setNovoCard({ ...novoCard, titulo: e.target.value })}
-                          onKeyDown={(e) => { if (e.key === 'Enter') handleCreateCard(coluna.id); if (e.key === 'Escape') { setCreating(null); setNovoCard({ titulo: '', solicitante: '', prioridade: 'media' }); } }} />
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleCreateCard(coluna.id); if (e.key === 'Escape') { setCreating(null); setNovoCard({ titulo: '', descricao: '', solicitante: '', prioridade: 'media' }); } }} />
+                        <textarea placeholder="Descrição..." value={novoCard.descricao} rows={2}
+                          onChange={(e) => setNovoCard({ ...novoCard, descricao: e.target.value })}
+                          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCreateCard(coluna.id); } if (e.key === 'Escape') { setCreating(null); setNovoCard({ titulo: '', descricao: '', solicitante: '', prioridade: 'media' }); } }} />
                         <input placeholder="Solicitante..." value={novoCard.solicitante}
                           onChange={(e) => setNovoCard({ ...novoCard, solicitante: e.target.value })}
                           onKeyDown={(e) => e.key === 'Enter' && handleCreateCard(coluna.id)} />
@@ -290,7 +321,7 @@ export default function Kanban() {
                         </select>
                         <div className="create-form-actions">
                           <button className="btn btn-sm btn-primary" onClick={() => handleCreateCard(coluna.id)}>Criar</button>
-                          <button className="btn btn-sm btn-ghost" onClick={() => { setCreating(null); setNovoCard({ titulo: '', solicitante: '', prioridade: 'media' }); }}><X size={14} /></button>
+                          <button className="btn btn-sm btn-ghost" onClick={() => { setCreating(null); setNovoCard({ titulo: '', descricao: '', solicitante: '', prioridade: 'media' }); }}><X size={14} /></button>
                         </div>
                       </div>
                     ) : (
@@ -318,14 +349,24 @@ export default function Kanban() {
                     onDragEnd={handleDragEnd}
                     onClick={() => { if (!dragIdRef.current) navigate(`/chamados/${c.id}`); }}
                   >
-                    <div className="card-header-row">
-                      <span className={`card-prioridade prioridade-${c.prioridade}`} />
-                      <GripVertical size={14} className="card-grip" />
+                    <div className="card-title-row">
+                      <p className="card-titulo">{c.titulo}</p>
+                      <div className="card-title-right">
+                        <span className={`card-prioridade prioridade-${c.prioridade}`} />
+                        <GripVertical size={14} className="card-grip" />
+                      </div>
                     </div>
-                    <p className="card-titulo">{c.titulo}</p>
+                    {c.descricao && <p className="card-desc">{c.descricao}</p>}
                     <div className="card-footer">
+                      <div className="card-meta">
+                        <span className={`kanban-avatar kanban-avatar-${getAvatarColor(c.solicitante)}`}>
+                          {getInitials(c.solicitante)}
+                        </span>
+                        <span className={`kanban-tag kanban-tag-${getTagColor(c.categoria)}`}>
+                          {c.categoria || 'geral'}
+                        </span>
+                      </div>
                       <span className="card-id">#{c.id}</span>
-                      <span className="card-solicitante">{c.solicitante}</span>
                     </div>
                   </div>
                 ))}
@@ -405,7 +446,16 @@ export default function Kanban() {
                                     <span className="card-id">#{c.id}</span>
                                   </div>
                                   <p className="card-titulo">{c.titulo}</p>
-                                  <div className="card-log-meta">{c.solicitante}</div>
+                                  <div className="card-footer">
+                                    <div className="card-meta">
+                                      <span className={`kanban-avatar kanban-avatar-${getAvatarColor(c.solicitante)}`}>
+                                        {getInitials(c.solicitante)}
+                                      </span>
+                                      <span className={`kanban-tag kanban-tag-${getTagColor(c.categoria)}`}>
+                                        {c.categoria || 'geral'}
+                                      </span>
+                                    </div>
+                                  </div>
                                 </div>
                               ))}
                             </div>

@@ -17,6 +17,7 @@ import Whatsapp from './pages/Whatsapp';
 import WhatsappChat from './pages/WhatsappChat';
 import PortalHome from './pages/PortalHome';
 import PortalNovo from './pages/PortalNovo';
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 
 function ProtectedRoute({ children }) {
@@ -37,6 +38,7 @@ function AdminRoute({ children }) {
 export default function App() {
   return (
     <Routes>
+      <Route path="/landing" element={<Landing />} />
       <Route path="/login" element={<Login />} />
 
       <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>

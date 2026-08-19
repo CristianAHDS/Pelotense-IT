@@ -52,9 +52,10 @@ function statusDe(reg, aberta) {
 }
 
 function getUsuario(req) {
+  const primeiro = (v) => (Array.isArray(v) ? v[0] : v);
   const logado = getUsuarioLogado(req);
-  if (logado.nome) return logado.nome;
-  return (req.body && req.body.usuario) || req.query.usuario || '';
+  if (logado.nome) return primeiro(logado.nome);
+  return primeiro((req.body && req.body.usuario) || req.query.usuario || '');
 }
 
 router.get('/status', (req, res) => {
@@ -189,8 +190,9 @@ router.post('/finalizar', (req, res) => {
 
 router.get('/mes', (req, res) => {
   try {
-    const usuario = req.query.usuario || '';
-    const mes = req.query.data || '';
+    const usuario = getUsuario(req);
+    const primeiro = (v) => (Array.isArray(v) ? v[0] : v);
+    const mes = primeiro(req.query.data) || '';
     if (!usuario || !mes) return res.status(400).json({ error: 'Usuário e mês são obrigatórios' });
 
     const regs = query(
@@ -199,6 +201,66 @@ router.get('/mes', (req, res) => {
     ).map(buildRegistro);
 
     res.json({ registros: regs });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/:id', (req, res) => {
+  try {
+    const usuario = getUsuario(req);
+    if (!usuario) return res.status(400).json({ error: 'Usuário não informado' });
+    const reg = queryOne('SELECT * FROM ponto WHERE id = ?', [req.params.id]);
+    if (!reg) return res.status(404).json({ error: 'Registro não encontrado' });
+    if (reg.usuario !== usuario) {
+      return res.status(403).json({ error: 'Você só pode editar seus próprios registros' });
+    }
+
+    const { inicio, inicio_almoco, fim_almoco, fim, pausas } = req.body || {};
+    const limpar = (v) =>
+      v === undefined || v === null || v === '' ? null : String(v);
+    const normalizar = (v) => {
+      if (v === null) return null;
+      if (/^\d{2}:\d{2}$/.test(v)) return `${reg.data} ${v}:00`;
+      if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(v)) return `${v}:00`;
+      return v;
+    };
+
+    const campos = { inicio, inicio_almoco, fim_almoco, fim };
+    const sets = [];
+    const vals = [];
+    for (const c of ['inicio', 'inicio_almoco', 'fim_almoco', 'fim']) {
+      if (campos[c] !== undefined) {
+        sets.push(`${c} = ?`);
+        vals.push(normalizar(limpar(campos[c])));
+      }
+    }
+    if (sets.length > 0) {
+      run(`UPDATE ponto SET ${sets.join(', ')} WHERE id = ?`, [...vals, reg.id]);
+    }
+
+    if (Array.isArray(pausas) && pausas.length > 0) {
+      const ids = pausas.map((p) => p && p.id).filter(Boolean);
+      const existentes = query(
+        `SELECT * FROM ponto_pausas WHERE id IN (${ids.map(() => '?').join(',')})`,
+        ids
+      );
+      const permitidas = existentes.filter(
+        (p) => p.usuario === usuario && p.data === reg.data
+      );
+      for (const p of pausas) {
+        const alvo = permitidas.find((x) => String(x.id) === String(p.id));
+        if (!alvo) continue;
+        run('UPDATE ponto_pausas SET inicio = ?, fim = ? WHERE id = ?', [
+          normalizar(limpar(p.inicio)),
+          normalizar(limpar(p.fim)),
+          alvo.id,
+        ]);
+      }
+    }
+
+    const atualizado = queryOne('SELECT * FROM ponto WHERE id = ?', [reg.id]);
+    res.json({ registro: buildRegistro(atualizado) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

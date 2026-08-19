@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import {
   Trophy, Award, Star, Zap, Target, TrendingUp, Clock, Shield,
-  User, Check, Lock, Flame, Crown, Medal, CheckCircle2, Layers, BarChart3,
+  Check, Lock, Flame, Crown, Medal, CheckCircle2, Layers, BarChart3,
+  Monitor, AppWindow, Globe, Printer, Mail, KeyRound, ClipboardList,
+  CalendarDays, Clapperboard, Mic, Scissors, Send,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import './Gamificacao.css';
@@ -13,9 +15,9 @@ import { useTermos } from '../termos';
 const API = API_URL;
 
 const CAT_ICONS = {
-  hardware: '💻', software: '🖥️', rede: '🌐', impressora: '🖨️',
-  email: '📧', acesso: '🔑', geral: '📋', evento: '🎪', censura: '🎥',
-  gravacao: '🎙️', edicao: '✂️', postagem: '📡',
+  hardware: Monitor, software: AppWindow, rede: Globe, impressora: Printer,
+  email: Mail, acesso: KeyRound, geral: ClipboardList, evento: CalendarDays,
+  censura: Clapperboard, gravacao: Mic, edicao: Scissors, postagem: Send,
 };
 
 const CAT_LABELS = {
@@ -25,9 +27,9 @@ const CAT_LABELS = {
 };
 
 const CAT_COLORS = {
-  hardware: '#6366f1', software: '#22d3ee', rede: '#10b981', impressora: '#f59e0b',
-  email: '#8b5cf6', acesso: '#f43f5e', geral: '#94a3b8', evento: '#ec4899', censura: '#fb7185',
-  gravacao: '#e879f9', edicao: '#a78bfa', postagem: '#38bdf8',
+  hardware: '#6366f1', software: '#38bdf8', rede: '#10b981', impressora: '#f59e0b',
+  email: '#6366f1', acesso: '#f43f5e', geral: '#94a3b8', evento: '#38bdf8',
+  censura: '#f43f5e', gravacao: '#f59e0b', edicao: '#10b981', postagem: '#38bdf8',
 };
 
 const CATEGORIAS_POR_TIPO = {
@@ -48,30 +50,6 @@ const PERIOD_OPTIONS = [
   { key: 'semana', label: 'Semana' },
   { key: 'mes', label: 'Mês' },
 ];
-
-function ProgressRing({ value = 0, size = 104, stroke = 9, children }) {
-  const radius = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (Math.min(100, Math.max(0, value)) / 100) * circumference;
-  return (
-    <div className="ring" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="ring-svg">
-        <circle className="ring-track" cx={size / 2} cy={size / 2} r={radius} strokeWidth={stroke} />
-        <circle
-          className="ring-fill"
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          strokeWidth={stroke}
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-        />
-      </svg>
-      <div className="ring-center">{children}</div>
-    </div>
-  );
-}
 
 export default function Gamificacao() {
   const { user } = useAuth();
@@ -107,7 +85,6 @@ export default function Gamificacao() {
 
   const conquistados = allBadges.filter(b => b.conquistado).length;
   const total = allBadges.length;
-  const taxaConquista = total > 0 ? Math.round((conquistados / total) * 100) : 0;
 
   const resolvidosDisplay = periodo === 'semana' ? (dados.resolvidosSemana ?? 0)
     : periodo === 'mes' ? (dados.resolvidosMes ?? 0)
@@ -127,43 +104,58 @@ export default function Gamificacao() {
     { icon: Flame, value: `${dados.streak}d`, label: 'Sequência de dias', color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)' },
   ];
 
+  function ProgressRing({ value = 0, size = 84, stroke = 8, children }) {
+    const radius = (size - stroke) / 2;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (Math.min(100, Math.max(0, value)) / 100) * circumference;
+    return (
+      <div className="ring" style={{ width: size, height: size }}>
+        <svg width={size} height={size} className="ring-svg">
+          <circle className="ring-track" cx={size / 2} cy={size / 2} r={radius} strokeWidth={stroke} />
+          <circle
+            className="ring-fill"
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            strokeWidth={stroke}
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+          />
+        </svg>
+        <div className="ring-center">{children}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="gamificacao-page">
-      {/* Hero */}
-      <div className="gamificacao-hero">
-        <div className="hero-bg" />
-        <div className="hero-particles">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="hero-particle" style={{
-              left: (5 + i * 17) + '%',
-              animationDelay: (i * 0.7) + 's',
+      {/* Header */}
+      <div className="page-header">
+        <div className="header-particles">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="header-particle" style={{
+              left: (5 + i * 20) + '%',
+              animationDelay: (i * 0.6) + 's',
               animationDuration: (3 + i * 0.4) + 's',
             }} />
           ))}
         </div>
-        <div className="hero-content">
-          <div className="hero-ring-col">
-            <ProgressRing value={dados.progressoNivel}>
-              <span className="hero-medal">{dados.medal}</span>
-            </ProgressRing>
-            <span className="hero-ring-caption">{dados.progressoNivel}%</span>
-          </div>
-          <div className="hero-info">
-            <span className="hero-kicker"><User size={13} /> Painel do técnico</span>
-            <h1>{dados.usuario}</h1>
-            <p className="hero-level-line">
-              Nível <strong>{dados.nivel}</strong>
-              {dados.proximoNivel !== 'Máximo' && <span className="hero-arrow">→ {dados.proximoNivel}</span>}
-            </p>
-            <div className="hero-badges-row">
-              <span className="hero-badge"><Award size={14} /> {conquistados}/{total} badges</span>
-              <span className="hero-badge"><CheckCircle2 size={14} /> {dados.totalResolvidos} resolvidos</span>
-              <span className="hero-badge"><Target size={14} /> {taxaConquista}% de conquistas</span>
-              {meRankIndex >= 0 && (
-                <span className="hero-badge hero-badge-rank"><Crown size={14} /> #{meRankIndex + 1} no ranking</span>
-              )}
-            </div>
-          </div>
+        <div className="page-header-ring">
+          <ProgressRing value={dados.progressoNivel}>
+            <span className="ring-level">{dados.nivel}</span>
+          </ProgressRing>
+          <span className="ring-caption">{dados.progressoNivel}%</span>
+        </div>
+        <div>
+          <h2>Gamificação</h2>
+          <span className="page-subtitle">Acompanhe seu nível, badges e ranking</span>
+        </div>
+        <div className="hero-badges-row gamificacao-header-right">
+          <span className="hero-badge"><Award size={14} /> {conquistados}/{total} badges</span>
+          <span className="hero-badge"><CheckCircle2 size={14} /> {dados.totalResolvidos} resolvidos</span>
+          {meRankIndex >= 0 && (
+            <span className="hero-badge hero-badge-rank"><Trophy size={14} /> #{meRankIndex + 1} no ranking</span>
+          )}
         </div>
       </div>
 
@@ -213,10 +205,11 @@ export default function Gamificacao() {
                 const maxBar = badgesCat.length > 0 ? Math.max(...badgesCat.map(b => JSON.parse(b.criterio).min)) : 5;
                 const pct = Math.min(100, Math.round((totalCat / (maxBar * 1.3)) * 100));
                 const color = CAT_COLORS[cat] || '#6366f1';
+                const CatIcon = CAT_ICONS[cat] || ClipboardList;
                 return (
                   <div key={cat} className="cat-progress-item">
                     <div className="cat-progress-icon" style={{ color }}>
-                      {CAT_ICONS[cat] || '📋'}
+                      <CatIcon size={18} />
                     </div>
                     <div className="cat-progress-info">
                       <div className="cat-progress-top">
@@ -312,7 +305,7 @@ export default function Gamificacao() {
                       <span className="ranking-meta">{t.totalResolvidos} resolvidos · SLA {t.slaMedio}h</span>
                     </div>
                     <div className="ranking-level">
-                      <span className="ranking-medal">{t.medal}</span>
+                      <span className="ranking-medal"><Award size={16} /></span>
                       <span className="ranking-nivel">{t.nivel}</span>
                     </div>
                   </div>

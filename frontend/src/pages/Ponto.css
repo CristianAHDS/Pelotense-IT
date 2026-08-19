@@ -1,4 +1,6 @@
-.ponto-page { overflow-x: hidden; }
+.ponto-page {
+  overflow-x: hidden;
+}
 
 .ponto-page .page-header {
   display: flex;
@@ -21,11 +23,23 @@
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background: radial-gradient(circle at 20% 50%, rgba(99,102,241,0.12) 0%, transparent 50%),
-              radial-gradient(circle at 80% 50%, rgba(16,185,129,0.08) 0%, transparent 50%);
+  background:
+    radial-gradient(
+      circle at 20% 50%,
+      rgba(99, 102, 241, 0.12) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 50%,
+      rgba(16, 185, 129, 0.08) 0%,
+      transparent 50%
+    );
 }
 
-.ponto-page .page-header > :not(.header-particles) { position: relative; z-index: 1; }
+.ponto-page .page-header > :not(.header-particles) {
+  position: relative;
+  z-index: 1;
+}
 .ponto-page .page-header h2 {
   font-size: 26px;
   font-weight: 800;
@@ -35,26 +49,62 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
-.ponto-page .page-subtitle { color: var(--color-text-muted); font-size: 13px; display: block; margin-top: 4px; }
+.ponto-page .page-subtitle {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  display: block;
+  margin-top: 4px;
+}
 
-.header-particles { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.header-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
 .header-particle {
-  position: absolute; bottom: -6px;
-  width: 6px; height: 6px;
+  position: absolute;
+  bottom: -6px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   opacity: 0;
   animation: headerParticleFloat 4s ease-in-out infinite;
 }
-.header-particle:nth-child(odd) { background: var(--color-primary-light); width: 7px; height: 7px; }
-.header-particle:nth-child(even) { background: rgba(16,185,129,0.7); width: 5px; height: 5px; }
+.header-particle:nth-child(odd) {
+  background: var(--color-primary-light);
+  width: 7px;
+  height: 7px;
+}
+.header-particle:nth-child(even) {
+  background: rgba(16, 185, 129, 0.7);
+  width: 5px;
+  height: 5px;
+}
 @keyframes headerParticleFloat {
-  0% { opacity: 0; transform: translateY(0) scale(0); }
-  20% { opacity: 0.7; transform: translateY(-30px) scale(1.2); }
-  60% { opacity: 0.4; transform: translateY(-60px) scale(0.8); }
-  100% { opacity: 0; transform: translateY(-90px) scale(0.3); }
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0);
+  }
+  20% {
+    opacity: 0.7;
+    transform: translateY(-30px) scale(1.2);
+  }
+  60% {
+    opacity: 0.4;
+    transform: translateY(-60px) scale(0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-90px) scale(0.3);
+  }
 }
 
-.loading { color: var(--color-text-muted); padding: 40px 0; text-align: center; }
+.loading {
+  color: var(--color-text-muted);
+  padding: 40px 0;
+  text-align: center;
+}
 
 /* ===== Status card ===== */
 .ponto-status-card {
@@ -69,7 +119,12 @@
   margin-bottom: 20px;
 }
 
-.ponto-clock-col { display: flex; flex-direction: column; gap: 4px; min-width: 190px; }
+.ponto-clock-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 190px;
+}
 
 .ponto-clock {
   font-size: 46px;
@@ -107,10 +162,22 @@
   color: var(--color-text-secondary);
 }
 
-.ponto-status-badge.success { background: rgba(16,185,129,0.12); color: var(--color-success); }
-.ponto-status-badge.warning { background: rgba(245,158,11,0.12); color: var(--color-warning); }
-.ponto-status-badge.info { background: rgba(56,189,248,0.12); color: var(--color-info); }
-.ponto-status-badge.muted { background: var(--color-bg-tertiary); color: var(--color-text-muted); }
+.ponto-status-badge.success {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--color-success);
+}
+.ponto-status-badge.warning {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--color-warning);
+}
+.ponto-status-badge.info {
+  background: rgba(56, 189, 248, 0.12);
+  color: var(--color-info);
+}
+.ponto-status-badge.muted {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-muted);
+}
 
 .ponto-timeline {
   display: grid;
@@ -150,22 +217,116 @@
 }
 
 .ponto-timeline-total {
-  background: rgba(99,102,241,0.06);
-  border-color: rgba(99,102,241,0.25);
+  background: rgba(99, 102, 241, 0.06);
+  border-color: rgba(99, 102, 241, 0.25);
   grid-column: 1 / -1;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
 }
 
-.ponto-timeline-total .ponto-timeline-value { color: var(--color-primary-light); }
+.ponto-timeline-total .ponto-timeline-value {
+  color: var(--color-primary-light);
+}
+
+.ponto-timeline-pencil {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ponto-timeline-pencil:hover {
+  color: var(--color-primary-light);
+  background: var(--color-bg-tertiary);
+}
+
+.ponto-timeline-edit {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.ponto-timeline-edit-inputs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ponto-timeline-edit-dash {
+  color: var(--color-text-muted);
+  font-weight: 700;
+}
+
+.ponto-timeline-edit input[type='time'] {
+  padding: 4px 6px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.ponto-timeline-edit-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.ponto-timeline-edit-actions button {
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ponto-timeline-confirm {
+  border: 1px solid var(--color-primary);
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--color-primary-light);
+}
+
+.ponto-timeline-confirm:hover {
+  background: rgba(99, 102, 241, 0.22);
+}
+
+.ponto-timeline-confirm.armed {
+  border-color: var(--color-danger);
+  background: rgba(244, 63, 94, 0.15);
+  color: var(--color-danger);
+}
+
+.ponto-timeline-cancel {
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+}
+
+.ponto-timeline-cancel:hover {
+  color: var(--color-text);
+  background: var(--color-bg-tertiary);
+}
 
 .ponto-pausa-chip {
   font-size: 11px;
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 6px;
-  background: rgba(245,158,11,0.12);
+  background: rgba(245, 158, 11, 0.12);
   color: var(--color-warning);
 }
 
@@ -192,16 +353,30 @@
   cursor: pointer;
   color: #fff;
   transition: all 0.15s ease;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
 }
 
-.ponto-btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.08); }
-.ponto-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.ponto-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+.ponto-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 
-.ponto-btn-success { background: linear-gradient(135deg, #10b981, #059669); }
-.ponto-btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
-.ponto-btn-info { background: linear-gradient(135deg, #38bdf8, #0284c7); }
-.ponto-btn-danger { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+.ponto-btn-success {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+.ponto-btn-warning {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+.ponto-btn-info {
+  background: linear-gradient(135deg, #38bdf8, #0284c7);
+}
+.ponto-btn-danger {
+  background: linear-gradient(135deg, #f43f5e, #e11d48);
+}
 
 .ponto-finished {
   display: flex;
@@ -209,13 +384,15 @@
   gap: 10px;
   padding: 12px 18px;
   border-radius: var(--radius);
-  background: rgba(16,185,129,0.1);
-  border: 1px solid rgba(16,185,129,0.3);
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
   color: var(--color-success);
   font-size: 14px;
 }
 
-.ponto-finished strong { color: var(--color-text); }
+.ponto-finished strong {
+  color: var(--color-text);
+}
 
 /* ===== Tabela ===== */
 .ponto-table-card {
@@ -242,9 +419,15 @@
   gap: 10px;
 }
 
-.ponto-table-header h3 svg { color: var(--color-primary-light); }
+.ponto-table-header h3 svg {
+  color: var(--color-primary-light);
+}
 
-.ponto-month-nav { display: flex; align-items: center; gap: 8px; }
+.ponto-month-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
 .ponto-nav-btn {
   display: flex;
@@ -291,16 +474,28 @@
   border: 1px solid var(--color-border);
 }
 
-.ponto-stat-value { font-size: 18px; font-weight: 800; color: var(--color-primary-light); }
-.ponto-stat-label { font-size: 12px; color: var(--color-text-muted); }
+.ponto-stat-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--color-primary-light);
+}
+.ponto-stat-label {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
 
-.ponto-table-wrap { overflow-x: auto; }
+.ponto-table-wrap {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.ponto-table-wrap::-webkit-scrollbar { display: none; }
 
 .ponto-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13.5px;
-  min-width: 720px;
 }
 
 .ponto-table th {
@@ -323,16 +518,36 @@
   font-variant-numeric: tabular-nums;
 }
 
-.ponto-table tbody tr:last-child td { border-bottom: none; }
-.ponto-table tbody tr { transition: background 0.12s; }
-.ponto-table tbody tr:hover { background: rgba(99,102,241,0.04); }
-.ponto-table tbody tr.is-today { background: rgba(99,102,241,0.06); }
+.ponto-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.ponto-table tbody tr {
+  transition: background 0.12s;
+}
 
-.ponto-td-data { display: flex; flex-direction: column; gap: 1px; }
-.ponto-td-data strong { color: var(--color-text); font-weight: 700; }
-.ponto-td-data span { font-size: 11px; color: var(--color-text-muted); text-transform: capitalize; }
+.ponto-table tbody tr.is-today {
+  background: rgba(99, 102, 241, 0.06);
+}
 
-.ponto-td-total { font-weight: 800; color: var(--color-text) !important; }
+.ponto-td-data {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.ponto-td-data strong {
+  color: var(--color-text);
+  font-weight: 700;
+}
+.ponto-td-data span {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-transform: capitalize;
+}
+
+.ponto-td-total {
+  font-weight: 800;
+  color: var(--color-text) !important;
+}
 
 .ponto-table-empty {
   text-align: center;
@@ -351,21 +566,251 @@
   color: var(--color-text-secondary);
 }
 
-.ponto-tag.success { background: rgba(16,185,129,0.12); color: var(--color-success); }
-.ponto-tag.warning { background: rgba(245,158,11,0.12); color: var(--color-warning); }
-.ponto-tag.info { background: rgba(56,189,248,0.12); color: var(--color-info); }
-.ponto-tag.working { background: rgba(99,102,241,0.14); color: var(--color-primary-light); }
-.ponto-tag.muted { background: var(--color-bg-tertiary); color: var(--color-text-muted); }
+.ponto-tag.success {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--color-success);
+}
+.ponto-tag.warning {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--color-warning);
+}
+.ponto-tag.info {
+  background: rgba(56, 189, 248, 0.12);
+  color: var(--color-info);
+}
+.ponto-tag.working {
+  background: rgba(99, 102, 241, 0.14);
+  color: var(--color-primary-light);
+}
+.ponto-tag.muted {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-muted);
+}
+
+.ponto-td-acoes {
+  text-align: right;
+}
+
+.ponto-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ponto-edit-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary-light);
+  transform: translateY(-1px);
+}
+
+/* ===== Modal de edição ===== */
+.ponto-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+.ponto-modal {
+  width: 100%;
+  max-width: 520px;
+  background: var(--color-surface-solid);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  animation: scaleIn 0.25s ease;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.ponto-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ponto-modal-head h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.ponto-modal-head h3 svg {
+  color: var(--color-primary-light);
+}
+
+.ponto-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ponto-modal-close:hover {
+  background: rgba(244, 63, 94, 0.15);
+  color: var(--color-danger);
+}
+
+.ponto-modal-body {
+  padding: 20px 22px;
+  overflow-y: auto;
+}
+
+.ponto-modal-data {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: capitalize;
+  color: var(--color-text);
+  margin-bottom: 16px;
+}
+
+.ponto-edit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.ponto-edit-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.ponto-edit-grid input[type='time'] {
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.ponto-edit-grid input[type='time']:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.ponto-edit-pausas {
+  margin-top: 18px;
+}
+
+.ponto-edit-pausas h4 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  margin-bottom: 10px;
+}
+
+.ponto-edit-pausa {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.ponto-edit-pausa-num {
+  flex: 1;
+  font-size: 12.5px;
+  color: var(--color-text-muted);
+}
+
+.ponto-edit-pausa input[type='time'] {
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.ponto-edit-pausa input[type='time']:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.ponto-edit-hint {
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.ponto-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 22px;
+  border-top: 1px solid var(--color-border);
+}
 
 @media (max-width: 900px) {
-  .ponto-status-card { grid-template-columns: 1fr; gap: 20px; }
-  .ponto-timeline { grid-template-columns: repeat(2, 1fr); }
+  .ponto-status-card {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .ponto-timeline {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
-  .ponto-page .page-header { padding: 18px 20px; }
-  .ponto-page .page-header h2 { font-size: 20px; }
-  .ponto-table-card { padding: 18px; }
-  .ponto-timeline { grid-template-columns: 1fr; }
-  .ponto-clock { font-size: 38px; }
+  .ponto-page .page-header {
+    padding: 18px 20px;
+  }
+  .ponto-page .page-header h2 {
+    font-size: 20px;
+  }
+  .ponto-table-card {
+    padding: 18px;
+  }
+  .ponto-timeline {
+    grid-template-columns: 1fr;
+  }
+  .ponto-clock {
+    font-size: 38px;
+  }
+  .ponto-edit-grid {
+    grid-template-columns: 1fr;
+  }
 }
