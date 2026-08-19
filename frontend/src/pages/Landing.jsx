@@ -26,6 +26,12 @@ import {
   Circle,
   Headphones,
   Flame,
+  LayoutDashboard,
+  AlertTriangle,
+  Activity,
+  Plus,
+  ThermometerSun,
+  Star,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import './Landing.css';
@@ -89,24 +95,6 @@ const STATS = [
     icon: Bot,
     value: 'Multi-canal',
     desc: 'Sistema, portal do cliente e WhatsApp',
-  },
-];
-
-const STEPS = [
-  {
-    n: '01',
-    title: 'Acesse o sistema',
-    desc: 'Login seguro para técnicos e equipe, com papéis definidos.',
-  },
-  {
-    n: '02',
-    title: 'Organize a rotina',
-    desc: 'Abra chamados, monte o kanban e registre o ponto.',
-  },
-  {
-    n: '03',
-    title: 'Acompanhe tudo',
-    desc: 'Relatórios, badges e atendimento em um único lugar.',
   },
 ];
 
@@ -191,6 +179,70 @@ const SIDE_NAV = [
   { icon: Clock, label: 'Ponto' },
   { icon: BarChart3, label: 'Relatórios' },
   { icon: MessageCircle, label: 'WhatsApp' },
+];
+
+const DASH_STATS = [
+  { label: 'Total de chamados', value: '128', icon: TicketCheck, color: 'indigo' },
+  { label: 'Em aberto', value: '12', icon: AlertTriangle, color: 'amber' },
+  { label: 'Em andamento', value: '7', icon: Timer, color: 'sky' },
+  { label: 'Resolvidos', value: '38', icon: CheckCircle2, color: 'emerald' },
+];
+
+const DASH_RECENTES = [
+  { id: '#248', title: 'Impressora sem toner', badge: 'aberto' },
+  { id: '#247', title: 'Novo e-mail corporativo', badge: 'andamento' },
+  { id: '#246', title: 'Acesso ao drive da equipe', badge: 'resolvido' },
+  { id: '#245', title: 'Configurar acesso VPN', badge: 'critico' },
+];
+
+const DASH_FEED = [
+  { icon: '✅', text: '#244 resolvido', time: 'agora' },
+  { icon: '📝', text: '#248 criado', time: 'há 2min' },
+  { icon: '🔄', text: '#245 em andamento', time: 'há 8min' },
+  { icon: '✏️', text: '#247 editado', time: 'há 15min' },
+];
+
+const TESTIMONIALS = [
+  {
+    nome: 'Diego Viana',
+    cargo: 'Suporte · TI',
+    avatar: 'DV',
+    avatarColor: 'amber',
+    texto:
+      'Antes os chamados se perdiam no WhatsApp. Agora tudo tem status, prioridade e histórico — não preciso mais caçar informação.',
+  },
+  {
+    nome: 'Mariana Vaz',
+    cargo: 'Audiovisual',
+    avatar: 'MV',
+    avatarColor: 'emerald',
+    texto:
+      'O quadro kanban deixou o fluxo das tarefas visível: sei exatamente o que está em aberto, em andamento e pronto.',
+  },
+  {
+    nome: 'Renata Almeida',
+    cargo: 'Comercial',
+    avatar: 'RA',
+    avatarColor: 'green',
+    texto:
+      'O ponto eletrônico calcula as horas sozinho e os relatórios mostram o desempenho da equipe em segundos.',
+  },
+  {
+    nome: 'Camila Moreira',
+    cargo: 'Comercial',
+    avatar: 'CM',
+    avatarColor: 'sky',
+    texto:
+      'Abro um chamado pelo WhatsApp e acompanho a resolução na hora. Simples e rápido, sem precisar abrir o sistema.',
+  },
+  {
+    nome: 'Lucas Souza',
+    cargo: 'Atendimento',
+    avatar: 'LS',
+    avatarColor: 'rose',
+    texto:
+      'A gamificação trouxe um clima leve: a galera compete por badges e o desempenho da equipe subiu.',
+  },
 ];
 
 function LandingMockup() {
@@ -334,21 +386,216 @@ function LandingMockup() {
   );
 }
 
+function DashboardMockup() {
+  return (
+    <div className="landing-mockup-wrap landing-dash-wrap">
+      <div className="landing-mockup">
+        <div className="landing-mockup-bar">
+          <span className="landing-mockup-dots">
+            <i />
+            <i />
+            <i />
+          </span>
+          <span className="landing-mockup-url">
+            <ShieldCheck size={12} /> app.pelotense.com/dashboard
+          </span>
+          <span className="landing-mockup-bell">
+            <Bell size={14} />
+          </span>
+        </div>
+
+        <div className="landing-mockup-body">
+          <aside className="landing-mockup-side">
+            <span className="landing-mockup-logo">
+              <Zap size={15} />
+            </span>
+            <span className="landing-mockup-nav active" title="Início">
+              <LayoutDashboard size={15} />
+            </span>
+            {SIDE_NAV.map((item) => {
+              const Icon = item.icon;
+              return (
+                <span key={item.label} className="landing-mockup-nav" title={item.label}>
+                  <Icon size={15} />
+                </span>
+              );
+            })}
+            <span className="landing-mockup-nav landing-mockup-nav-user">
+              <Users size={15} />
+            </span>
+          </aside>
+
+          <div className="landing-mockup-main landing-dash-main">
+            <div className="landing-dash-welcome">
+              <div>
+                <strong>Boa tarde, Cristian</strong>
+                <span>terça-feira, 18 de agosto · resumo do dia</span>
+              </div>
+              <div className="landing-dash-welcome-right">
+                <span className="landing-dash-pill">
+                  <ThermometerSun size={12} /> 18°C
+                </span>
+                <svg
+                  className="landing-dash-spark"
+                  width="72"
+                  height="20"
+                  viewBox="0 0 72 20"
+                  aria-hidden="true"
+                >
+                  <polyline
+                    points="0,14 10,11 20,13 30,7 40,9 50,5 60,6 72,2"
+                    fill="none"
+                    stroke="#818cf8"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            <div className="landing-dash-actions">
+              <span className="landing-dash-action">
+                <Plus size={13} /> Novo chamado
+              </span>
+              <span className="landing-dash-action">
+                <Columns3 size={13} /> Quadro Kanban
+              </span>
+              <span className="landing-dash-action">
+                <ClipboardList size={13} /> Ver chamados
+              </span>
+            </div>
+
+            <div className="landing-dash-stats">
+              {DASH_STATS.map((s) => {
+                const Icon = s.icon;
+                return (
+                  <div key={s.label} className="landing-dash-stat">
+                    <span className={`landing-dash-stat-icon dash-${s.color}`}>
+                      <Icon size={15} />
+                    </span>
+                    <div>
+                      <strong>{s.value}</strong>
+                      <span>{s.label}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="landing-dash-panels">
+              <div className="landing-dash-panel">
+                <strong className="landing-dash-panel-title">
+                  Chamados por status
+                </strong>
+                <div
+                  className="landing-dash-donut"
+                  style={{
+                    background:
+                      'conic-gradient(#f59e0b 0 25%, #38bdf8 25% 48%, #a78bfa 48% 58%, #10b981 58% 88%, #64748b 88% 100%)',
+                  }}
+                >
+                  <div className="landing-dash-donut-center">
+                    <strong>128</strong>
+                    <span>total</span>
+                  </div>
+                </div>
+                <div className="landing-dash-legend">
+                  <span className="landing-dash-legend-item">
+                    <i className="landing-dash-dot ldd-amber" /> Aberto <b>12</b>
+                  </span>
+                  <span className="landing-dash-legend-item">
+                    <i className="landing-dash-dot ldd-sky" /> Em andamento <b>7</b>
+                  </span>
+                  <span className="landing-dash-legend-item">
+                    <i className="landing-dash-dot ldd-violet" /> Pendente <b>4</b>
+                  </span>
+                  <span className="landing-dash-legend-item">
+                    <i className="landing-dash-dot ldd-emerald" /> Resolvido <b>38</b>
+                  </span>
+                  <span className="landing-dash-legend-item">
+                    <i className="landing-dash-dot ldd-slate" /> Fechado <b>67</b>
+                  </span>
+                </div>
+              </div>
+
+              <div className="landing-dash-panel">
+                <strong className="landing-dash-panel-title">
+                  Chamados recentes
+                </strong>
+                <div className="landing-dash-recentes">
+                  {DASH_RECENTES.map((c) => (
+                    <div key={c.id} className="landing-dash-recente">
+                      <em>{c.id}</em>
+                      <b>{c.title}</b>
+                      <span className={`landing-dash-badge ldb-${c.badge}`}>
+                        {c.badge === 'aberto'
+                          ? 'Aberto'
+                          : c.badge === 'andamento'
+                          ? 'Em andamento'
+                          : c.badge === 'critico'
+                          ? 'Crítico'
+                          : 'Resolvido'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="landing-dash-panel">
+                <strong className="landing-dash-panel-title">
+                  Atividade recente
+                </strong>
+                <div className="landing-dash-feed">
+                  {DASH_FEED.map((f, i) => (
+                    <div key={i} className="landing-dash-feed-item">
+                      <span className="landing-dash-feed-icon">{f.icon}</span>
+                      <b>{f.text}</b>
+                      <em>{f.time}</em>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="landing-float landing-float-dash1">
+        <span className="landing-float-icon f-green">
+          <CheckCircle2 size={16} />
+        </span>
+        <div>
+          <strong>Chamado resolvido</strong>
+          <span>#244 · agora</span>
+        </div>
+      </div>
+
+      <div className="landing-float landing-float-dash2">
+        <span className="landing-float-icon f-red">
+          <AlertTriangle size={16} />
+        </span>
+        <div>
+          <strong>2 críticos</strong>
+          <span>precisam de atenção</span>
+        </div>
+      </div>
+
+      <div className="landing-float landing-float-dash3">
+        <span className="landing-float-icon f-sky">
+          <Activity size={16} />
+        </span>
+        <div>
+          <strong>38 resolvidos</strong>
+          <span>neste mês</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Landing() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeStep, setActiveStep] = useState(0);
-
-  useEffect(() => {
-    const reduceMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
-    ).matches;
-    if (reduceMotion) return undefined;
-    const t = setInterval(
-      () => setActiveStep((s) => (s + 1) % STEPS.length),
-      5000
-    );
-    return () => clearInterval(t);
-  }, []);
 
   const scrollToSection = (e, id) => {
     e.preventDefault();
@@ -397,10 +644,16 @@ export default function Landing() {
               Recursos
             </a>
             <a
-              href="#como-funciona"
-              onClick={(e) => scrollToSection(e, 'como-funciona')}
+              href="#dashboard"
+              onClick={(e) => scrollToSection(e, 'dashboard')}
             >
-              Como funciona
+              Dashboard
+            </a>
+            <a
+              href="#depoimentos"
+              onClick={(e) => scrollToSection(e, 'depoimentos')}
+            >
+              Depoimentos
             </a>
             <a href="#sobre" onClick={(e) => scrollToSection(e, 'sobre')}>
               Sobre
@@ -507,53 +760,19 @@ export default function Landing() {
         </section>
 
         <section
-          id="como-funciona"
+          id="dashboard"
           className="landing-section landing-section-alt landing-reveal"
         >
           <div className="landing-section-head">
-            <span className="landing-section-tag">Como funciona</span>
-            <h2>Simples de começar</h2>
-            <p>Três passos para tirar o máximo do sistema.</p>
+            <span className="landing-section-tag">Dashboard</span>
+            <h2>O painel principal do sistema</h2>
+            <p>
+              Visão geral em tempo real: chamados, estatísticas, prioridades e
+              atividade recente — tudo em um só lugar.
+            </p>
           </div>
 
-          <div className="landing-steps-carousel">
-            <div className="landing-steps-particles">
-              {[...Array(8)].map((_, i) => (
-                <span
-                  key={i}
-                  className="landing-particle"
-                  style={{
-                    left: 4 + i * 13 + '%',
-                    animationDelay: i * 0.55 + 's',
-                    animationDuration: 4 + (i % 4) + 's',
-                  }}
-                />
-              ))}
-            </div>
-            {STEPS.map((s, i) => (
-              <div
-                key={s.n}
-                className={`landing-step-slide ${i === activeStep ? 'active' : ''}`}
-              >
-                <span className="landing-step-n">{s.n}</span>
-                <h3>{s.title}</h3>
-                <p>{s.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="landing-steps-dots" role="tablist" aria-label="Passos">
-            {STEPS.map((s, i) => (
-              <button
-                key={s.n}
-                type="button"
-                className={`landing-step-dot ${i === activeStep ? 'active' : ''}`}
-                onClick={() => setActiveStep(i)}
-                aria-label={`Passo ${s.n}: ${s.title}`}
-                aria-selected={i === activeStep}
-              />
-            ))}
-          </div>
+          <DashboardMockup />
         </section>
 
         <section
@@ -610,6 +829,42 @@ export default function Landing() {
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section
+          id="depoimentos"
+          className="landing-section landing-section-alt landing-reveal"
+        >
+          <div className="landing-section-head">
+            <span className="landing-section-tag">Prova social</span>
+            <h2>Quem usa, recomenda</h2>
+            <p>
+              Veja como a equipe do dia a dia ganhou tempo e organização com o
+              Pelotense IT.
+            </p>
+          </div>
+
+          <div className="landing-testimonials">
+            {TESTIMONIALS.map((t) => (
+              <figure key={t.nome} className="landing-testimonial">
+                <div className="landing-testimonial-stars">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={12} fill="currentColor" />
+                  ))}
+                </div>
+                <blockquote>“{t.texto}”</blockquote>
+                <figcaption>
+                  <span className={`landing-avatar landing-avatar-${t.avatarColor}`}>
+                    {t.avatar}
+                  </span>
+                  <div>
+                    <strong>{t.nome}</strong>
+                    <span>{t.cargo}</span>
+                  </div>
+                </figcaption>
+              </figure>
+            ))}
           </div>
         </section>
 
