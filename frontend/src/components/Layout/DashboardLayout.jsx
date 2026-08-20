@@ -4,6 +4,7 @@ import {
   LayoutDashboard, Ticket, PlusCircle, BarChart3, Settings,
   Wrench, Columns, Menu, X, Bell, Sun, Moon, ChevronLeft, ChevronRight, Plus,
   Trophy, Contrast, UserCog, LogOut, Mail, MessageCircle, Clock, ChevronDown,
+  Activity,
 } from 'lucide-react';
 import { useSocket } from '../../contexts/SocketContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -25,6 +26,7 @@ const buildMainMenu = (t) => [
   { to: '/relatorios', icon: BarChart3, label: 'Relatórios' },
   { to: '/gamificacao', icon: Trophy, label: 'Gamificação' },
   { to: '/ponto', icon: Clock, label: 'Ponto' },
+  { to: '/rede', icon: Activity, label: 'Monitoramento de Rede', tiOnly: true },
 ];
 
 const adminMenuItems = [
@@ -44,6 +46,7 @@ const breadcrumbMap = {
   '/cadastro-tecnicos': 'Cadastro de Técnicos',
   '/enviar-email': 'Envio de E-mails',
   '/whatsapp': 'WhatsApp',
+  '/rede': 'Monitoramento de Rede',
 };
 
 export default function DashboardLayout() {
@@ -119,7 +122,7 @@ export default function DashboardLayout() {
 
         <div className="sidebar-section-label">Menu Principal</div>
         <nav className="sidebar-nav">
-          {mainMenuItems.map(({ to, icon: Icon, label, badge, cta }) => (
+          {mainMenuItems.filter((i) => !i.tiOnly || isAdmin).map(({ to, icon: Icon, label, badge, cta }) => (
             <NavLink
               key={to}
               to={to}
@@ -213,7 +216,7 @@ export default function DashboardLayout() {
       </header>
 
       <nav className="mobile-bottom-nav">
-        {mainMenuItems.slice(0, 5).map(({ to, icon: Icon, label }) => (
+        {mainMenuItems.filter((i) => !i.tiOnly || isAdmin).slice(0, 5).map(({ to, icon: Icon, label }) => (
           <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => `bottom-nav-link ${isActive ? 'active' : ''}`}>
             <Icon size={20} /><span>{label}</span>
           </NavLink>

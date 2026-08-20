@@ -23,14 +23,14 @@ function build(av) {
 
 export function useTermos() {
   const { user } = useAuth();
-  return build(user?.tipo === 'audiovisual');
+  return build(['audiovisual', 'radio'].includes(user?.tipo));
 }
 
 export function getTermos() {
   try {
     const raw = localStorage.getItem('pelotense_user');
     const user = raw ? JSON.parse(raw) : null;
-    return build(user?.tipo === 'audiovisual');
+    return build(['audiovisual', 'radio'].includes(user?.tipo));
   } catch (_) {
     return build(false);
   }

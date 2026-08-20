@@ -10,6 +10,7 @@ import './NovoChamado.css';
 import { API_URL } from '../config';
 import { apiFetch } from '../api';
 import { useTermos } from '../termos';
+import { categoriasParaTipo } from '../categorias';
 
 const API = API_URL;
 
@@ -19,11 +20,12 @@ export default function NovoChamado() {
   const termos = useTermos();
   const tecnicoNome = user?.nome || 'Cristian Raffi Cunha';
   const tipo = user?.tipo || 'TI';
+  const catsDisponiveis = categoriasParaTipo(tipo);
   const fileInputRef = useRef(null);
   const alertaDateRef = useRef(null);
   const [form, setForm] = useState({
     titulo: '', descricao: '', prioridade: 'media',
-    categoria: 'geral', solicitante: '',
+    categoria: catsDisponiveis[0].value, solicitante: '',
   });
   const [arquivos, setArquivos] = useState([]);
   const [tags, setTags] = useState([]);
@@ -194,22 +196,9 @@ export default function NovoChamado() {
           <div className="form-group">
             <label htmlFor="categoria">Categoria</label>
             <select id="categoria" name="categoria" value={form.categoria} onChange={handleChange}>
-              {tipo === 'TI' && (
-                <>
-                  <option value="geral">Geral</option>
-                  <option value="hardware">Hardware</option>
-                  <option value="software">Software</option>
-                  <option value="rede">Rede</option>
-                  <option value="impressora">Impressora</option>
-                  <option value="email">E-mail</option>
-                  <option value="acesso">Acesso</option>
-                  <option value="evento">Evento</option>
-                  <option value="censura">Censura</option>
-                </>
-              )}
-              <option value="gravacao">Gravação</option>
-              <option value="edicao">Edição</option>
-              <option value="postagem">Postagem</option>
+              {catsDisponiveis.map((c) => (
+                <option key={c.value} value={c.value}>{c.label}</option>
+              ))}
             </select>
           </div>
           <div className="form-group">

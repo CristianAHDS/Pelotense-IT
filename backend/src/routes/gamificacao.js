@@ -57,11 +57,13 @@ function getTipoUsuario(nome) {
 
 function condicaoTipoBadges(tipo) {
   if (tipo === 'audiovisual') return "(tipo IS NULL OR tipo = 'audiovisual')";
+  if (tipo === 'radio') return "(tipo IS NULL OR tipo = 'radio')";
   return "(tipo IS NULL OR tipo = 'TI')";
 }
 
 function categoriasDoTipo(tipo) {
   if (tipo === 'audiovisual') return ['gravacao', 'edicao', 'postagem'];
+  if (tipo === 'radio') return ['transmissao', 'operacao', 'sonorizacao', 'gravacao'];
   return ['hardware', 'software', 'rede', 'impressora', 'email', 'acesso', 'geral', 'evento', 'censura'];
 }
 

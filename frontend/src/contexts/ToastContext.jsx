@@ -25,6 +25,14 @@ function ToastItem({ toast, onRemove }) {
   const colors = COLORS[toast.type] || COLORS.info;
   const Icon = ICONS[toast.type] || Info;
   const timerRef = useRef(null);
+  const removedRef = useRef(false);
+  const progressRef = useRef(100);
+
+  const finish = useCallback(() => {
+    if (removedRef.current) return;
+    removedRef.current = true;
+    onRemove(toast.id);
+  }, [toast.id, onRemove]);
 
   useEffect(() => {
     const start = Date.now();
@@ -32,33 +40,35 @@ function ToastItem({ toast, onRemove }) {
     timerRef.current = setInterval(() => {
       const elapsed = Date.now() - start;
       const remaining = Math.max(0, 100 - (elapsed / duration) * 100);
+      progressRef.current = remaining;
       setProgress(remaining);
       if (remaining <= 0) {
         clearInterval(timerRef.current);
-        onRemove(toast.id);
+        finish();
       }
     }, 30);
     return () => clearInterval(timerRef.current);
-  }, [toast.id, toast.duration, onRemove]);
+  }, [toast.id, toast.duration, finish]);
+
+  const retomar = () => {
+    clearInterval(timerRef.current);
+    const duration = toast.duration || 4000;
+    timerRef.current = setInterval(() => {
+      progressRef.current = Math.max(0, progressRef.current - (30 / duration) * 100);
+      setProgress(progressRef.current);
+      if (progressRef.current <= 0) {
+        clearInterval(timerRef.current);
+        finish();
+      }
+    }, 30);
+  };
 
   return (
     <div
       className={`toast toast-${toast.type}`}
       style={{ '--toast-bg': colors.bg, '--toast-color': colors.color, '--toast-border': colors.border }}
       onMouseEnter={() => clearInterval(timerRef.current)}
-      onMouseLeave={() => {
-        clearInterval(timerRef.current);
-        const remaining = Math.max(0, progress);
-        const duration = toast.duration || 4000;
-        const remainingMs = (remaining / 100) * duration;
-        timerRef.current = setInterval(() => {
-          setProgress((p) => {
-            const newP = p - (30 / duration) * 100;
-            if (newP <= 0) { clearInterval(timerRef.current); onRemove(toast.id); }
-            return newP;
-          });
-        }, 30);
-      }}
+      onMouseLeave={retomar}
     >
       <div className="toast-icon" style={{ color: colors.icon }}>
         <Icon size={18} />

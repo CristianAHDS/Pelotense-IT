@@ -11,6 +11,7 @@ import './Kanban.css';
 import { API_URL } from '../config';
 import { apiFetch } from '../api';
 import { useTermos } from '../termos';
+import { categoriasParaTipo } from '../categorias';
 
 const API = API_URL;
 
@@ -47,6 +48,9 @@ const CAT_TAG_COLORS = {
   gravacao: 'amber',
   edicao: 'sky',
   postagem: 'emerald',
+  transmissao: 'violet',
+  operacao: 'orange',
+  sonorizacao: 'cyan',
 };
 
 const getTagColor = (categoria = '') => CAT_TAG_COLORS[categoria] || 'indigo';
@@ -55,12 +59,16 @@ export default function Kanban() {
   const navigate = useNavigate();
   const termos = useTermos();
   const { user } = useAuth();
+  const catsDisponiveis = categoriasParaTipo(user?.tipo);
   const [chamados, setChamados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [draggedId, setDraggedId] = useState(null);
   const [dragOverCol, setDragOverCol] = useState(null);
   const [creating, setCreating] = useState(null);
-  const [novoCard, setNovoCard] = useState({ titulo: '', descricao: '', solicitante: '', prioridade: 'media' });
+  const [novoCard, setNovoCard] = useState({
+    titulo: '', descricao: '', solicitante: '', prioridade: 'media',
+    categoria: categoriasParaTipo(user?.tipo)[0].value,
+  });
   const [logOpen, setLogOpen] = useState(false);
   const [logMes, setLogMes] = useState('all');
   const [logSemana, setLogSemana] = useState('all');
@@ -165,12 +173,12 @@ export default function Kanban() {
         descricao: novoCard.descricao.trim() || `Criado via Kanban por ${novoCard.solicitante}`,
         prioridade: novoCard.prioridade,
         solicitante: novoCard.solicitante,
-        categoria: 'geral',
+        categoria: novoCard.categoria,
         tecnico: user?.nome || null,
       }),
     });
     addToast('Card criado com sucesso!', 'success');
-    setNovoCard({ titulo: '', descricao: '', solicitante: '', prioridade: 'media' });
+    setNovoCard({ titulo: '', descricao: '', solicitante: '', prioridade: 'media', categoria: catsDisponiveis[0].value });
     setCreating(null);
     fetchChamados();
   };
@@ -308,10 +316,10 @@ export default function Kanban() {
                       <div className="card-create-form">
                         <input autoFocus placeholder={`Título do ${termos.chamado}...`} value={novoCard.titulo}
                           onChange={(e) => setNovoCard({ ...novoCard, titulo: e.target.value })}
-                          onKeyDown={(e) => { if (e.key === 'Enter') handleCreateCard(coluna.id); if (e.key === 'Escape') { setCreating(null); setNovoCard({ titulo: '', descricao: '', solicitante: '', prioridade: 'media' }); } }} />
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleCreateCard(coluna.id); if (e.key === 'Escape') { setCreating(null); setNovoCard({ titulo: '', descricao: '', solicitante: '', prioridade: 'media', categoria: catsDisponiveis[0].value }); } }} />
                         <textarea placeholder="Descrição..." value={novoCard.descricao} rows={2}
                           onChange={(e) => setNovoCard({ ...novoCard, descricao: e.target.value })}
-                          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCreateCard(coluna.id); } if (e.key === 'Escape') { setCreating(null); setNovoCard({ titulo: '', descricao: '', solicitante: '', prioridade: 'media' }); } }} />
+                          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCreateCard(coluna.id); } if (e.key === 'Escape') { setCreating(null); setNovoCard({ titulo: '', descricao: '', solicitante: '', prioridade: 'media', categoria: catsDisponiveis[0].value }); } }} />
                         <input placeholder="Solicitante..." value={novoCard.solicitante}
                           onChange={(e) => setNovoCard({ ...novoCard, solicitante: e.target.value })}
                           onKeyDown={(e) => e.key === 'Enter' && handleCreateCard(coluna.id)} />
@@ -319,9 +327,15 @@ export default function Kanban() {
                           onChange={(e) => setNovoCard({ ...novoCard, prioridade: e.target.value })}>
                           <option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option><option value="critica">Crítica</option>
                         </select>
+                        <select value={novoCard.categoria}
+                          onChange={(e) => setNovoCard({ ...novoCard, categoria: e.target.value })}>
+                          {catsDisponiveis.map((c) => (
+                            <option key={c.value} value={c.value}>{c.label}</option>
+                          ))}
+                        </select>
                         <div className="create-form-actions">
                           <button className="btn btn-sm btn-primary" onClick={() => handleCreateCard(coluna.id)}>Criar</button>
-                          <button className="btn btn-sm btn-ghost" onClick={() => { setCreating(null); setNovoCard({ titulo: '', descricao: '', solicitante: '', prioridade: 'media' }); }}><X size={14} /></button>
+                          <button className="btn btn-sm btn-ghost" onClick={() => { setCreating(null); setNovoCard({ titulo: '', descricao: '', solicitante: '', prioridade: 'media', categoria: catsDisponiveis[0].value }); }}><X size={14} /></button>
                         </div>
                       </div>
                     ) : (

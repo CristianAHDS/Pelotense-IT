@@ -96,12 +96,23 @@ router.get('/stats', (req, res) => {
     const porCategoria = query(`SELECT categoria, COUNT(*) as count FROM chamados ${where} GROUP BY categoria`, params);
     const totalPeriodo = queryOne(`SELECT COUNT(*) as count FROM chamados ${where}`, params);
 
-    const tecWhere = conditions.length ? `WHERE ${conditions.join(' AND ')} AND tecnico IS NOT NULL` : 'WHERE tecnico IS NOT NULL';
+    const tipoUsuario = getUsuarioLogado(req).tipo || 'TI';
+    const tecJoins = [];
+    const tecParams = [];
+    if (inicio) { tecJoins.push("c.criado_em >= ? || ' 00:00:00'"); tecParams.push(inicio); }
+    if (fim) { tecJoins.push("c.criado_em <= ? || ' 23:59:59'"); tecParams.push(fim); }
+    const tecJoinWhere = tecJoins.length ? `AND ${tecJoins.join(' AND ')}` : '';
     const tecnicos = query(
-      `SELECT tecnico, COUNT(*) as total,
-        SUM(CASE WHEN status = 'resolvido' THEN 1 ELSE 0 END) as resolvidos
-       FROM chamados ${tecWhere} GROUP BY tecnico ORDER BY total DESC`,
-      params
+      `SELECT t.nome as tecnico,
+        COUNT(c.id) as total,
+        SUM(CASE WHEN c.status = 'resolvido' THEN 1 ELSE 0 END) as resolvidos,
+        ROUND(AVG(CASE WHEN c.resolvido_em IS NOT NULL AND c.criado_em IS NOT NULL
+          THEN (julianday(c.resolvido_em) - julianday(c.criado_em)) * 24 END), 1) as sla
+       FROM tecnicos t
+       LEFT JOIN chamados c ON c.tecnico = t.nome ${tecJoinWhere}
+       WHERE t.ativo = 1 AND t.tipo = ?
+       GROUP BY t.nome ORDER BY total DESC`,
+      [...tecParams, tipoUsuario]
     );
 
     let slaMedio = null;

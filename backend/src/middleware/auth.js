@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { queryOne } = require('../database');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'pelotense-it-secret-key-2024';
 
@@ -39,9 +40,14 @@ function optionalAuth(req, res, next) {
 
 function getUsuarioLogado(req) {
   if (req.user) {
+    let tipoAtual = '';
+    try {
+      const dbUser = queryOne('SELECT tipo FROM usuarios WHERE id = ?', [req.user.id]);
+      tipoAtual = dbUser?.tipo || '';
+    } catch (_) {}
     return {
       ...req.user,
-      tipo: req.user.tipo || req.query.tipo || (req.body && req.body.tipo) || '',
+      tipo: tipoAtual || req.user.tipo || req.query.tipo || (req.body && req.body.tipo) || '',
     };
   }
   return {
@@ -56,7 +62,13 @@ function condicaoChamados(req) {
   const tipo = u.tipo || '';
   if (!nome) return { sql: '', params: [] };
   if (tipo === 'TI') {
-    return { sql: '(tecnico = ? OR tecnico IS NULL)', params: [nome] };
+    return { sql: "(tecnico IS NULL OR tecnico IN (SELECT nome FROM tecnicos WHERE tipo = 'TI'))", params: [] };
+  }
+  if (tipo === 'radio' || tipo === 'audiovisual') {
+    return {
+      sql: '(tecnico IN (SELECT nome FROM tecnicos WHERE tipo = ?) OR tecnico = ?)',
+      params: [tipo, nome],
+    };
   }
   return { sql: '(tecnico = ?)', params: [nome] };
 }

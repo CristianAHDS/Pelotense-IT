@@ -173,7 +173,7 @@ router.post('/finalizar', (req, res) => {
     const usuario = getUsuario(req);
     if (!usuario) return res.status(400).json({ error: 'Usuário não informado' });
     const data = hoje();
-    const reg = queryOne('SELECT * FROM ponto WHERE usuario = ? AND data = ?', [usuario, data]);
+    let reg = queryOne('SELECT * FROM ponto WHERE usuario = ? AND data = ?', [usuario, data]);
     if (!reg || !reg.inicio) return res.status(400).json({ error: 'Expediente não iniciado' });
     if (reg.fim) return res.status(400).json({ error: 'Expediente já finalizado' });
 
@@ -288,6 +288,15 @@ router.get('/relatorio', (req, res) => {
         map[reg.usuario].total_minutos += full.total_minutos;
       } else {
         map[reg.usuario].dias_incompletos += 1;
+      }
+    }
+
+    const logado = getUsuarioLogado(req);
+    const tipoUsuario = (logado && logado.tipo) || 'TI';
+    const ativos = query("SELECT nome FROM tecnicos WHERE ativo = 1 AND tipo = ? ORDER BY nome ASC", [tipoUsuario]);
+    for (const t of ativos) {
+      if (!map[t.nome]) {
+        map[t.nome] = { usuario: t.nome, dias: 0, total_minutos: 0, dias_incompletos: 0 };
       }
     }
 

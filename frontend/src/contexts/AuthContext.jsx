@@ -54,6 +54,34 @@ export function AuthProvider({ children }) {
     setUser(userData);
   }, []);
 
+  useEffect(() => {
+    const refreshUser = () => {
+      const savedToken = localStorage.getItem('pelotense_token');
+      const isGuest = localStorage.getItem('pelotense_guest') === '1';
+      if (isGuest || !savedToken) return;
+      fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${savedToken}` } })
+        .then(r => (r.ok ? r.json() : null))
+        .then(data => {
+          if (data) {
+            setUser(data);
+            localStorage.setItem('pelotense_user', JSON.stringify(data));
+          }
+        })
+        .catch(() => {});
+    };
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refreshUser();
+    };
+    window.addEventListener('focus', refreshUser);
+    document.addEventListener('visibilitychange', onVisible);
+    const interval = setInterval(refreshUser, 60000);
+    return () => {
+      window.removeEventListener('focus', refreshUser);
+      document.removeEventListener('visibilitychange', onVisible);
+      clearInterval(interval);
+    };
+  }, []);
+
   const loginAsGuest = useCallback(() => {
     localStorage.setItem('pelotense_guest', '1');
     localStorage.setItem('pelotense_user', JSON.stringify(GUEST_USER));

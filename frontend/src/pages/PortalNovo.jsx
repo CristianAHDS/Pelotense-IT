@@ -170,6 +170,9 @@ export default function PortalNovo() {
               <option value="gravacao">Gravação</option>
               <option value="edicao">Edição</option>
               <option value="postagem">Postagem</option>
+              <option value="transmissao">Transmissão</option>
+              <option value="operacao">Operação</option>
+              <option value="sonorizacao">Sonorização</option>
             </select>
           </div>
           <div className="form-group">

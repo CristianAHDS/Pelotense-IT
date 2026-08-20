@@ -1,0 +1,760 @@
+.rede-page {
+  overflow-x: hidden;
+}
+
+.rede-page .page-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 18px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: 18px 22px;
+  position: relative;
+  overflow: hidden;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.rede-page .page-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 20% 50%, rgba(16, 185, 129, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 80% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%);
+}
+
+.rede-page .page-header > :not(.header-particles) {
+  position: relative;
+  z-index: 1;
+}
+
+.rede-page .page-header h2 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--color-text) 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.rede-page .page-subtitle {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  display: block;
+  margin-top: 4px;
+}
+
+.rede-stats {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.rede-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  min-width: 110px;
+}
+
+.rede-stat svg { flex-shrink: 0; width: 18px; height: 18px; }
+
+.rede-stat-total svg { color: var(--color-info); }
+.rede-stat-online svg { color: var(--color-success); }
+.rede-stat-offline svg { color: var(--color-danger); }
+
+.rede-stat-value {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.rede-stat-label {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  line-height: 1.1;
+}
+
+.rede-check-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  padding: 9px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-primary);
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--color-primary-light);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.rede-check-btn:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.22);
+}
+
+.rede-check-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spin {
+  animation: redeSpin 1s linear infinite;
+}
+
+@keyframes redeSpin {
+  to { transform: rotate(360deg); }
+}
+
+.rede-updated {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-bottom: 16px;
+}
+
+.rede-grid {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.rede-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+}
+
+.rede-card h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rede-card h3 svg { color: var(--color-primary-light); }
+
+.rede-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rede-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+.rede-form .form-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.rede-form input,
+.rede-form select {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.rede-form input:focus,
+.rede-form select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.rede-add-btn {
+  margin-top: 4px;
+  justify-content: center;
+}
+
+.rede-hosts-card {
+  min-height: 320px;
+}
+
+.rede-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+}
+
+.rede-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+.rede-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.07), transparent);
+  animation: redeShimmer 1.4s infinite;
+}
+
+@keyframes redeShimmer {
+  100% { transform: translateX(100%); }
+}
+
+.rede-skeleton-line {
+  height: 12px;
+  border-radius: 4px;
+}
+
+.rede-skeleton-host {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+}
+
+.rede-skeleton-host .rede-skeleton-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.rede-skeleton-host .rede-skeleton-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rede-skeleton-table {
+  width: 100%;
+}
+
+.rede-skeleton-table .rede-skeleton-row {
+  display: grid;
+  grid-template-columns: 16% 34% 32% 18%;
+  gap: 12px;
+  padding: 13px 12px;
+  border-bottom: 1px solid var(--color-border);
+  align-items: center;
+}
+
+.rede-skeleton-table .rede-skeleton-row:last-child {
+  border-bottom: none;
+}
+
+.rede-hosts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.rede-host {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  transition: border-color 0.2s;
+}
+
+.rede-host.online {
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.rede-host.offline {
+  border-color: rgba(244, 63, 94, 0.35);
+}
+
+.rede-host.disabled {
+  opacity: 0.55;
+}
+
+.rede-host-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--color-text-muted);
+}
+
+.rede-host-dot.online {
+  background: var(--color-success);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+}
+
+.rede-host-dot.offline {
+  background: var(--color-danger);
+  box-shadow: 0 0 8px rgba(244, 63, 94, 0.5);
+}
+
+.rede-host-dot.checking {
+  background: var(--color-warning);
+  animation: redeBlink 0.8s ease-in-out infinite;
+}
+
+@keyframes redeBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.rede-host-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.rede-host-icon.online {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--color-success);
+}
+
+.rede-host-icon.offline {
+  background: rgba(244, 63, 94, 0.12);
+  color: var(--color-danger);
+}
+
+.rede-host-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rede-host-nome {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rede-host-alvo {
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rede-host-tag {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.rede-host-latencia {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  min-width: 70px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.rede-host.online .rede-host-latencia {
+  color: var(--color-success);
+}
+
+.rede-host.offline .rede-host-latencia {
+  color: var(--color-danger);
+}
+
+.rede-host-toggle,
+.rede-host-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.rede-host-toggle svg.on { color: var(--color-success); }
+
+.rede-host-toggle:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-primary-light);
+}
+
+.rede-host-remove:hover {
+  background: rgba(244, 63, 94, 0.12);
+  color: var(--color-danger);
+}
+
+/* ===== Dispositivos na rede ===== */
+.rede-card-full {
+  grid-column: 1 / -1;
+}
+
+.rede-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.rede-section-head h3 {
+  margin-bottom: 0;
+}
+
+.rede-section-head .rede-check-btn {
+  margin-left: 0;
+}
+
+.rede-table-wrap {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.rede-table-wrap::-webkit-scrollbar { display: none; }
+
+.rede-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  table-layout: fixed;
+}
+
+.rede-table th:nth-child(1),
+.rede-table td:nth-child(1) { width: 20%; }
+.rede-table th:nth-child(2),
+.rede-table td:nth-child(2) { width: 30%; }
+.rede-table th:nth-child(3),
+.rede-table td:nth-child(3) { width: 30%; }
+.rede-table th:nth-child(4),
+.rede-table td:nth-child(4) { width: 20%; }
+
+.rede-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.rede-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rede-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.rede-table tbody tr {
+  transition: background 0.12s;
+}
+
+.rede-table tbody tr.is-self {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.rede-td-ip {
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rede-td-mac {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.rede-self-tag {
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--color-primary-light);
+}
+
+.rede-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.rede-tag.online {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--color-success);
+}
+
+.rede-tag.offline {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-muted);
+}
+
+.rede-paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.rede-paginacao button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.rede-paginacao button:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary-light);
+}
+
+.rede-paginacao button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.rede-paginacao span {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== Teste de velocidade ===== */
+.rede-speed-actions {
+  margin-bottom: 16px;
+}
+
+.rede-speed-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.rede-speed-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-bg-tertiary);
+  overflow: hidden;
+}
+
+.rede-speed-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-success));
+  transition: width 0.2s ease;
+}
+
+.rede-speed-bar-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  min-width: 36px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.rede-speed-erro {
+  color: var(--color-danger);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.rede-speed-result {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.rede-speed-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px 24px;
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  min-width: 150px;
+}
+
+.rede-speed-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--color-primary-light);
+  font-variant-numeric: tabular-nums;
+}
+
+.rede-speed-label {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 900px) {
+  .rede-grid {
+    grid-template-columns: 1fr;
+  }
+  .rede-check-btn {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .rede-page .page-header {
+    padding: 16px 16px;
+  }
+  .rede-page .page-header h2 {
+    font-size: 18px;
+  }
+  .rede-card {
+    padding: 14px 14px;
+  }
+  .rede-stats {
+    gap: 8px;
+  }
+  .rede-stat {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 8px 12px;
+  }
+  .rede-host-alvo {
+    max-width: 110px;
+  }
+  .rede-table {
+    min-width: 540px;
+  }
+}
+
+@media (max-width: 560px) {
+  .rede-stats {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .rede-stat {
+    flex: 1 1 0;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 8px 6px;
+    text-align: center;
+  }
+  .rede-check-btn {
+    flex: 1 1 100%;
+    justify-content: center;
+    margin: 4px 0 0;
+  }
+  .rede-section-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .rede-section-head .rede-check-btn {
+    justify-content: center;
+  }
+  .rede-host {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .rede-host .rede-host-tag {
+    display: none;
+  }
+  .rede-host-latencia {
+    min-width: 0;
+    margin-left: auto;
+  }
+  .rede-speed-result {
+    flex-direction: column;
+  }
+  .rede-speed-stat {
+    min-width: 0;
+    padding: 12px 16px;
+  }
+  .rede-speed-value {
+    font-size: 20px;
+  }
+}

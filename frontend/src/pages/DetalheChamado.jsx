@@ -26,6 +26,7 @@ const CAT_AVATARS = {
   hardware: '💻', software: '🖥️', rede: '🌐', impressora: '🖨️',
   email: '📧', acesso: '🔑', geral: '📋', evento: '🎪', censura: '🎥',
   gravacao: '🎙️', edicao: '✂️', postagem: '📡',
+  transmissao: '📻', operacao: '🎚️', sonorizacao: '🎧',
 };
 
 const PRIORIDADE_MAP = {
@@ -343,6 +344,7 @@ export default function DetalheChamado() {
                   <option value="rede">Rede</option><option value="impressora">Impressora</option><option value="email">E-mail</option>
                   <option value="acesso">Acesso</option><option value="evento">Evento</option><option value="censura">Censura</option>
                   <option value="gravacao">Gravação</option><option value="edicao">Edição</option><option value="postagem">Postagem</option>
+                  <option value="transmissao">Transmissão</option><option value="operacao">Operação</option><option value="sonorizacao">Sonorização</option>
                 </select>
                 <select value={editForm.prioridade} onChange={(e) => setEditForm({ ...editForm, prioridade: e.target.value })}>
                   <option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option><option value="critica">Crítica</option>

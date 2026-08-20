@@ -131,6 +131,9 @@ function SimpleDonut({ data = [], size = 140, strokeWidth = 16 }) {
     gravacao: '#8b5cf6',
     edicao: '#06b6d4',
     postagem: '#84cc16',
+    transmissao: '#8b5cf6',
+    operacao: '#f97316',
+    sonorizacao: '#06b6d4',
   };
   let acc = 0;
   return (
@@ -361,23 +364,10 @@ const [stats, setStats] = useState(null);
     }));
   })();
 
-  const tecnicosComSLA = (stats?.tecnicos || []).map((t) => {
-    const chamadosTec = chamados.filter(
-      (c) => c.tecnico === t.tecnico && c.resolvido_em && c.criado_em,
-    );
-    const avg =
-      chamadosTec.length > 0
-        ? (
-            chamadosTec.reduce(
-              (a, c) =>
-                a +
-                (new Date(c.resolvido_em) - new Date(c.criado_em)) / 3600000,
-              0,
-            ) / chamadosTec.length
-          ).toFixed(1)
-        : '-';
-    return { ...t, sla: avg };
-  });
+  const tecnicosComSLA = (stats?.tecnicos || []).map((t) => ({
+    ...t,
+    sla: t.sla != null ? t.sla : '-',
+  }));
 
   const maxHoras = Math.max(...horasTecnicos.map((x) => x.total_minutos), 1);
 
@@ -811,6 +801,9 @@ const [stats, setStats] = useState(null);
                         gravacao: '#8b5cf6',
                         edicao: '#06b6d4',
                         postagem: '#84cc16',
+                        transmissao: '#8b5cf6',
+                        operacao: '#f97316',
+                        sonorizacao: '#06b6d4',
                       }[c.name] || '#6366f1',
                   }}
                 />

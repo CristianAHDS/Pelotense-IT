@@ -64,6 +64,12 @@ router.put('/:id', (req, res) => {
       [nome ?? null, email ?? null, tipo, tipo, ativo !== undefined ? (ativo ? 1 : 0) : null, req.params.id]
     );
 
+    // Sincroniza a área/tipo e dados do usuário de login correspondente
+    run(
+      'UPDATE usuarios SET nome = COALESCE(?, nome), email = COALESCE(?, email), tipo = COALESCE(?, tipo) WHERE email = ?',
+      [nome ?? null, email ? email.trim().toLowerCase() : null, tipo, existing.email.trim().toLowerCase()]
+    );
+
     const tecnico = queryOne('SELECT * FROM tecnicos WHERE id = ?', [req.params.id]);
     res.json(tecnico);
   } catch (err) {

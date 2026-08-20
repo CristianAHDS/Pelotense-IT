@@ -3,7 +3,7 @@ import {
   Trophy, Award, Star, Zap, Target, TrendingUp, Clock, Shield,
   Check, Lock, Flame, Crown, Medal, CheckCircle2, Layers, BarChart3,
   Monitor, AppWindow, Globe, Printer, Mail, KeyRound, ClipboardList,
-  CalendarDays, Clapperboard, Mic, Scissors, Send,
+  CalendarDays, Clapperboard, Mic, Scissors, Send, RadioTower, SlidersHorizontal, Volume2,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import './Gamificacao.css';
@@ -18,23 +18,27 @@ const CAT_ICONS = {
   hardware: Monitor, software: AppWindow, rede: Globe, impressora: Printer,
   email: Mail, acesso: KeyRound, geral: ClipboardList, evento: CalendarDays,
   censura: Clapperboard, gravacao: Mic, edicao: Scissors, postagem: Send,
+  transmissao: RadioTower, operacao: SlidersHorizontal, sonorizacao: Volume2,
 };
 
 const CAT_LABELS = {
   hardware: 'Hardware', software: 'Software', rede: 'Rede', impressora: 'Impressora',
   email: 'E-mail', acesso: 'Acesso', geral: 'Geral', evento: 'Evento', censura: 'Censura',
   gravacao: 'Gravação', edicao: 'Edição', postagem: 'Postagem',
+  transmissao: 'Transmissão', operacao: 'Operação', sonorizacao: 'Sonorização',
 };
 
 const CAT_COLORS = {
   hardware: '#6366f1', software: '#38bdf8', rede: '#10b981', impressora: '#f59e0b',
   email: '#6366f1', acesso: '#f43f5e', geral: '#94a3b8', evento: '#38bdf8',
   censura: '#f43f5e', gravacao: '#f59e0b', edicao: '#10b981', postagem: '#38bdf8',
+  transmissao: '#8b5cf6', operacao: '#f97316', sonorizacao: '#06b6d4',
 };
 
 const CATEGORIAS_POR_TIPO = {
   TI: ['hardware', 'software', 'rede', 'impressora', 'email', 'acesso', 'geral', 'evento', 'censura'],
   audiovisual: ['gravacao', 'edicao', 'postagem'],
+  radio: ['transmissao', 'operacao', 'sonorizacao', 'gravacao'],
 };
 
 const BADGE_CATEGORIES = [

@@ -246,6 +246,22 @@ async function initDatabase() {
       [id, nome, descricao, icone, categoria, criterio]);
   });
 
+  // Badges específicos de rádio (categorias transmissao, operacao, sonorizacao, gravacao)
+  const badgesRadio = [
+    ["transmissao_5", "Transmissão Novice", "5 chamados de transmissão resolvidos", "📻", "categoria", '{"tipo":"categoria","categoria":"transmissao","min":5}'],
+    ["transmissao_10", "Transmissão Expert", "10 chamados de transmissão resolvidos", "🛰️", "categoria", '{"tipo":"categoria","categoria":"transmissao","min":10}'],
+    ["operacao_5", "Operação Novice", "5 chamados de operação resolvidos", "🎛️", "categoria", '{"tipo":"categoria","categoria":"operacao","min":5}'],
+    ["operacao_10", "Operação Expert", "10 chamados de operação resolvidos", "🎚️", "categoria", '{"tipo":"categoria","categoria":"operacao","min":10}'],
+    ["sonorizacao_5", "Sonorização Novice", "5 chamados de sonorização resolvidos", "🔊", "categoria", '{"tipo":"categoria","categoria":"sonorizacao","min":5}'],
+    ["sonorizacao_10", "Sonorização Expert", "10 chamados de sonorização resolvidos", "🎧", "categoria", '{"tipo":"categoria","categoria":"sonorizacao","min":10}'],
+    ["radio_gravacao_5", "Gravação Novice", "5 chamados de gravação resolvidos", "🎤", "categoria", '{"tipo":"categoria","categoria":"gravacao","min":5}'],
+    ["radio_gravacao_10", "Gravação Expert", "10 chamados de gravação resolvidos", "⏺️", "categoria", '{"tipo":"categoria","categoria":"gravacao","min":10}'],
+  ];
+  badgesRadio.forEach(([id, nome, descricao, icone, categoria, criterio]) => {
+    run("INSERT OR IGNORE INTO badges (id, nome, descricao, icone, categoria, criterio, tipo) VALUES (?, ?, ?, ?, ?, ?, 'radio')",
+      [id, nome, descricao, icone, categoria, criterio]);
+  });
+
   // Badges de categoria são do tipo TI; genéricos (volume/velocidade/prioridade/especial) ficam com tipo NULL (todos)
   run(`UPDATE badges SET tipo = 'TI' WHERE id IN (
     'hardware_5','hardware_10','software_5','software_10','rede_5','rede_10',
@@ -372,6 +388,18 @@ async function initDatabase() {
       data TEXT NOT NULL,
       inicio TEXT NOT NULL,
       fim TEXT
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS rede_hosts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nome TEXT NOT NULL,
+      tipo TEXT NOT NULL DEFAULT 'ping',
+      alvo TEXT NOT NULL,
+      porta INTEGER,
+      ativo INTEGER DEFAULT 1,
+      criado_em TEXT DEFAULT (datetime('now','localtime'))
     )
   `);
 

@@ -519,11 +519,13 @@ export default function Dashboard() {
                   hardware: '#f59e0b', software: '#6366f1', rede: '#38bdf8', impressora: '#a78bfa',
                   email: '#f43f5e', acesso: '#10b981', geral: '#64748b', evento: '#f97316',
                   censura: '#ec4899', gravacao: '#8b5cf6', edicao: '#06b6d4', postagem: '#84cc16',
+                  transmissao: '#8b5cf6', operacao: '#f97316', sonorizacao: '#06b6d4',
                 };
                 const catIcons = {
                   hardware: '💻', software: '🖥️', rede: '🌐', impressora: '🖨️',
                   email: '📧', acesso: '🔑', geral: '📋', evento: '🎪',
                   censura: '🎥', gravacao: '🎙️', edicao: '✂️', postagem: '📡',
+                  transmissao: '📻', operacao: '🎚️', sonorizacao: '🎧',
                 };
                 const data = stats.porCategoria;
                 const total = data.reduce((a, b) => a + b.count, 0) || 1;

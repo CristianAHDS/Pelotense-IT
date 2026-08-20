@@ -14,6 +14,7 @@ const authRouter = require('./routes/auth');
 const projetosRouter = require('./routes/projetos');
 const whatsappRouter = require('./routes/whatsapp');
 const pontoRouter = require('./routes/ponto');
+const redeRouter = require('./routes/rede');
 const { gerarRelatorioDiario, enviarAlerta } = require('./services/email');
 const { optionalAuth } = require('./middleware/auth');
 
@@ -45,6 +46,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/projetos', projetosRouter);
 app.use('/api/whatsapp', whatsappRouter);
 app.use('/api/ponto', pontoRouter);
+app.use('/api/rede', redeRouter);
 
 app.all('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

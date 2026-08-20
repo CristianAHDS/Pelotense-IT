@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import DashboardLayout from './components/Layout/DashboardLayout';
@@ -19,6 +20,16 @@ import PortalHome from './pages/PortalHome';
 import PortalNovo from './pages/PortalNovo';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
+
+const Rede = lazy(() => import('./pages/Rede'));
+
+function PageFallback() {
+  return (
+    <div style={{ padding: 40, color: 'var(--color-text-muted)', fontSize: 14 }}>
+      Carregando página...
+    </div>
+  );
+}
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -55,6 +66,7 @@ export default function App() {
         <Route element={<AdminRoute><EnviarEmail /></AdminRoute>} path="/enviar-email" />
         <Route element={<AdminRoute><Whatsapp /></AdminRoute>} path="/whatsapp" />
         <Route element={<AdminRoute><WhatsappChat /></AdminRoute>} path="/whatsapp/chat/:numero" />
+        <Route element={<AdminRoute><Suspense fallback={<PageFallback />}><Rede /></Suspense></AdminRoute>} path="/rede" />
       </Route>
 
       <Route element={<PortalLayout />}>
