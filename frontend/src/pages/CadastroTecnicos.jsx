@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { UserCog, Plus, Trash2, Check, X, KeyRound } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import usePageTitle from '../hooks/usePageTitle';
 import './CadastroTecnicos.css';
 
 import { API_URL } from '../config';
@@ -12,6 +13,7 @@ const AREA_LABELS = { TI: 'TI', radio: 'Téc. Rádio', audiovisual: 'Audiovisual
 
 export default function CadastroTecnicos() {
   const { add: addToast } = useToast();
+  usePageTitle('Cadastro de Técnicos');
   const [tecnicos, setTecnicos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ nome: '', email: '', departamento: 'TI', ativo: true });

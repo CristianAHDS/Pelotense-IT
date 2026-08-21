@@ -12,6 +12,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSplash } from '../contexts/SplashContext';
 import { SkeletonCard, SkeletonPanel } from '../components/ui/Skeleton';
 import EmptyState from '../components/ui/EmptyState';
+import usePageTitle from '../hooks/usePageTitle';
 import './Dashboard.css';
 
 import { API_URL } from '../config';
@@ -108,6 +109,41 @@ function timeAgo(dateStr) {
   if (diff < 172800) return 'há 1d';
   return 'há ' + Math.floor(diff / 86400) + 'd';
 }
+
+function toMs(s) {
+  return new Date(String(s).replace(' ', 'T')).getTime();
+}
+
+function calcularDecorrido(reg, agoraMs) {
+  if (!reg || !reg.inicio) return 0;
+  const inicio = toMs(reg.inicio);
+  const fim = reg.fim ? toMs(reg.fim) : agoraMs;
+  let total = fim - inicio;
+  if (reg.inicio_almoco) {
+    const almIni = toMs(reg.inicio_almoco);
+    const almFim = reg.fim_almoco ? toMs(reg.fim_almoco) : agoraMs;
+    total -= almFim - almIni;
+  }
+  for (const p of reg.pausas || []) {
+    total -= (p.fim ? toMs(p.fim) : agoraMs) - toMs(p.inicio);
+  }
+  return Math.max(0, total);
+}
+
+function fmtDuracao(ms) {
+  const totalMin = Math.floor(ms / 60000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return h > 0 ? h + 'h ' + String(m).padStart(2, '0') + 'min' : m + 'min';
+}
+
+const PONTO_STATUS_META = {
+  trabalhando: { label: 'Trabalhando', cor: '#10b981' },
+  pausado: { label: 'Em pausa', cor: '#f59e0b' },
+  almoco: { label: 'Almoço', cor: '#f59e0b' },
+  finalizado: { label: 'Expediente encerrado', cor: '#64748b' },
+  nao_iniciado: { label: 'Expediente não iniciado', cor: '#64748b' },
+};
 
 
 function CountUp({ end, duration = 800 }) {
@@ -275,6 +311,7 @@ function HeatmapCalendar({ data = [] }) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  usePageTitle('Dashboard');
   const termos = useTermos();
   const [stats, setStats] = useState(null);
   const [recentes, setRecentes] = useState([]);
@@ -284,10 +321,15 @@ export default function Dashboard() {
   const [weather, setWeather] = useState(null);
   const [slide, setSlide] = useState(0);
   const [turnosData, setTurnosData] = useState([]);
+  const [ponto, setPonto] = useState(null);
+  const [agoraMs, setAgoraMs] = useState(Date.now());
+  const [rede, setRede] = useState(null);
+  const [redeCarregando, setRedeCarregando] = useState(false);
   const greeting = getGreeting();
   const { socket } = useSocket();
   const { user } = useAuth();
   const { hide: hideSplash } = useSplash();
+  const isAdmin = user?.tipo === 'TI';
 
   const todayStr = new Date().toLocaleDateString('sv');
   const hojeCriados = stats?.porDia?.find((d) => d.dia === todayStr)?.count || 0;
@@ -410,6 +452,43 @@ export default function Dashboard() {
       }
     };
   }, [socket]);
+
+  useEffect(() => {
+    const usuario = user?.nome;
+    if (!usuario) return;
+    const load = () => {
+      apiFetch(`${API}/ponto/status?usuario=${encodeURIComponent(usuario)}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (d) setPonto(d); })
+        .catch(() => {});
+    };
+    load();
+    const sync = setInterval(load, 60000);
+    const tick = setInterval(() => setAgoraMs(Date.now()), 30000);
+    return () => { clearInterval(sync); clearInterval(tick); };
+  }, [user?.nome]);
+
+  const carregarRede = useCallback(() => {
+    if (!isAdmin) return;
+    setRedeCarregando(true);
+    apiFetch(`${API}/rede/verificar`, { method: 'POST' })
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data) => {
+        const hosts = data.hosts || [];
+        const online = hosts.filter((h) => h.online);
+        const lats = online.map((h) => h.latencia).filter((l) => typeof l === 'number' && l > 0);
+        setRede({
+          total: hosts.length,
+          online: online.length,
+          pingMedio: lats.length ? Math.round(lats.reduce((a, b) => a + b, 0) / lats.length) : null,
+          em: new Date(),
+        });
+      })
+      .catch(() => setRede(null))
+      .finally(() => setRedeCarregando(false));
+  }, [isAdmin]);
+
+  useEffect(() => { carregarRede(); }, [carregarRede]);
 
   const totalChamados = stats?.porStatus?.reduce((a, b) => a + b.count, 0) || 0;
   const openCount = stats?.porStatus?.find((s) => s.status === 'aberto')?.count || 0;
@@ -846,6 +925,58 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      <section className='home-widgets'>
+        <div className='home-widget-card anim-fadeInUp'>
+          <div className='widget-icon' style={{ background: '#6366f118', color: '#6366f1' }}>
+            <Clock size={22} />
+          </div>
+          <div className='widget-info'>
+            <span className='widget-label'>Meu Ponto Hoje</span>
+            <span className='widget-value'>{ponto?.registro ? fmtDuracao(calcularDecorrido(ponto.registro, agoraMs)) : '--'}</span>
+            {(() => {
+              const meta = PONTO_STATUS_META[ponto?.status] || PONTO_STATUS_META.nao_iniciado;
+              const reg = ponto?.registro;
+              return (
+                <span className='widget-sub'>
+                  <span className='widget-dot' style={{ background: meta.cor }} />
+                  {meta.label}
+                  {reg?.inicio ? ' · entrada ' + reg.inicio.slice(11, 16) : ''}
+                  {ponto?.status === 'finalizado' && reg?.fim ? ' · saída ' + reg.fim.slice(11, 16) : ''}
+                </span>
+              );
+            })()}
+          </div>
+          <Link to='/ponto' className='panel-link'>Ver ponto <ArrowRight size={14} /></Link>
+        </div>
+
+        {isAdmin && (
+          <div className='home-widget-card anim-fadeInUp'>
+            <div className='widget-icon' style={{ background: '#38bdf814', color: '#38bdf8' }}>
+              <Activity size={22} />
+            </div>
+            <div className='widget-info'>
+              <span className='widget-label'>Saúde da Rede</span>
+              <span className='widget-value'>
+                {rede ? rede.online + '/' + rede.total : '--'} <small>online</small>
+              </span>
+              <span className='widget-sub'>
+                {redeCarregando
+                  ? 'Verificando hosts...'
+                  : rede
+                    ? 'ping médio ' + (rede.pingMedio != null ? rede.pingMedio + ' ms' : '--') + ' · atualizado ' + rede.em.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                    : 'Sem dados de monitoramento'}
+              </span>
+            </div>
+            <div className='widget-actions'>
+              <button className='widget-refresh' onClick={carregarRede} disabled={redeCarregando} title='Atualizar verificação'>
+                <RefreshCw size={14} className={redeCarregando ? 'spin' : ''} />
+              </button>
+              <Link to='/rede' className='panel-link'>Monitorar <ArrowRight size={14} /></Link>
+            </div>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

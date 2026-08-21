@@ -173,6 +173,44 @@
   border-bottom: 1px solid var(--color-border);
 }
 
+.table th.th-sort {
+  cursor: pointer;
+  user-select: none;
+}
+
+.table th.th-sort span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  vertical-align: middle;
+}
+
+.table th.th-sort svg {
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.table th.th-sort .th-sort-idle {
+  opacity: 0.35;
+  transition: opacity 0.15s;
+}
+
+.table th.th-sort:hover .th-sort-idle,
+.table th.th-sort.ordenando {
+  color: var(--color-primary-light);
+}
+
+.table th.th-sort:hover .th-sort-idle {
+  opacity: 0.8;
+}
+
+.hl-busca {
+  background: rgba(99, 102, 241, 0.28);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 1px;
+}
+
 .table td {
   padding: 14px 18px;
   font-size: 13px;

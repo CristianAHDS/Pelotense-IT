@@ -11,11 +11,13 @@ import { API_URL } from '../config';
 import { apiFetch } from '../api';
 import { useTermos } from '../termos';
 import { categoriasParaTipo } from '../categorias';
+import usePageTitle from '../hooks/usePageTitle';
 
 const API = API_URL;
 
 export default function NovoChamado() {
   const navigate = useNavigate();
+  usePageTitle('Novo Chamado');
   const { user } = useAuth();
   const termos = useTermos();
   const tecnicoNome = user?.nome || 'Cristian Raffi Cunha';

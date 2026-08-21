@@ -4,6 +4,7 @@ import { Save, Upload, X, File, Image, Film, Music } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import { applyWatermark } from '../utils/watermark';
 import './Portal.css';
+import usePageTitle from '../hooks/usePageTitle';
 
 import { API_URL } from '../config';
 
@@ -11,6 +12,7 @@ const API = API_URL;
 
 export default function PortalNovo() {
   const navigate = useNavigate();
+  usePageTitle('Portal — Novo Chamado');
   const { add: addToast } = useToast();
   const fileInputRef = useRef(null);
   const [form, setForm] = useState({

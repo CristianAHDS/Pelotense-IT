@@ -10,8 +10,11 @@ import './Ponto.css';
 
 import { API_URL } from '../config';
 import { apiFetch } from '../api';
+import usePageTitle from '../hooks/usePageTitle';
 
 const API = API_URL;
+
+const JORNADA_PADRAO_MIN = 8 * 60;
 
 const pad = (n) => String(n).padStart(2, '0');
 
@@ -23,6 +26,14 @@ const fmtTotal = (min) => {
   const m = min % 60;
   if (h === 0) return `${m}min`;
   return m === 0 ? `${h}h` : `${h}h${pad(m)}`;
+};
+
+const fmtSaldo = (min) => {
+  const sinal = min < 0 ? '-' : '+';
+  const abs = Math.abs(min);
+  const h = Math.floor(abs / 60);
+  const m = abs % 60;
+  return sinal + (h === 0 ? `${m}min` : m === 0 ? `${h}h` : `${h}h${pad(m)}`);
 };
 
 const STATUS_INFO = {
@@ -60,6 +71,7 @@ function pausaTotalMinutos(reg) {
 
 export default function Ponto() {
   const { user } = useAuth();
+  usePageTitle('Ponto');
   const { add: addToast } = useToast();
   const usuario = user?.nome || 'Cristian Raffi Cunha';
 
@@ -79,6 +91,7 @@ export default function Ponto() {
   const [editandoCampo, setEditandoCampo] = useState(null);
   const [campoValores, setCampoValores] = useState({});
   const [confirmandoCampo, setConfirmandoCampo] = useState(false);
+  const [confirmandoFinalizar, setConfirmandoFinalizar] = useState(false);
   const campoRef = useRef(null);
 
   useEffect(() => {
@@ -149,6 +162,19 @@ export default function Ponto() {
   };
 
   const info = STATUS_INFO[status] || STATUS_INFO.nao_iniciado;
+
+  useEffect(() => {
+    setConfirmandoFinalizar(false);
+  }, [status]);
+
+  const clicarFinalizar = () => {
+    if (!confirmandoFinalizar) {
+      setConfirmandoFinalizar(true);
+      return;
+    }
+    setConfirmandoFinalizar(false);
+    acao('finalizar', 'Expediente finalizado!');
+  };
 
   const abrirEdicao = (reg) => {
     setEditando(reg);
@@ -298,12 +324,6 @@ export default function Ponto() {
     setMes(`${d.getFullYear()}-${pad(d.getMonth() + 1)}`);
   };
 
-  const resumoMes = useMemo(() => {
-    const dias = (registros || []).filter((r) => r.inicio);
-    const minutos = dias.reduce((acc, r) => acc + (r.total_minutos || 0), 0);
-    return { diasTrabalhados: dias.length, totalMinutos: minutos };
-  }, [registros]);
-
   const hoje = new Date();
   const hojeStr = `${hoje.getFullYear()}-${pad(hoje.getMonth() + 1)}-${pad(hoje.getDate())}`;
   const regHoje = registro;
@@ -326,6 +346,30 @@ export default function Ponto() {
     }
     return Math.max(0, Math.round(ms / 60000));
   }, [regHoje, now]);
+
+  const resumoMes = useMemo(() => {
+    const dias = (registros || []).filter((r) => r.inicio);
+    const minutos = dias.reduce((acc, r) => {
+      if (r.data === hojeStr && !r.fim && totalTrabalhado != null) return acc + totalTrabalhado;
+      return acc + (r.total_minutos || 0);
+    }, 0);
+
+    const [y, m] = mes.split('-').map(Number);
+    const mesAtual = hojeStr.slice(0, 7);
+    const ultimoDia = new Date(y, m, 0).getDate();
+    const limiteDia = mes === mesAtual ? hoje.getDate() : mes < mesAtual ? ultimoDia : 0;
+    let diasUteis = 0;
+    for (let d = 1; d <= limiteDia; d++) {
+      const wd = new Date(y, m - 1, d).getDay();
+      if (wd !== 0 && wd !== 6) diasUteis++;
+    }
+
+    return {
+      diasTrabalhados: dias.length,
+      totalMinutos: minutos,
+      saldoMinutos: minutos - diasUteis * JORNADA_PADRAO_MIN,
+    };
+  }, [registros, totalTrabalhado, hojeStr, mes]);
 
   return (
     <div className="ponto-page">
@@ -500,6 +544,22 @@ export default function Ponto() {
                 </span>
                 <span className="ponto-timeline-value">{fmtTotal(totalTrabalhado)}</span>
               </div>
+              <div className="ponto-progress">
+                <div className="ponto-progress-head">
+                  <span>Progresso da jornada</span>
+                  <span>
+                    {(totalTrabalhado || 0) >= JORNADA_PADRAO_MIN
+                      ? '+' + fmtTotal((totalTrabalhado || 0) - JORNADA_PADRAO_MIN) + ' além da meta'
+                      : fmtTotal(Math.max(0, JORNADA_PADRAO_MIN - (totalTrabalhado || 0))) + ' restantes'}
+                  </span>
+                </div>
+                <div className="ponto-progress-bar">
+                  <div
+                    className={'ponto-progress-fill' + ((totalTrabalhado || 0) >= JORNADA_PADRAO_MIN ? ' completo' : '')}
+                    style={{ width: Math.min(100, ((totalTrabalhado || 0) / JORNADA_PADRAO_MIN) * 100) + '%' }}
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="ponto-actions">
@@ -531,10 +591,15 @@ export default function Ponto() {
                   </button>
                   <button
                     className="ponto-btn ponto-btn-danger"
-                    onClick={() => acao('finalizar', 'Expediente finalizado!')}
+                    onClick={clicarFinalizar}
                     disabled={!!saving}
                   >
-                    <LogOut size={18} /> {saving === 'finalizar' ? 'Finalizando...' : 'Finalizar Expediente'}
+                    <LogOut size={18} />{' '}
+                    {saving === 'finalizar'
+                      ? 'Finalizando...'
+                      : confirmandoFinalizar
+                        ? 'Confirmar?'
+                        : 'Finalizar Expediente'}
                   </button>
                 </>
               )}
@@ -550,10 +615,15 @@ export default function Ponto() {
                   </button>
                   <button
                     className="ponto-btn ponto-btn-danger"
-                    onClick={() => acao('finalizar', 'Expediente finalizado!')}
+                    onClick={clicarFinalizar}
                     disabled={!!saving}
                   >
-                    <LogOut size={18} /> Finalizar Expediente
+                    <LogOut size={18} />{' '}
+                    {saving === 'finalizar'
+                      ? 'Finalizando...'
+                      : confirmandoFinalizar
+                        ? 'Confirmar?'
+                        : 'Finalizar Expediente'}
                   </button>
                 </>
               )}
@@ -604,6 +674,14 @@ export default function Ponto() {
               <div className="ponto-stat">
                 <span className="ponto-stat-value">{fmtTotal(resumoMes.totalMinutos)}</span>
                 <span className="ponto-stat-label">total no mês</span>
+              </div>
+              <div className="ponto-stat">
+                <span
+                  className={'ponto-stat-value ' + (resumoMes.saldoMinutos > 0 ? 'saldo-pos' : '')}
+                >
+                  {resumoMes.saldoMinutos > 0 ? fmtSaldo(resumoMes.saldoMinutos) : '00:00'}
+                </span>
+                <span className="ponto-stat-label">saldo do mês</span>
               </div>
             </div>
 

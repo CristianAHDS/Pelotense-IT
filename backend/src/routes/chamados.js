@@ -40,7 +40,7 @@ function podeVerChamado(req, id) {
 
 router.get('/', (req, res) => {
   try {
-    const { status, prioridade, categoria, page = 1, limit = 20, busca } = req.query;
+    const { status, prioridade, categoria, page = 1, limit = 20, busca, ordenar, dir } = req.query;
     const conditions = [];
     const params = [];
 
@@ -59,9 +59,21 @@ router.get('/', (req, res) => {
     const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
+    const camposOrdenacao = {
+      id: 'id',
+      titulo: 'titulo COLLATE NOCASE',
+      status: 'status',
+      prioridade: 'prioridade',
+      categoria: 'categoria COLLATE NOCASE',
+      solicitante: 'solicitante COLLATE NOCASE',
+      criado_em: 'criado_em',
+    };
+    const campoOrdenar = camposOrdenacao[ordenar] || 'criado_em';
+    const direcao = dir === 'asc' ? 'ASC' : dir === 'desc' ? 'DESC' : 'DESC';
+
     const totalRow = queryOne(`SELECT COUNT(*) as count FROM chamados ${where}`, params);
     const chamados = query(
-      `SELECT * FROM chamados ${where} ORDER BY criado_em DESC LIMIT ? OFFSET ?`,
+      `SELECT * FROM chamados ${where} ORDER BY ${campoOrdenar} ${direcao} LIMIT ? OFFSET ?`,
       [...params, parseInt(limit), offset]
     );
 

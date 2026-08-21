@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import './Whatsapp.css';
+import usePageTitle from '../hooks/usePageTitle';
 
 import { API_URL } from '../config';
 
@@ -25,6 +26,7 @@ const fmtHoraChat = (dt) => {
 
 export default function WhatsappChat() {
   const { numero } = useParams();
+  usePageTitle('WhatsApp');
   const navigate = useNavigate();
   const { add: addToast } = useToast();
   const [mensagens, setMensagens] = useState([]);

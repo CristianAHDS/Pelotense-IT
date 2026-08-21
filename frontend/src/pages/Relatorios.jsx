@@ -14,6 +14,7 @@ import './Relatorios.css';
 import { API_URL } from '../config';
 import { apiFetch } from '../api';
 import { useTermos } from '../termos';
+import usePageTitle from '../hooks/usePageTitle';
 
 const API = API_URL;
 
@@ -173,6 +174,7 @@ function SimpleDonut({ data = [], size = 140, strokeWidth = 16 }) {
 
 export default function Relatorios() {
 const termos = useTermos();
+usePageTitle('Relatórios');
 const [stats, setStats] = useState(null);
   const [chamados, setChamados] = useState([]);
   const [prevStats, setPrevStats] = useState(null);

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import './EnviarEmail.css';
+import usePageTitle from '../hooks/usePageTitle';
 
 import { API_URL } from '../config';
 
@@ -91,6 +92,7 @@ function stripHtml(html) {
 
 export default function EnviarEmail() {
   const { add: addToast } = useToast();
+  usePageTitle('Envio de E-mails');
   const [form, setForm] = useState({ para: '', assunto: '' });
   const [arquivos, setArquivos] = useState([]);
   const [sending, setSending] = useState(false);

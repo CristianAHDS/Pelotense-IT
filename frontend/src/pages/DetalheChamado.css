@@ -977,4 +977,13 @@
   .detalhe-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .back-link {
+    position: sticky;
+    top: 8px;
+    z-index: 30;
+    background: var(--color-surface-solid);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 12px;
+  }
 }

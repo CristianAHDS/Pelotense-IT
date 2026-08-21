@@ -35,6 +35,13 @@ const adminMenuItems = [
   { to: '/whatsapp', icon: MessageCircle, label: 'WhatsApp' },
 ];
 
+const buildMobileNav = (t) => [
+  { to: '/', icon: LayoutDashboard, label: 'Início' },
+  { to: '/chamados', icon: Ticket, label: t.Chamados },
+  { to: '/chamados/novo', icon: PlusCircle, label: 'Novo' },
+  { to: '/ponto', icon: Clock, label: 'Ponto' },
+];
+
 const breadcrumbMap = {
   '/': 'Dashboard',
   '/kanban': 'Kanban',
@@ -233,8 +240,13 @@ export default function DashboardLayout() {
       </header>
 
       <nav className="mobile-bottom-nav">
-        {mainMenuItems.filter((i) => !i.tiOnly || isAdmin).slice(0, 5).map(({ to, icon: Icon, label }) => (
-          <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => `bottom-nav-link ${isActive ? 'active' : ''}`}>
+        {buildMobileNav(termos).map(({ to, icon: Icon, label }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={to === '/' || to === '/chamados'}
+            className={({ isActive }) => `bottom-nav-link ${isActive ? 'active' : ''}`}
+          >
             <Icon size={20} /><span>{label}</span>
           </NavLink>
         ))}

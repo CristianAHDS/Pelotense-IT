@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '../contexts/ToastContext';
 import { version } from '../../package.json';
 import './Configuracoes.css';
+import usePageTitle from '../hooks/usePageTitle';
 
 import { API_URL } from '../config';
 
@@ -9,6 +10,7 @@ const API = API_URL;
 
 export default function Configuracoes() {
   const { add: addToast } = useToast();
+  usePageTitle('Configurações');
   const [emailConfig, setEmailConfig] = useState({
     smtp_host: 'smtp.gmail.com',
     smtp_port: 587,

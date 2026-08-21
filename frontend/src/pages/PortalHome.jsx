@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Eye, ExternalLink } from 'lucide-react';
 import './Portal.css';
+import usePageTitle from '../hooks/usePageTitle';
 
 import { API_URL } from '../config';
 
@@ -17,6 +18,7 @@ const STATUS_MAP = {
 
 export default function PortalHome() {
   const [email, setEmail] = useState('');
+  usePageTitle('Portal');
   const [chamados, setChamados] = useState([]);
   const [buscou, setBuscou] = useState(false);
 

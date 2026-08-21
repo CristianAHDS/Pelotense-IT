@@ -814,3 +814,41 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== PROGRESSO DA JORNADA ===== */
+.ponto-progress {
+  grid-column: 1 / -1;
+  padding-top: 4px;
+}
+.ponto-progress-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-bottom: 6px;
+}
+.ponto-progress-head span:last-child {
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+.ponto-progress-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-bg-tertiary);
+  overflow: hidden;
+}
+.ponto-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #6366f1, #6366f1cc);
+  transition: width 0.5s ease;
+}
+.ponto-progress-fill.completo {
+  background: linear-gradient(90deg, #10b981, #10b981cc);
+}
+
+/* ===== SALDO DO MES ===== */
+.ponto-stat-value.saldo-pos {
+  color: #10b981;
+}

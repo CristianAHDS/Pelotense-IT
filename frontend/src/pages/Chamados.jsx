@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Plus, Eye, ChevronLeft, ChevronRight, Trash2, Search } from 'lucide-react';
+import { Plus, Eye, ChevronLeft, ChevronRight, Trash2, Search, ArrowUp, ArrowDown, ChevronsUpDown } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import { SkeletonTable } from '../components/ui/Skeleton';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import EmptyState from '../components/ui/EmptyState';
+import usePageTitle from '../hooks/usePageTitle';
 import './Chamados.css';
 
 import { API_URL } from '../config';
@@ -28,20 +29,49 @@ const PRIORIDADE_MAP = {
   critica: { label: 'Crítica', cls: 'badge-red' },
 };
 
+const COLUNAS = [
+  { key: 'id', label: '#' },
+  { key: 'titulo', label: 'Título' },
+  { key: 'status', label: 'Status' },
+  { key: 'prioridade', label: 'Prioridade' },
+  { key: 'categoria', label: 'Categoria' },
+  { key: 'solicitante', label: 'Solicitante' },
+  { key: 'criado_em', label: 'Criado em' },
+];
+
+function destacar(texto, termo) {
+  if (!termo || texto == null) return texto;
+  const t = String(texto);
+  const idx = t.toLowerCase().indexOf(termo.toLowerCase());
+  if (idx === -1) return t;
+  return (
+    <>
+      {t.slice(0, idx)}
+      <mark className="hl-busca">{t.slice(idx, idx + termo.length)}</mark>
+      {t.slice(idx + termo.length)}
+    </>
+  );
+}
+
 export default function Chamados() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const termos = useTermos();
+  usePageTitle(termos.Chamados);
   const [chamados, setChamados] = useState([]);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(Math.max(1, parseInt(searchParams.get('pagina')) || 1));
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     status: searchParams.get('status') || '',
-    prioridade: '',
+    prioridade: searchParams.get('prioridade') || '',
   });
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(searchParams.get('busca') || '');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [ordem, setOrdem] = useState({
+    campo: searchParams.get('ordenar') || '',
+    dir: searchParams.get('dir') === 'asc' ? 'asc' : 'desc',
+  });
   const [deleteTarget, setDeleteTarget] = useState(null);
   const limit = 10;
   const { add: addToast } = useToast();
@@ -55,6 +85,10 @@ export default function Chamados() {
     setLoading(true);
     const params = new URLSearchParams({ page, limit, ...filters });
     if (debouncedSearch) params.set('busca', debouncedSearch);
+    if (ordem.campo) {
+      params.set('ordenar', ordem.campo);
+      params.set('dir', ordem.dir);
+    }
     apiFetch(`${API}/chamados?${params}`)
       .then((r) => r.json())
       .then((data) => {
@@ -63,9 +97,47 @@ export default function Chamados() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [page, filters, debouncedSearch]);
+  }, [page, filters, debouncedSearch, ordem]);
+
+  useEffect(() => {
+    const p = {};
+    if (filters.status) p.status = filters.status;
+    if (filters.prioridade) p.prioridade = filters.prioridade;
+    if (debouncedSearch) p.busca = debouncedSearch;
+    if (ordem.campo) {
+      p.ordenar = ordem.campo;
+      p.dir = ordem.dir;
+    }
+    if (page > 1) p.pagina = String(page);
+    setSearchParams(p, { replace: true });
+  }, [filters, debouncedSearch, page, ordem, setSearchParams]);
 
   const totalPages = Math.ceil(total / limit);
+
+  const alternarOrdem = (campo) => {
+    setOrdem((o) => (o.campo === campo
+      ? { campo, dir: o.dir === 'asc' ? 'desc' : 'asc' }
+      : { campo, dir: 'asc' }));
+    setPage(1);
+  };
+
+  const recarregar = () => {
+    setLoading(true);
+    const params = new URLSearchParams({ page, limit, ...filters });
+    if (debouncedSearch) params.set('busca', debouncedSearch);
+    if (ordem.campo) {
+      params.set('ordenar', ordem.campo);
+      params.set('dir', ordem.dir);
+    }
+    apiFetch(`${API}/chamados?${params}`)
+      .then((r) => r.json())
+      .then((data) => {
+        setChamados(data.chamados);
+        setTotal(data.total);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  };
 
   const confirmDelete = async () => {
     const id = deleteTarget;
@@ -75,17 +147,7 @@ export default function Chamados() {
       const r = await apiFetch(`${API}/chamados/${id}`, { method: 'DELETE' });
       if (!r.ok) throw new Error();
       addToast(`${termos.Chamado} #${id} excluído`, 'success');
-      setLoading(true);
-      const params = new URLSearchParams({ page, limit, ...filters });
-      if (debouncedSearch) params.set('busca', debouncedSearch);
-      apiFetch(`${API}/chamados?${params}`)
-        .then((r) => r.json())
-        .then((data) => {
-          setChamados(data.chamados);
-          setTotal(data.total);
-          setLoading(false);
-        })
-        .catch(() => setLoading(false));
+      recarregar();
     } catch {
       addToast(`Erro ao excluir ${termos.chamado}`, 'error');
     }
@@ -119,7 +181,7 @@ export default function Chamados() {
             type="text"
             placeholder="Buscar por título, solicitante ou nº..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           />
         </div>
         <select
@@ -157,7 +219,7 @@ export default function Chamados() {
             <colgroup>
               <col style={{ width: '64px' }} />
               <col style={{ width: '240px' }} />
-              <col style={{ width: '150px' }} />
+              <col style={{ width: '110px' }} />
               <col style={{ width: '110px' }} />
               <col style={{ width: '130px' }} />
               <col style={{ width: '160px' }} />
@@ -166,13 +228,23 @@ export default function Chamados() {
             </colgroup>
             <thead>
               <tr>
-                <th>#</th>
-                <th>Título</th>
-                <th>Status</th>
-                <th>Prioridade</th>
-                <th>Categoria</th>
-                <th>Solicitante</th>
-                <th>Criado em</th>
+                {COLUNAS.map((col) => (
+                  <th
+                    key={col.key}
+                    className={'th-sort' + (ordem.campo === col.key ? ' ordenando' : '')}
+                    onClick={() => alternarOrdem(col.key)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && alternarOrdem(col.key)}
+                  >
+                    <span>{col.label}</span>
+                    {ordem.campo === col.key ? (
+                      ordem.dir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
+                    ) : (
+                      <ChevronsUpDown size={12} className="th-sort-idle" />
+                    )}
+                  </th>
+                ))}
                 <th></th>
               </tr>
             </thead>
@@ -180,11 +252,11 @@ export default function Chamados() {
               {chamados.map((c) => (
                 <tr key={c.id} className="table-row-clickable" onClick={() => navigate(`/chamados/${c.id}`)}>
                   <td className="cell-id">#{c.id}</td>
-                  <td className="cell-title">{c.titulo}</td>
+                  <td className="cell-title">{destacar(c.titulo, debouncedSearch)}</td>
                   <td><span className={`badge ${STATUS_MAP[c.status]?.cls}`}>{STATUS_MAP[c.status]?.label}</span></td>
                   <td><span className={`badge ${PRIORIDADE_MAP[c.prioridade]?.cls}`}>{PRIORIDADE_MAP[c.prioridade]?.label}</span></td>
-                  <td><span className="badge badge-gray">{c.categoria}</span></td>
-                  <td>{c.solicitante}</td>
+                  <td><span className="badge badge-gray">{destacar(c.categoria, debouncedSearch)}</span></td>
+                  <td>{destacar(c.solicitante, debouncedSearch)}</td>
                   <td className="cell-date">{new Date(c.criado_em).toLocaleDateString()}</td>
                   <td>
                     <div className="row-actions">

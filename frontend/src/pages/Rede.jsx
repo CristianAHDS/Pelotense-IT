@@ -10,6 +10,7 @@ import EmptyState from '../components/ui/EmptyState';
 import './Rede.css';
 
 import { API_URL } from '../config';
+import usePageTitle from '../hooks/usePageTitle';
 
 const API = API_URL;
 
@@ -69,6 +70,7 @@ function useNumeroAnimado(alvo, duracao = 900) {
 
 export default function Rede() {
   const { add: addToast } = useToast();
+  usePageTitle('Monitoramento de Rede');
   const [hosts, setHosts] = useState([]);
   const [resultados, setResultados] = useState({});
   const [checking, setChecking] = useState(false);

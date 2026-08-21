@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import './Whatsapp.css';
+import usePageTitle from '../hooks/usePageTitle';
 
 import { API_URL } from '../config';
 
@@ -48,6 +49,7 @@ const fmtHora = (dt) => {
 
 export default function Whatsapp() {
   const { add: addToast } = useToast();
+  usePageTitle('WhatsApp');
   const [config, setConfig] = useState({
     ativo: false,
     api_url: 'http://localhost:8081',

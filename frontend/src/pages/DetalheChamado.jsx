@@ -11,6 +11,7 @@ import './DetalheChamado.css';
 import { API_URL } from '../config';
 import { apiFetch } from '../api';
 import { useTermos } from '../termos';
+import usePageTitle from '../hooks/usePageTitle';
 
 const API = API_URL;
 
@@ -69,6 +70,7 @@ export default function DetalheChamado() {
   const termos = useTermos();
   const tecnicoNome = user?.nome || 'Cristian Raffi Cunha';
   const [chamado, setChamado] = useState(null);
+  usePageTitle(chamado ? `#${chamado.id} — ${chamado.titulo}` : termos.Chamado);
   const [comentario, setComentario] = useState('');
   const [comentImagem, setComentImagem] = useState(null);
   const [elapsed, setElapsed] = useState('');

@@ -12,6 +12,7 @@ import { API_URL } from '../config';
 import { apiFetch } from '../api';
 import { useTermos } from '../termos';
 import { categoriasParaTipo } from '../categorias';
+import usePageTitle from '../hooks/usePageTitle';
 
 const API = API_URL;
 
@@ -58,6 +59,7 @@ const getTagColor = (categoria = '') => CAT_TAG_COLORS[categoria] || 'indigo';
 export default function Kanban() {
   const navigate = useNavigate();
   const termos = useTermos();
+  usePageTitle('Kanban');
   const { user } = useAuth();
   const catsDisponiveis = categoriasParaTipo(user?.tipo);
   const [chamados, setChamados] = useState([]);
