@@ -3,7 +3,7 @@ import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Ticket, PlusCircle, BarChart3, Settings,
   Wrench, Columns, Menu, X, Bell, Sun, Moon, ChevronLeft, ChevronRight, Plus,
-  Trophy, Contrast, UserCog, LogOut, Mail, MessageCircle, Clock, ChevronDown,
+  Contrast, UserCog, LogOut, Mail, MessageCircle, Clock, ChevronDown,
   Activity,
 } from 'lucide-react';
 import { useSocket } from '../../contexts/SocketContext';
@@ -24,7 +24,6 @@ const buildMainMenu = (t) => [
   { to: '/chamados', icon: Ticket, label: t.Chamados, badge: true },
   { to: '/chamados/novo', icon: PlusCircle, label: t.novoChamado, cta: true },
   { to: '/relatorios', icon: BarChart3, label: 'Relatórios' },
-  { to: '/gamificacao', icon: Trophy, label: 'Gamificação' },
   { to: '/ponto', icon: Clock, label: 'Ponto' },
   { to: '/rede', icon: Activity, label: 'Monitoramento de Rede', tiOnly: true },
 ];

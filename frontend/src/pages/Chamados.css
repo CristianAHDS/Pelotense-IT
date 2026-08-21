@@ -364,6 +364,7 @@
   .filters-bar .search-input {
     width: 100%;
     min-width: 0;
+    flex: none;
   }
 
   .table th,

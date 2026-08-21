@@ -7,6 +7,7 @@ const os = require('os');
 const dns = require('dns');
 const { query, queryOne, run, getLastID } = require('../database');
 const { getUsuarioLogado } = require('../middleware/auth');
+const { nomeConhecido } = require('../rede-conhecidos');
 
 const router = express.Router();
 
@@ -288,6 +289,13 @@ router.post('/dispositivos', async (req, res) => {
           .then((h) => { if (h) d.hostname = h; })
       )
     );
+
+    dispositivos.forEach((d) => {
+      if (!d.hostname) {
+        const nome = nomeConhecido(d.ip, d.mac);
+        if (nome) d.hostname = nome;
+      }
+    });
 
     dispositivos.sort((a, b) => {
       const pa = a.ip.split('.').map(Number);
