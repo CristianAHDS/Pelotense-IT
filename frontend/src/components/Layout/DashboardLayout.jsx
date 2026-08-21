@@ -49,6 +49,13 @@ const breadcrumbMap = {
   '/rede': 'Monitoramento de Rede',
 };
 
+const ROLE_META = {
+  ti: { label: 'TI', grad: 'linear-gradient(135deg, #6366f1, #818cf8)', badgeCls: 'ti' },
+  radio: { label: 'Téc. Rádio', grad: 'linear-gradient(135deg, #0ea5e9, #38bdf8)', badgeCls: 'radio' },
+  audiovisual: { label: 'Audiovisual', grad: 'linear-gradient(135deg, #f59e0b, #fbbf24)', badgeCls: 'av' },
+  convidado: { label: 'Convidado', grad: 'linear-gradient(135deg, #64748b, #94a3b8)', badgeCls: 'convidado' },
+};
+
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -180,16 +187,27 @@ export default function DashboardLayout() {
         </div>
 
         <div className="sidebar-footer">
-          <div className="sidebar-user">
-            <div className="user-avatar">{user ? user.nome.charAt(0).toUpperCase() : 'CR'}</div>
+          <div className="sidebar-user-card">
+            <div
+              className="user-avatar"
+              style={{ background: (ROLE_META[user?.tipo] || ROLE_META.ti).grad }}
+            >
+              {user ? user.nome.charAt(0).toUpperCase() : 'CR'}
+            </div>
             <div className="user-info">
               <span className="user-name">{user?.nome || 'Cristian Raffi Cunha'}</span>
-              <span className="user-role">{user?.tipo === 'radio' ? 'Téc. Rádio' : user?.tipo === 'audiovisual' ? 'Audiovisual' : user?.tipo === 'convidado' ? 'Convidado' : 'TI'}</span>
+              <span className={`user-role-badge ${(ROLE_META[user?.tipo] || ROLE_META.ti).badgeCls}`}>
+                {(ROLE_META[user?.tipo] || ROLE_META.ti).label}
+              </span>
             </div>
+            <button
+              className="user-logout-btn"
+              onClick={() => { logout(); navigate('/login'); }}
+              title="Sair"
+            >
+              <LogOut size={15} />
+            </button>
           </div>
-          <button className="sidebar-logout-btn" onClick={() => { logout(); navigate('/login'); }} title="Sair">
-            <LogOut size={16} />
-          </button>
         </div>
       </aside>
 

@@ -23,9 +23,13 @@ Run from the repo root:
 
 Ports: backend `3001`, frontend `5173` (Vite, `strictPort: true`, binds `0.0.0.0` for LAN/mobile access), evolution-api `8081`. Vite proxies `/api` → `localhost:3001`; for a remote API set `VITE_API_URL` and `VITE_SOCKET_URL`.
 
+Tauri desktop mode is out of sync: `frontend/src-tauri/tauri.conf.json` points `devUrl` to `localhost:1420`, but Vite serves on `5173` — don't assume `npm run tauri dev` works without aligning that port first.
+
 ## Versioning
 
 Versions live in three places that must stay in sync: root `VERSION`, `backend/package.json`, `frontend/package.json`. Bump all at once with `node bump-version.js` (patch increment only); `frontend/src/pages/Configuracoes.jsx` imports its displayed version from `frontend/package.json`, so no manual edit needed.
+
+Release commits follow `vX.Y.Z - descrição das mudanças` (pt-BR) and must include the bump — run `node bump-version.js` before committing (the v1.0.27 release skipped it and files fell out of sync).
 
 ## Deploy
 

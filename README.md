@@ -95,15 +95,15 @@ npm run dev:front
 ```
 
 - Backend: `http://localhost:3001`
-- Frontend: `http://localhost:1420`
+- Frontend: `http://localhost:5173`
 - Evolution API (WhatsApp): `http://localhost:8081` (Manager em `http://localhost:8081/manager`)
 
-Acesse o frontend em: `http://localhost:1420`
+Acesse o frontend em: `http://localhost:5173`
 
 ### Acesso mobile (mesma rede)
 
 1. Descubra o IP do computador: `ipconfig` (PowerShell)
-2. No celular, acesse: `http://192.168.x.x:1420`
+2. No celular, acesse: `http://192.168.x.x:5173`
 
 ### Tauri (desktop app)
 

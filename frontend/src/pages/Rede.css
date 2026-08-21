@@ -50,6 +50,7 @@
   margin-top: 4px;
 }
 
+/* ===== Stats ===== */
 .rede-stats {
   display: flex;
   align-items: stretch;
@@ -203,6 +204,33 @@
   min-height: 320px;
 }
 
+/* ===== Filtros (padrão filters-bar) ===== */
+.rede-filters-bar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.rede-filters-bar select {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  padding: 8px 14px;
+  font-size: 13px;
+  border-radius: var(--radius-sm);
+  width: auto;
+  min-width: 170px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.rede-filters-bar select:hover,
+.rede-filters-bar select:focus {
+  border-color: var(--color-primary);
+}
+
 .rede-empty {
   text-align: center;
   padding: 40px 20px;
@@ -278,6 +306,7 @@
   border-bottom: none;
 }
 
+/* ===== Lista de hosts ===== */
 .rede-hosts {
   display: flex;
   flex-direction: column;
@@ -319,7 +348,13 @@
 
 .rede-host-dot.online {
   background: var(--color-success);
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  animation: redePulse 2s ease-out infinite;
+}
+
+@keyframes redePulse {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45); }
+  70% { box-shadow: 0 0 0 7px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
 }
 
 .rede-host-dot.offline {
@@ -405,15 +440,63 @@
   flex-shrink: 0;
 }
 
-.rede-host.online .rede-host-latencia {
-  color: var(--color-success);
+/* Badge de latência (mesmos valores do padrão .badge) */
+.rede-latencia-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  min-width: 0;
 }
+
+.rede-latencia-badge.neutro { background: #64748b18; color: #94a3b8; }
+.rede-latencia-badge.bom { background: #10b98118; color: #10b981; }
+.rede-latencia-badge.medio { background: #f59e0b18; color: #f59e0b; }
+.rede-latencia-badge.ruim { background: #f43f5e18; color: #f43f5e; }
 
 .rede-host.offline .rede-host-latencia {
   color: var(--color-danger);
 }
 
-.rede-host-toggle,
+/* ===== Toggle (padrão toggle-row do Configuracoes) ===== */
+.rede-toggle {
+  width: 44px;
+  height: 24px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--color-bg-tertiary);
+  border-radius: 12px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  margin: 0;
+  border: none;
+}
+
+.rede-toggle::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.rede-toggle:checked {
+  background: var(--color-primary);
+}
+
+.rede-toggle:checked::after {
+  transform: translateX(20px);
+}
+
 .rede-host-remove {
   display: flex;
   align-items: center;
@@ -427,13 +510,6 @@
   cursor: pointer;
   transition: all 0.15s;
   flex-shrink: 0;
-}
-
-.rede-host-toggle svg.on { color: var(--color-success); }
-
-.rede-host-toggle:hover {
-  background: var(--color-bg-tertiary);
-  color: var(--color-primary-light);
 }
 
 .rede-host-remove:hover {
@@ -459,8 +535,55 @@
   margin-bottom: 0;
 }
 
-.rede-section-head .rede-check-btn {
+.rede-section-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.rede-section-actions .rede-check-btn {
   margin-left: 0;
+}
+
+/* Busca (padrão search-input) */
+.rede-search-input {
+  width: 260px;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0 12px;
+  transition: border-color 0.2s;
+}
+
+.rede-search-input:focus-within {
+  border-color: var(--color-primary);
+}
+
+.rede-search-input svg {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.rede-search-input input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  font-size: 13px;
+  padding: 8px 0;
+  outline: none;
+}
+
+.rede-search-input input::placeholder {
+  color: var(--color-text-muted);
 }
 
 .rede-table-wrap {
@@ -489,24 +612,26 @@
 
 .rede-table th {
   text-align: left;
-  padding: 10px 12px;
+  padding: 12px 18px;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 1px;
   color: var(--color-text-muted);
+  background: var(--color-bg-secondary);
   border-bottom: 1px solid var(--color-border);
   white-space: nowrap;
 }
 
 .rede-table td {
-  padding: 11px 12px;
+  padding: 13px 18px;
   border-bottom: 1px solid var(--color-border);
   color: var(--color-text-secondary);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: background 0.15s ease;
 }
 
 .rede-table tbody tr:last-child td {
@@ -514,11 +639,57 @@
 }
 
 .rede-table tbody tr {
-  transition: background 0.12s;
+  transition: all 0.15s ease;
+}
+
+.rede-table tbody tr:not(.is-self):hover td {
+  background: rgba(99, 102, 241, 0.03);
+}
+
+.rede-table tbody tr:not(.is-self):hover {
+  box-shadow: inset 3px 0 0 var(--color-primary);
 }
 
 .rede-table tbody tr.is-self {
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(99, 102, 241, 0.06);
+}
+
+.rede-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.rede-dev-icon {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.rede-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.rede-copy:hover {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--color-primary-light);
+}
+
+.rede-table tbody tr:hover .rede-copy {
+  opacity: 1;
 }
 
 .rede-td-ip {
@@ -540,8 +711,8 @@
   border-radius: 999px;
   font-size: 10px;
   font-weight: 700;
-  background: rgba(99, 102, 241, 0.15);
-  color: var(--color-primary-light);
+  background: #6366f118;
+  color: #818cf8;
 }
 
 .rede-tag {
@@ -563,41 +734,44 @@
   color: var(--color-text-muted);
 }
 
+/* Paginação (padrão .pagination) */
 .rede-paginacao {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  margin-top: 14px;
+  gap: 16px;
+  margin-top: 16px;
 }
 
 .rede-paginacao button {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius);
   border: 1px solid var(--color-border);
-  background: var(--color-bg);
-  color: var(--color-text-secondary);
-  font-size: 12.5px;
-  font-weight: 700;
+  background: var(--color-surface);
+  color: var(--color-text);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.25s ease;
+  padding: 0;
 }
 
 .rede-paginacao button:hover:not(:disabled) {
+  background: var(--color-bg-tertiary);
   border-color: var(--color-primary);
-  color: var(--color-primary-light);
+  box-shadow: 0 0 12px var(--color-primary-glow);
+  transform: translateY(-1px);
 }
 
 .rede-paginacao button:disabled {
-  opacity: 0.4;
+  opacity: 0.3;
   cursor: not-allowed;
 }
 
 .rede-paginacao span {
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
@@ -637,6 +811,7 @@
   min-width: 36px;
   text-align: right;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .rede-speed-erro {
@@ -674,11 +849,70 @@
   color: var(--color-text-muted);
 }
 
+/* ===== Histórico de testes ===== */
+.rede-speed-historico {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--color-border);
+}
+
+.rede-hist-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.rede-hist-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--color-text-muted);
+}
+
+.rede-hist-limpar {
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.rede-hist-limpar:hover {
+  color: var(--color-danger);
+}
+
+.rede-hist-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 56px;
+}
+
+.rede-hist-bar {
+  flex: 1;
+  max-width: 26px;
+  min-height: 8px;
+  border-radius: 4px 4px 2px 2px;
+  background: var(--color-primary);
+  opacity: 0.75;
+  transition: height 0.4s ease, opacity 0.15s ease;
+}
+
+.rede-hist-bar:hover {
+  opacity: 1;
+  box-shadow: 0 0 10px var(--color-primary-glow);
+}
+
 @media (max-width: 900px) {
   .rede-grid {
     grid-template-columns: 1fr;
   }
-  .rede-check-btn {
+  .rede-stats .rede-check-btn {
     margin-left: 0;
   }
 }
@@ -704,8 +938,57 @@
   .rede-host-alvo {
     max-width: 110px;
   }
+  .rede-filters-bar select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Tabela vira cards empilhados */
+  .rede-table-wrap {
+    overflow-x: visible;
+  }
   .rede-table {
-    min-width: 540px;
+    display: block;
+  }
+  .rede-table thead {
+    display: none;
+  }
+  .rede-table tbody {
+    display: block;
+  }
+  .rede-table tbody tr {
+    display: block;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    background: var(--color-bg);
+    box-shadow: none;
+  }
+  .rede-table tbody tr.is-self {
+    border-color: var(--color-primary);
+  }
+  .rede-table tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    border-bottom: none;
+    padding: 4px 0;
+    white-space: normal;
+    overflow: visible;
+  }
+  .rede-table tbody td::before {
+    content: attr(data-label);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+  }
+  .rede-copy {
+    opacity: 1;
   }
 }
 
@@ -733,8 +1016,16 @@
     flex-direction: column;
     align-items: stretch;
   }
-  .rede-section-head .rede-check-btn {
+  .rede-section-actions {
+    margin-left: 0;
+  }
+  .rede-section-actions .rede-check-btn {
     justify-content: center;
+    flex: 1;
+  }
+  .rede-search-input {
+    flex: 1;
+    width: auto;
   }
   .rede-host {
     flex-wrap: wrap;
