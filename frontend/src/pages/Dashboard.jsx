@@ -1,10 +1,17 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Ticket, Clock, CheckCircle, AlertTriangle, Plus, Columns, List, ArrowRight, Activity, ThermometerSun } from 'lucide-react';
+import {
+  Ticket, Clock, CheckCircle, AlertTriangle, Plus, Columns, List, ArrowRight, Activity, ThermometerSun,
+  Sun, CloudSun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudSnow, CloudLightning,
+  FilePlus2, RefreshCw, Pencil, CheckCircle2, BellOff, ClipboardList, Bell, Lightbulb, CalendarDays,
+  Cpu, Monitor, Network, Printer, Mail, KeyRound, PartyPopper, Video, Mic, Scissors, Send, RadioTower, SlidersHorizontal, Headphones, Globe,
+  History, PieChart, BarChart3, Sunrise, Moon, Flag, Flame, ShieldCheck,
+} from 'lucide-react';
 import { useSocket } from '../contexts/SocketContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useSplash } from '../contexts/SplashContext';
 import { SkeletonCard, SkeletonPanel } from '../components/ui/Skeleton';
+import EmptyState from '../components/ui/EmptyState';
 import './Dashboard.css';
 
 import { API_URL } from '../config';
@@ -28,7 +35,32 @@ const PRIORIDADE_MAP = {
   critica: { label: 'Crítica', cls: 'badge-red' },
 };
 
-const EVENT_ICONS = { criacao: '📝', status: '🔄', edicao: '✏️', resolucao: '✅' };
+const FEED_META = {
+  criacao: { icon: FilePlus2, color: '#6366f1' },
+  status: { icon: RefreshCw, color: '#38bdf8' },
+  edicao: { icon: Pencil, color: '#f59e0b' },
+  resolucao: { icon: CheckCircle2, color: '#10b981' },
+};
+const FEED_FALLBACK = { icon: Bell, color: '#64748b' };
+
+const CATEGORIA_META = {
+  hardware: { icon: Cpu, color: '#f59e0b' },
+  software: { icon: Monitor, color: '#6366f1' },
+  rede: { icon: Network, color: '#38bdf8' },
+  impressora: { icon: Printer, color: '#a78bfa' },
+  email: { icon: Mail, color: '#f43f5e' },
+  acesso: { icon: KeyRound, color: '#10b981' },
+  geral: { icon: ClipboardList, color: '#64748b' },
+  evento: { icon: PartyPopper, color: '#f97316' },
+  censura: { icon: Video, color: '#ec4899' },
+  gravacao: { icon: Mic, color: '#8b5cf6' },
+  edicao: { icon: Scissors, color: '#06b6d4' },
+  postagem: { icon: Send, color: '#84cc16' },
+  transmissao: { icon: RadioTower, color: '#8b5cf6' },
+  operacao: { icon: SlidersHorizontal, color: '#f97316' },
+  sonorizacao: { icon: Headphones, color: '#06b6d4' },
+};
+const CATEGORIA_FALLBACK = { icon: Globe, color: '#6366f1' };
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -38,31 +70,31 @@ function getGreeting() {
 }
 
 const WEATHER_MAP = {
-  0: { emoji: '☀️', label: 'Céu limpo' },
-  1: { emoji: '🌤️', label: 'Parcialmente nublado' },
-  2: { emoji: '⛅', label: 'Nublado' },
-  3: { emoji: '☁️', label: 'Encoberto' },
-  45: { emoji: '🌫️', label: 'Nevoeiro' },
-  48: { emoji: '🌫️', label: 'Nevoeiro' },
-  51: { emoji: '🌦️', label: 'Garoa leve' },
-  53: { emoji: '🌦️', label: 'Garoa' },
-  55: { emoji: '🌧️', label: 'Garoa forte' },
-  61: { emoji: '🌧️', label: 'Chuva leve' },
-  63: { emoji: '🌧️', label: 'Chuva' },
-  65: { emoji: '🌧️', label: 'Chuva forte' },
-  71: { emoji: '❄️', label: 'Neve leve' },
-  73: { emoji: '❄️', label: 'Neve' },
-  75: { emoji: '❄️', label: 'Neve forte' },
-  80: { emoji: '🌦️', label: 'Pancadas' },
-  81: { emoji: '🌧️', label: 'Pancadas fortes' },
-  82: { emoji: '⛈️', label: 'Pancadas violentas' },
-  95: { emoji: '⛈️', label: 'Trovoada' },
-  96: { emoji: '⛈️', label: 'Trovoada com granizo' },
-  99: { emoji: '⛈️', label: 'Trovoada severa' },
+  0: { Icon: Sun, label: 'Céu limpo' },
+  1: { Icon: CloudSun, label: 'Parcialmente nublado' },
+  2: { Icon: Cloud, label: 'Nublado' },
+  3: { Icon: Cloud, label: 'Encoberto' },
+  45: { Icon: CloudFog, label: 'Nevoeiro' },
+  48: { Icon: CloudFog, label: 'Nevoeiro' },
+  51: { Icon: CloudDrizzle, label: 'Garoa leve' },
+  53: { Icon: CloudDrizzle, label: 'Garoa' },
+  55: { Icon: CloudRain, label: 'Garoa forte' },
+  61: { Icon: CloudRain, label: 'Chuva leve' },
+  63: { Icon: CloudRain, label: 'Chuva' },
+  65: { Icon: CloudRain, label: 'Chuva forte' },
+  71: { Icon: CloudSnow, label: 'Neve leve' },
+  73: { Icon: CloudSnow, label: 'Neve' },
+  75: { Icon: CloudSnow, label: 'Neve forte' },
+  80: { Icon: CloudRain, label: 'Pancadas' },
+  81: { Icon: CloudRain, label: 'Pancadas fortes' },
+  82: { Icon: CloudLightning, label: 'Pancadas violentas' },
+  95: { Icon: CloudLightning, label: 'Trovoada' },
+  96: { Icon: CloudLightning, label: 'Trovoada com granizo' },
+  99: { Icon: CloudLightning, label: 'Trovoada severa' },
 };
 
-function getWeatherEmoji(code) {
-  return WEATHER_MAP[code] || { emoji: '🌤️', label: 'Indisponível' };
+function getWeatherInfo(code) {
+  return WEATHER_MAP[code] || { Icon: CloudSun, label: 'Indisponível' };
 }
 
 function timeAgo(dateStr) {
@@ -121,10 +153,12 @@ function Sparkline({ data, color = '#6366f1', width = 120, height = 24 }) {
   );
 }
 
-function DonutChart({ segments = [], size = 120, strokeWidth = 12 }) {
+function DonutChart({ segments = [], size = 160, strokeWidth = 14, centerLabel = 'total' }) {
+  const [hover, setHover] = useState(null);
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const total = segments.reduce((a, b) => a + b.count, 0) || 1;
+  const active = hover !== null ? segments[hover] : null;
   return (
     <div className='donut-wrap'>
       <svg width={size} height={size} viewBox={'0 0 ' + size + ' ' + size}>
@@ -139,20 +173,47 @@ function DonutChart({ segments = [], size = 120, strokeWidth = 12 }) {
               strokeDasharray={dash + ' ' + (circumference - dash)}
               strokeDashoffset={segOffset} strokeLinecap='round'
               className='donut-segment'
-              style={{ animationDelay: (i * 0.15) + 's' }} />
+              onMouseEnter={() => setHover(i)}
+              onMouseLeave={() => setHover(null)}
+              style={{
+                animationDelay: (i * 0.15) + 's',
+                cursor: 'pointer',
+                opacity: hover === null || hover === i ? 1 : 0.25,
+              }} />
           );
         })}
       </svg>
       <div className='donut-center'>
-        <span className='donut-total'>{total}</span>
-        <span className='donut-label'>total</span>
+        {active ? (
+          <>
+            <span className='donut-total' style={{ color: active.color }}>{Math.round((active.count / total) * 100)}%</span>
+            <span className='donut-label'>{active.label}</span>
+          </>
+        ) : (
+          <>
+            <span className='donut-total'>{total}</span>
+            <span className='donut-label'>{centerLabel}</span>
+          </>
+        )}
       </div>
+    </div>
+  );
+}
+
+function PanelTitle({ icon: Icon, color, children }) {
+  return (
+    <div className='panel-title'>
+      <span className='panel-title-icon' style={{ background: color + '14', color }}>
+        <Icon size={15} />
+      </span>
+      <h3>{children}</h3>
     </div>
   );
 }
 
 function HeatmapCalendar({ data = [] }) {
   const today = new Date();
+  const todayKey = today.toISOString().slice(0, 10);
   const weeks = 12;
   const dayLabels = ['', 'S', 'T', 'Q', 'Q', 'S', 'S'];
   const cells = [];
@@ -171,17 +232,36 @@ function HeatmapCalendar({ data = [] }) {
       cells.push({ key, count, level });
     }
   }
+  const monthSpans = [];
+  for (let w = 0; w < weeks; w++) {
+    const colDate = new Date(today);
+    colDate.setDate(colDate.getDate() - ((weeks - 1 - w) * 7 + 6));
+    const m = colDate.getMonth();
+    const last = monthSpans[monthSpans.length - 1];
+    if (last && last.m === m) last.span++;
+    else monthSpans.push({ m, span: 1 });
+  }
   return (
     <div className='heatmap-wrap'>
       <div className='heatmap-grid'>
         <div className='heatmap-labels'>
           {dayLabels.map((l, i) => <span key={i} className='heatmap-label'>{l}</span>)}
         </div>
-        <div className='heatmap-cells' style={{ gridTemplateColumns: 'repeat(' + weeks + ', 1fr)' }}>
-          {cells.map((cell, i) => (
-            <div key={cell.key} className={'heatmap-cell level-' + cell.level}
-              title={cell.key + ': ' + cell.count + ' ' + getTermos().chamados} />
-          ))}
+        <div className='heatmap-main'>
+          <div className='heatmap-months' style={{ gridTemplateColumns: 'repeat(' + weeks + ', 1fr)' }}>
+            {monthSpans.map((ms, i) => (
+              <span key={i} className='heatmap-month-label' style={{ gridColumn: 'span ' + ms.span }}>
+                {new Date(today.getFullYear(), ms.m, 1).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}
+              </span>
+            ))}
+          </div>
+          <div className='heatmap-cells' style={{ gridTemplateColumns: 'repeat(' + weeks + ', 1fr)' }}>
+            {cells.map((cell) => (
+              <div key={cell.key}
+                className={'heatmap-cell level-' + cell.level + (cell.key === todayKey ? ' today' : '')}
+                data-tip={cell.key.split('-').reverse().join('/') + ' · ' + cell.count + ' ' + getTermos().chamados} />
+            ))}
+          </div>
         </div>
       </div>
       <div className='heatmap-legend'>
@@ -215,11 +295,12 @@ export default function Dashboard() {
     return (recentes || []).filter((c) => c.status === 'resolvido' && (c.resolvido_em || '').slice(0, 10) === todayStr).length;
   })() : 0;
 
-  const weatherInfo = weather ? getWeatherEmoji(weather.code) : null;
+  const weatherInfo = weather ? getWeatherInfo(weather.code) : null;
 
   const slides = [
     {
-      emoji: weather ? weatherInfo.emoji : '🌤️',
+      icon: weather ? weatherInfo.Icon : CloudSun,
+      iconStyle: { background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff' },
       title: greeting + ', ' + (user?.nome || 'Cristian'),
       text: weather
         ? (weatherInfo.label + ', ' + weather.temp + '°C — Confira o resumo dos ' + termos.chamados)
@@ -227,16 +308,22 @@ export default function Dashboard() {
       loading: !weather,
     },
     {
+      icon: CalendarDays,
+      iconStyle: { background: '#38bdf814', color: '#38bdf8' },
       title: 'Resumo do Dia',
       text: hojeCriados + ' criados hoje · ' + hojeResolvidos + ' resolvidos · ' + (stats?.porStatus?.find((s) => s.status === 'aberto')?.count || 0) + ' em aberto',
     },
     {
+      icon: Bell,
+      iconStyle: { background: '#f59e0b14', color: '#f59e0b' },
       title: 'Lembrete',
       text: stats?.porStatus?.find((s) => s.status === 'pendente')?.count
         ? stats.porStatus.find((s) => s.status === 'pendente').count + ' ' + termos.chamados + ' pendentes aguardando ação'
         : 'Nenhum ' + termos.chamado + ' pendente no momento',
     },
     {
+      icon: Lightbulb,
+      iconStyle: { background: '#10b98114', color: '#10b981' },
       title: 'Dica',
       text: 'Use o Kanban para arrastar cards entre colunas e gerenciar o fluxo de trabalho de forma visual.',
     },
@@ -329,8 +416,10 @@ export default function Dashboard() {
   const progressCount = stats?.porStatus?.find((s) => s.status === 'em_andamento')?.count || 0;
   const resolvedCount = stats?.porStatus?.find((s) => s.status === 'resolvido')?.count || 0;
 
+  const sparkData = (stats?.porDia || []).slice(-7).map((d) => d.count);
+
   const cards = [
-    { label: 'Total de ' + termos.Chamados, value: totalChamados, icon: Ticket, color: '#6366f1', filter: '', trend: stats?.trend },
+    { label: 'Total de ' + termos.Chamados, value: totalChamados, icon: Ticket, color: '#6366f1', filter: '', trend: stats?.trend, spark: sparkData },
     { label: 'Em Aberto', value: openCount, icon: AlertTriangle, color: '#f59e0b', filter: 'aberto', pulse: openCount > 0 },
     { label: 'Em Andamento', value: progressCount, icon: Clock, color: '#38bdf8', filter: 'em_andamento' },
     { label: 'Resolvidos', value: resolvedCount, icon: CheckCircle, color: '#10b981', filter: 'resolvido', trend: stats?.resolvedTrend },
@@ -346,10 +435,8 @@ export default function Dashboard() {
     .filter((s) => s.count > 0)
     .map((s) => {
       const colors = { aberto: '#f59e0b', em_andamento: '#38bdf8', pendente: '#a78bfa', resolvido: '#10b981', fechado: '#64748b' };
-      return { ...s, color: colors[s.status] || '#6366f1' };
+      return { ...s, label: STATUS_MAP[s.status]?.label || s.status, color: colors[s.status] || '#6366f1' };
     });
-
-  const sparkData = (stats?.porDia || []).slice(-7).map((d) => d.count);
 
   const handleTilt = useCallback((e) => {
     const card = e.currentTarget;
@@ -387,7 +474,11 @@ export default function Dashboard() {
         {slides.map((s, i) => (
           <div key={i} className={'carousel-slide' + (i === slide ? ' active' : '')}>
             <div className='welcome-content'>
-              {s.emoji && <span className={'welcome-emoji' + (s.loading ? ' skeleton-shimmer' : '')}>{s.emoji}</span>}
+              {s.icon && (
+                <span className={'welcome-icon' + (s.loading ? ' skeleton-shimmer' : '')} style={s.iconStyle}>
+                  <s.icon size={26} />
+                </span>
+              )}
               <div>
                 <h1>{s.title}</h1>
                 <p className={s.loading ? 'skeleton-text' : ''}>{s.text}</p>
@@ -442,7 +533,7 @@ export default function Dashboard() {
         </div>
       ) : (
         <section className='stats-grid stagger'>
-          {cards.map(({ label, value, icon: Icon, color, filter, trend, pulse }) => (
+          {cards.map(({ label, value, icon: Icon, color, filter, trend, pulse, spark }) => (
             <div
               key={label}
               className='stat-card anim-fadeInUp'
@@ -461,6 +552,7 @@ export default function Dashboard() {
                 <span className='stat-value'><CountUp end={value} /></span>
                 <span className='stat-label'>{label}</span>
               </div>
+              {spark && <Sparkline data={spark} color={color} width={84} height={26} />}
               {trend !== undefined && (
                 <div className={'stat-trend ' + (trend > 0 ? 'positive' : trend < 0 ? 'negative' : 'neutral')}>
                   {trend > 0 ? '↑' : trend < 0 ? '↓' : '–'} {Math.abs(trend)}%
@@ -473,34 +565,44 @@ export default function Dashboard() {
 
       <div className='home-grid'>
         {loading ? (
-          <div className='home-panel home-panel-recentes'><div className='panel-header'><h3>{termos.Chamados} Recentes</h3></div><SkeletonPanel /></div>
+          <div className='home-panel home-panel-recentes'><div className='panel-header'><PanelTitle icon={History} color='#6366f1'>{termos.Chamados} Recentes</PanelTitle></div><SkeletonPanel /></div>
         ) : (
           <div className='home-panel home-panel-recentes anim-fadeInUp'>
             <div className='panel-header'>
-              <h3>{termos.Chamados} Recentes</h3>
+              <PanelTitle icon={History} color='#6366f1'>{termos.Chamados} Recentes</PanelTitle>
               <Link to='/chamados' className='panel-link'>Ver todos <ArrowRight size={14} /></Link>
             </div>
             <div className='recentes-list'>
               {recentes.length === 0 ? (
-                <div className='recentes-empty'>📋 {`Nenhum ${termos.chamado} registrado ainda.`}</div>
+                <EmptyState
+                  icon={<ClipboardList size={26} />}
+                  title={`Nenhum ${termos.chamado} registrado ainda.`}
+                  description='Os novos registros aparecerão aqui.'
+                />
               ) : (
-                recentes.map((c) => (
-                  <Link key={c.id} to={'/chamados/' + c.id} className='recent-item'>
-                    <div className='recent-left'>
-                      <div className='recent-main'>
-                        <div className='recent-top'>
-                          <span className='recent-id'>#{c.id}</span>
-                          <span className='recent-titulo'>{c.titulo}</span>
+                recentes.map((c) => {
+                  const CatMeta = CATEGORIA_META[c.categoria] || CATEGORIA_FALLBACK;
+                  return (
+                    <Link key={c.id} to={'/chamados/' + c.id} className='recent-item'>
+                      <span className='recent-chip' style={{ background: CatMeta.color + '14', color: CatMeta.color }}>
+                        <CatMeta.icon size={15} />
+                      </span>
+                      <div className='recent-left'>
+                        <div className='recent-main'>
+                          <div className='recent-top'>
+                            <span className='recent-id'>#{c.id}</span>
+                            <span className='recent-titulo'>{c.titulo}</span>
+                          </div>
+                          <span className='recent-time'>{timeAgo(c.criado_em)}</span>
                         </div>
-                        <span className='recent-time'>{timeAgo(c.criado_em)}</span>
                       </div>
-                    </div>
-                    <div className='recent-meta'>
-                      <span className={'badge ' + STATUS_MAP[c.status]?.cls}>{STATUS_MAP[c.status]?.label}</span>
-                      <span className={'badge ' + PRIORIDADE_MAP[c.prioridade]?.cls}>{PRIORIDADE_MAP[c.prioridade]?.label}</span>
-                    </div>
-                  </Link>
-                ))
+                      <div className='recent-meta'>
+                        <span className={'badge ' + STATUS_MAP[c.status]?.cls}>{STATUS_MAP[c.status]?.label}</span>
+                        <span className={'badge ' + PRIORIDADE_MAP[c.prioridade]?.cls}>{PRIORIDADE_MAP[c.prioridade]?.label}</span>
+                      </div>
+                    </Link>
+                  );
+                })
               )}
             </div>
           </div>
@@ -512,62 +614,29 @@ export default function Dashboard() {
           <div className='home-panel home-panel-donut'><SkeletonPanel /></div>
         ) : (
           <div className='home-panel home-panel-donut anim-fadeInUp'>
-            <div className='panel-header'><h3>{termos.Chamados} por Categoria</h3></div>
+            <div className='panel-header'><PanelTitle icon={PieChart} color='#a78bfa'>{termos.Chamados} por Categoria</PanelTitle></div>
             <div className='donut-content'>
               {stats?.porCategoria && (() => {
-                const catColors = {
-                  hardware: '#f59e0b', software: '#6366f1', rede: '#38bdf8', impressora: '#a78bfa',
-                  email: '#f43f5e', acesso: '#10b981', geral: '#64748b', evento: '#f97316',
-                  censura: '#ec4899', gravacao: '#8b5cf6', edicao: '#06b6d4', postagem: '#84cc16',
-                  transmissao: '#8b5cf6', operacao: '#f97316', sonorizacao: '#06b6d4',
-                };
-                const catIcons = {
-                  hardware: '💻', software: '🖥️', rede: '🌐', impressora: '🖨️',
-                  email: '📧', acesso: '🔑', geral: '📋', evento: '🎪',
-                  censura: '🎥', gravacao: '🎙️', edicao: '✂️', postagem: '📡',
-                  transmissao: '📻', operacao: '🎚️', sonorizacao: '🎧',
-                };
                 const data = stats.porCategoria;
-                const total = data.reduce((a, b) => a + b.count, 0) || 1;
-                const size = 170;
-                const strokeWidth = 18;
-                const radius = (size - strokeWidth) / 2;
-                const circ = 2 * Math.PI * radius;
+                const segments = data.map((c) => ({
+                  label: c.categoria,
+                  count: c.count,
+                  color: (CATEGORIA_META[c.categoria] || CATEGORIA_FALLBACK).color,
+                }));
                 return (
                   <>
-                    <div className='donut-wrap'>
-                      <svg width={size} height={size} viewBox={'0 0 ' + size + ' ' + size}>
-                        {data.map((seg, i) => {
-                          const pct = seg.count / total;
-                          const dash = circ * pct;
-                          const offset = -circ * (data.slice(0, i).reduce((a, b) => a + b.count, 0) / total) + circ * 0.25;
-                          return (
-                            <circle
-                              key={i}
-                              cx={size / 2} cy={size / 2} r={radius}
-                              fill="none"
-                              stroke={catColors[seg.categoria] || '#6366f1'}
-                              strokeWidth={strokeWidth}
-                              strokeDasharray={dash + ' ' + (circ - dash)}
-                              strokeDashoffset={offset}
-                              strokeLinecap="round"
-                            />
-                          );
-                        })}
-                      </svg>
-                      <div className='donut-center'>
-                        <span className='donut-total'>{total}</span>
-                        <span className='donut-label'>{termos.chamados}</span>
-                      </div>
-                    </div>
+                    <DonutChart segments={segments} size={170} strokeWidth={18} centerLabel={termos.chamados} />
                     <div className='donut-legend'>
-                      {data.slice(0, 6).map((c) => (
-                        <div key={c.categoria} className='donut-legend-item'>
-                          <span className='donut-legend-dot' style={{ background: catColors[c.categoria] || '#6366f1' }} />
-                          <span>{catIcons[c.categoria] || '📋'} {c.categoria}</span>
-                          <span className='donut-legend-count'>{c.count}</span>
-                        </div>
-                      ))}
+                      {data.slice(0, 6).map((c) => {
+                        const CatMeta = CATEGORIA_META[c.categoria] || CATEGORIA_FALLBACK;
+                        return (
+                          <div key={c.categoria} className='donut-legend-item'>
+                            <span className='donut-legend-dot' style={{ background: CatMeta.color }} />
+                            <span><CatMeta.icon size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} />{c.categoria}</span>
+                            <span className='donut-legend-count'>{c.count}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </>
                 );
@@ -582,7 +651,7 @@ export default function Dashboard() {
         ) : (
           <div className='home-panel home-panel-donut anim-fadeInUp'>
             <div className='panel-header'>
-              <h3>{termos.Chamados} por Status</h3>
+              <PanelTitle icon={BarChart3} color='#38bdf8'>{termos.Chamados} por Status</PanelTitle>
               <span className='panel-badge'>{totalChamados} total</span>
             </div>
             <div className='donut-content'>
@@ -591,7 +660,7 @@ export default function Dashboard() {
               {donutSegments.map((s) => (
                 <div key={s.status} className='donut-legend-item'>
                   <span className='donut-legend-dot' style={{ background: s.color }} />
-                  <span>{STATUS_MAP[s.status]?.label || s.status}</span>
+                  <span>{s.label}</span>
                   <span className='donut-legend-count'>{s.count}</span>
                 </div>
               ))}
@@ -606,23 +675,32 @@ export default function Dashboard() {
         ) : (
           <div className='home-panel home-panel-feed anim-fadeInUp'>
             <div className='panel-header'>
-              <h3><Activity size={14} style={{ marginRight: 6 }} />Atividade Recente</h3>
+              <PanelTitle icon={Activity} color='#10b981'>Atividade Recente</PanelTitle>
             </div>
             <div className='feed-list'>
               {feed.length === 0 ? (
-                <div className='recentes-empty'>🔔 Nenhuma atividade registrada.</div>
+                <EmptyState
+                  icon={<BellOff size={26} />}
+                  title='Nenhuma atividade registrada.'
+                  description='As ações nos chamados aparecerão aqui.'
+                />
               ) : (
-                feed.slice(0, 8).map((item) => (
-                  <Link key={item.id} to={'/chamados/' + item.chamado_id} className='feed-item'>
-                    <span className='feed-icon'>{EVENT_ICONS[item.acao] || '📌'}</span>
-                    <div className='feed-body'>
-                      <div className='feed-desc'>
-                        <strong>#{item.chamado_id}</strong> {item.descricao}
+                feed.slice(0, 8).map((item) => {
+                  const Meta = FEED_META[item.acao] || FEED_FALLBACK;
+                  return (
+                    <Link key={item.id} to={'/chamados/' + item.chamado_id} className='feed-item'>
+                      <span className='feed-icon' style={{ background: Meta.color + '14', color: Meta.color }}>
+                        <Meta.icon size={14} />
+                      </span>
+                      <div className='feed-body'>
+                        <div className='feed-desc'>
+                          <strong>#{item.chamado_id}</strong> {item.descricao}
+                        </div>
+                        <div className='feed-time'>{timeAgo(item.criado_em)}</div>
                       </div>
-                      <div className='feed-time'>{timeAgo(item.criado_em)}</div>
-                    </div>
-                  </Link>
-                ))
+                    </Link>
+                  );
+                })
               )}
             </div>
           </div>
@@ -634,11 +712,8 @@ export default function Dashboard() {
         ) : (
           <div className='home-panel home-panel-emergencia anim-fadeInUp'>
             <div className='panel-header'>
-              <h3 style={{ display: 'flex', alignItems: 'center' }}>
-                <AlertTriangle size={14} style={{ marginRight: 6, color: '#f43f5e' }} />
-                Precisa de Atenção
-              </h3>
-              <span className='panel-badge' style={{ background: 'rgba(244,63,94,0.1)', color: '#f43f5e' }}>
+              <PanelTitle icon={AlertTriangle} color='#f43f5e'>Precisa de Atenção</PanelTitle>
+              <span className='panel-badge panel-badge-red'>
                 {precisaAtencao.length}
               </span>
             </div>
@@ -649,7 +724,7 @@ export default function Dashboard() {
                     <span className='dot' style={{ background: '#f43f5e' }} />Críticos em aberto
                   </div>
                   {criticos.slice(0, 3).map((c) => (
-                    <Link key={c.id} to={'/chamados/' + c.id} className='emergencia-item'>
+                    <Link key={c.id} to={'/chamados/' + c.id} className='emergencia-item critico'>
                       <span className='e-id'>#{c.id}</span>
                       <span className='e-title'>{c.titulo}</span>
                       <span className='e-time'>{timeAgo(c.criado_em)}</span>
@@ -663,7 +738,7 @@ export default function Dashboard() {
                     <span className='dot' style={{ background: '#f59e0b' }} />Pendentes
                   </div>
                   {parados.slice(0, 3).map((c) => (
-                    <Link key={c.id} to={'/chamados/' + c.id} className='emergencia-item'>
+                    <Link key={c.id} to={'/chamados/' + c.id} className='emergencia-item pendente'>
                       <span className='e-id'>#{c.id}</span>
                       <span className='e-title'>{c.titulo}</span>
                       <span className='e-time'>{timeAgo(c.atualizado_em)}</span>
@@ -672,7 +747,11 @@ export default function Dashboard() {
                 </div>
               )}
               {precisaAtencao.length === 0 && (
-                <div className='recentes-empty'>✅ Nada pendente — tudo sob controle!</div>
+                <EmptyState
+                  icon={<ShieldCheck size={26} />}
+                  title='Nada pendente — tudo sob controle!'
+                  description='Nenhum chamado crítico ou parado no momento.'
+                />
               )}
             </div>
           </div>
@@ -684,23 +763,30 @@ export default function Dashboard() {
           <div className='home-panel'><SkeletonPanel /></div>
         ) : (
           <div className='home-panel anim-fadeInUp'>
-            <div className='panel-header'><h3>{termos.Chamados} por Turno (Hoje)</h3></div>
+            <div className='panel-header'><PanelTitle icon={Clock} color='#f59e0b'>{termos.Chamados} por Turno (Hoje)</PanelTitle></div>
             <div className='bar-list'>
-              {turnosData.map((t) => {
+              {turnosData.map((t, idx) => {
+                const TurnoIcon = [Sunrise, Sun, Moon][idx] || Clock;
                 const maxTurno = Math.max(...turnosData.map((d) => d.count), 1);
+                const totalTurno = turnosData.reduce((a, b) => a + b.count, 0) || 1;
+                const pct = Math.round((t.count / totalTurno) * 100);
+                const showPct = pct >= 15 && t.count > 0;
                 return (
                   <div key={t.label} className='bar-item'>
                     <div className='bar-label'>
                       <span className='bar-name'>
-                        <span className='bar-dot' style={{ background: t.color }} />
+                        <span className='bar-icon' style={{ background: t.color + '14', color: t.color }}>
+                          <TurnoIcon size={13} />
+                        </span>
                         {t.label}
                       </span>
                       <span className='bar-count'>{t.count}</span>
                     </div>
                     <div className='bar-track'>
                       <div
-                        className='bar-fill'
+                        className={'bar-fill' + (showPct ? ' has-pct' : '')}
                         style={{ width: ((t.count / maxTurno) * 100).toFixed(0) + '%', background: t.color }}
+                        data-pct={pct + '%'}
                       />
                     </div>
                   </div>
@@ -715,7 +801,7 @@ export default function Dashboard() {
           <div className='home-panel'><SkeletonPanel /></div>
         ) : (
           <div className='home-panel anim-fadeInUp'>
-            <div className='panel-header'><h3>{termos.Chamados} por Prioridade</h3></div>
+            <div className='panel-header'><PanelTitle icon={Flag} color='#f43f5e'>{termos.Chamados} por Prioridade</PanelTitle></div>
             {stats?.porPrioridade && (
               <div className='bar-list'>
                 {stats.porPrioridade.map((p) => {
@@ -728,8 +814,10 @@ export default function Dashboard() {
                     <div key={p.prioridade} className='bar-item'>
                       <div className='bar-label'>
                         <span className='bar-name'>
-                          <span className='bar-dot' style={{ background: barColor }} />
-                          {p.prioridade}
+                          <span className='bar-icon' style={{ background: barColor + '14', color: barColor }}>
+                            <Flag size={13} />
+                          </span>
+                          {PRIORIDADE_MAP[p.prioridade]?.label || p.prioridade}
                         </span>
                         <span className='bar-count'>{p.count} ({pct}%)</span>
                       </div>
@@ -752,9 +840,7 @@ export default function Dashboard() {
         {!loading && (
           <div className='home-panel home-panel-heatmap anim-fadeInUp'>
             <div className='panel-header'>
-              <h3 style={{ display: 'flex', alignItems: 'center' }}>
-                Atividade (12 semanas)
-              </h3>
+              <PanelTitle icon={Flame} color='#f97316'>Atividade (12 semanas)</PanelTitle>
             </div>
             <HeatmapCalendar data={stats?.porDia || []} />
           </div>
