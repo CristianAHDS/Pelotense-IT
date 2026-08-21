@@ -84,6 +84,9 @@ npm install --legacy-peer-deps
 # Sobe backend + frontend + Evolution API (WhatsApp) de uma vez
 npm run dev
 
+# Ou apenas backend + frontend (sem Evolution API)
+npm run dev:app
+
 # Ou apenas backend + Evolution API (WhatsApp)
 npm run dev:back
 

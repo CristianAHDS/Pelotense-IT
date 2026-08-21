@@ -6,6 +6,7 @@
   "author": "Cristian Raffi Cunha",
   "scripts": {
     "dev": "concurrently -n backend,frontend,evolution -c blue,green,magenta \"npm run backend\" \"npm run dev:front\" \"npm run evolution\"",
+    "dev:app": "concurrently -n backend,frontend -c blue,green \"npm run backend\" \"npm run dev:front\"",
     "dev:back": "concurrently -n backend,evolution -c blue,magenta \"npm run backend\" \"npm run evolution\"",
     "dev:front": "cd frontend && npm run dev",
     "backend": "cd backend && npm run dev",
